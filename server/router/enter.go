@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/router/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/example"
 	"github.com/flipped-aurora/gin-vue-admin/server/router/resource"
@@ -12,6 +13,7 @@ type RouterGroup struct {
 	Example  example.RouterGroup
 	Resource resource.RouterGroup
 	Assert   assert.RouterGroup
+	Ad       ad.RouterGroup
 }
 
 var RouterGroupApp = new(RouterGroup)

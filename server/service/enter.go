@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/service/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/example"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/resource"
@@ -12,6 +13,7 @@ type ServiceGroup struct {
 	ExampleServiceGroup  example.ServiceGroup
 	ResourceServiceGroup resource.ServiceGroup
 	AssertServiceGroup   assert.ServiceGroup
+	AdServiceGroup       ad.ServiceGroup
 }
 
 var ServiceGroupApp = new(ServiceGroup)
