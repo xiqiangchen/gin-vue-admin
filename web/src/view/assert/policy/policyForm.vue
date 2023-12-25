@@ -68,7 +68,7 @@ const formData = ref({
             publisher: 0,
             bundle: 0,
             format: 0,
-            identity: false,
+            identity: 0,
             os: 0,
             region: 0,
             price: 0,

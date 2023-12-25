@@ -116,32 +116,40 @@
               <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" />
             </el-form-item>
             <el-form-item label="广告形式:"  prop="ad_format" >
-              <el-select v-model="formData.ad_format" placeholder="请选择广告形式" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in adFormatOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
+              <el-checkbox-group  v-model="keys.ad_format" placeholder="请选择广告形式"  @change="handleChangeMultiAdFormat" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="ad_format" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in adFormatOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group >
             </el-form-item>
             <el-form-item label="设备类型:"  prop="device_type" >
-              <el-select v-model="formData.device_type" placeholder="请选择设备类型" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in deviceTypeOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
+              <el-checkbox-group v-model="keys.device_type" placeholder="请选择设备类型" @change="handleChangeMultiDeviceType" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="device_type" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in deviceTypeOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
             </el-form-item>
             <el-form-item label="操作系统:"  prop="os" >
-              <el-select v-model="formData.os" placeholder="请选择操作系统" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in osOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
+              <el-checkbox-group v-model="keys.os" placeholder="请选择操作系统" @change="handleChangeMultiOs" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="os" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in osOptions" :key="key" :label="item.value" :value="item.value" >{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
             </el-form-item>
             <el-form-item label="定向类型:"  prop="target_type" >
-              <el-select v-model="formData.target_type" placeholder="请选择定向类型" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in targetTypeOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
+              <el-checkbox-group v-model="keys.target_type" @change="handleChangeMultiTargetType" placeholder="请选择定向类型" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="target_type" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in targetTypeOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
             </el-form-item>
             <el-form-item label="行政区域:"  prop="region" >
-              <el-input v-model="formData.region" :clearable="true"  placeholder="请输入行政区域" />
+              <el-checkbox-group v-model="keys.region" @change="handleChangeMultiStr" placeholder="请选择定向地区" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="region" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in regionOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
             </el-form-item>
             <el-form-item label="性别:"  prop="gender" >
-              <el-select v-model="formData.gender" placeholder="请选择性别" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in genderOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
+              <el-checkbox-group v-model="keys.gender" placeholder="请选择性别" @change="handleChangeMultiGender" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="gender" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in genderOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
             </el-form-item>
           </el-form>
       </el-scrollbar>
@@ -163,22 +171,40 @@
                         {{ formData.desc }}
                 </el-descriptions-item>
                 <el-descriptions-item label="广告形式">
-                        {{ filterDict(formData.ad_format,adFormatOptions) }}
+                  <el-checkbox-group  v-model="keys.ad_format" placeholder="请选择广告形式"  @change="handleChangeMultiAdFormat" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="ad_format" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in adFormatOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group >
                 </el-descriptions-item>
                 <el-descriptions-item label="设备类型">
-                        {{ filterDict(formData.device_type,deviceTypeOptions) }}
+                  <el-checkbox-group v-model="keys.device_type" placeholder="请选择设备类型" @change="handleChangeMultiDeviceType" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="device_type" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in deviceTypeOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
                 <el-descriptions-item label="操作系统">
-                        {{ filterDict(formData.os,osOptions) }}
+                  <el-checkbox-group v-model="keys.os" placeholder="请选择操作系统" @change="handleChangeMultiOs" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="os" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in osOptions" :key="key" :label="item.value" :value="item.value" >{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
                 <el-descriptions-item label="定向类型">
-                        {{ filterDict(formData.target_type,targetTypeOptions) }}
+                  <el-checkbox-group v-model="keys.target_type" @change="handleChangeMultiTargetType" placeholder="请选择定向类型" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="target_type" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in targetTypeOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
                 <el-descriptions-item label="行政区域">
-                        {{ formData.region }}
+                  <el-checkbox-group v-model="keys.region" @change="handleChangeMultiStr" placeholder="请选择定向地区" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="region" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in regionOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
                 <el-descriptions-item label="性别">
-                        {{ filterDict(formData.gender,genderOptions) }}
+                  <el-checkbox-group v-model="keys.gender" placeholder="请选择性别" @change="handleChangeMultiGender" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="gender" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in genderOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -198,6 +224,8 @@ import {
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
+import { toBitInt, toArrFromBitInt } from '@/utils/bit'
+import { showDictLabel } from '@/utils/dictionary'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 
@@ -210,18 +238,27 @@ const targetTypeOptions = ref([])
 const genderOptions = ref([])
 const adFormatOptions = ref([])
 const deviceTypeOptions = ref([])
+const regionOptions = ref([])
 const osOptions = ref([])
 const formData = ref({
         name: '',
         desc: '',
-        ad_format: undefined,
-        device_type: undefined,
-        os: undefined,
-        target_type: undefined,
+        ad_format: 0,
+        device_type: 0,
+        os: 0,
+        target_type: 0,
         region: '',
-        gender: undefined,
+        gender: 0,
         })
 
+const keys = ref({
+  ad_format: [],
+  device_type: [],
+  os: [],
+  target_type: [],
+  gender: [],
+  region: [],
+})
 
 // 验证规则
 const rule = reactive({
@@ -314,10 +351,14 @@ const setOptions = async () =>{
     adFormatOptions.value = await getDictFunc('adFormat')
     deviceTypeOptions.value = await getDictFunc('deviceType')
     osOptions.value = await getDictFunc('os')
+    regionOptions.value = await getDictFunc('region')
 }
 
 // 获取需要的字典 可能为空 按需保留
 setOptions()
+
+toBitInt([1,3,4,6]);
+toArrFromBitInt(45);
 
 
 // 多选数据
@@ -325,6 +366,55 @@ const multipleSelection = ref([])
 // 多选
 const handleSelectionChange = (val) => {
     multipleSelection.value = val
+}
+
+// 需要转换的多选
+const handleChangeMultiTargetType = (val) => {
+  handleMultiSelectChange(val, 'target_type');
+}
+
+const handleChangeMultiOs = (val) => {
+  handleMultiSelectChange(val, 'os');
+}
+
+const handleChangeMultiGender = (val) => {
+  handleMultiSelectChange(val, 'gender');
+}
+
+const handleChangeMultiAdFormat = (val) => {
+  handleMultiSelectChange(val, 'ad_format');
+}
+
+const handleChangeMultiDeviceType = (val) => {
+  handleMultiSelectChange(val, 'device_type');
+}
+
+const handleMultiSelectChange = (val, key) => {
+  if (val !== undefined && val.length > 0) {
+    console.log(val, key);
+    if (val[val.length - 1] === 0) {
+      formData.value[key] = 0;
+      keys.value[key] = [0];
+    } else {
+      keys.value[key] = val.filter(item => item !== 0);
+      formData.value[key] = toBitInt(keys.value[key]);
+    }
+  }
+}
+
+const handleChangeMultiStr = (val) => {
+  if (val !== undefined && val.length > 0) {
+    if (val[val.length-1] === 0) {
+      keys.value['region'] = [0]
+      formData.value.region = keys.value['region'].join(',');
+      console.log(formData.value.region);  
+    } else {
+      keys.value['region'] = keys.value['region'].filter(item => item !== 0);
+      console.log(keys.value['region']);
+      formData.value.region = keys.value['region'].join(',');
+      console.log(formData.value.region);  
+    }
+  }
 }
 
 // 删除行
@@ -419,6 +509,18 @@ const getDetails = async (row) => {
   const res = await findTarget({ ID: row.ID })
   if (res.code === 0) {
     formData.value = res.data.retarget
+    const ks = Object.keys(keys.value);
+    console.log(ks)
+    for (const key of ks) {
+        if (typeof formData.value[key] === 'number') {
+          keys.value[key] = toArrFromBitInt(formData.value[key])
+          console.log(keys.value[key])
+        } else if (typeof formData.value[key] === 'string') {
+          const kk = formData.value[key].split(',')
+          keys.value[key] = keys.map(key => parseInt(key));
+          console.log("region",formData.value[key], formData.value[key].split(','))
+        }
+    }
     openDetailShow()
   }
 }
@@ -430,12 +532,12 @@ const closeDetailShow = () => {
   formData.value = {
           name: '',
           desc: '',
-          ad_format: undefined,
-          device_type: undefined,
-          os: undefined,
-          target_type: undefined,
+          ad_format: 0,
+          device_type: 0,
+          os: 0,
+          target_type: 0,
           region: '',
-          gender: undefined,
+          gender: 0,
           }
 }
 
@@ -452,12 +554,12 @@ const closeDialog = () => {
     formData.value = {
         name: '',
         desc: '',
-        ad_format: undefined,
-        device_type: undefined,
-        os: undefined,
-        target_type: undefined,
+        ad_format: 0,
+        device_type: 0,
+        os: 0,
+        target_type: 0,
         region: '',
-        gender: undefined,
+        gender: 0,
         }
 }
 // 弹窗确定

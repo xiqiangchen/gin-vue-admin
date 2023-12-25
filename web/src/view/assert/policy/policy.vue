@@ -62,13 +62,40 @@
         <el-table-column align="left" label="日期" width="180">
             <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
-        <el-table-column align="left" label="平台渠道" prop="platform" width="120" />
-        <el-table-column align="left" label="广告位" prop="spot" width="120" />
-        <el-table-column align="left" label="发布者" prop="publisher" width="120" />
-        <el-table-column align="left" label="bundle" prop="bundle" width="120" />
-        <el-table-column align="left" label="广告形式" prop="format" width="120" />
-        <el-table-column align="left" label="是否有设备id信息" prop="identity" width="120">
-            <template #default="scope">{{ formatBoolean(scope.row.identity) }}</template>
+        <el-table-column align="left" label="平台渠道" prop="platform" width="120">
+          <template #default="scope">
+           <span v-if="scope.row.platform === 0">不限</span>
+           <span v-else>{{ scope.row.platform }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="广告位" prop="spot" width="120">
+          <template #default="scope">
+           <span v-if="scope.row.spot === 0">不限</span>
+           <span v-else>{{ scope.row.spot }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="发布者" prop="publisher" width="120">
+          <template #default="scope">
+           <span v-if="scope.row.publisher === 0">不限</span>
+           <span v-else>{{ scope.row.publisher }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="bundle" prop="bundle" width="120">
+          <template #default="scope">
+           <span v-if="scope.row.bundle === 0">不限</span>
+           <span v-else>{{ scope.row.bundle }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="广告形式" prop="format" width="120">
+          <template #default="scope">
+           <span v-if="scope.row.format === 0">不限</span>
+           <span v-else>{{ scope.row.format }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="设备id信息要求" prop="identity" width="120" >
+          <template #default="scope">
+            {{ filterDict(scope.row.identity,identityOptions) }}
+          </template>
         </el-table-column>
         <el-table-column align="left" label="操作系统" prop="os" width="120" />
         <el-table-column align="left" label="地区" prop="region" width="120" />
@@ -115,8 +142,10 @@
             <el-form-item label="广告形式:"  prop="format" >
               <el-input v-model.number="formData.format" :clearable="true" placeholder="请输入广告形式" />
             </el-form-item>
-            <el-form-item label="是否有设备id信息:"  prop="identity" >
-              <el-switch v-model="formData.identity" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
+            <el-form-item label="设备id信息要求:"  prop="identity" >
+              <el-select v-model="formData.identity" placeholder="请选择" style="width:100%" :clearable="true" >
+                <el-option v-for="(item,key) in identityOptions" :key="key" :label="item.label" :value="item.value" />
+              </el-select>
             </el-form-item>
             <el-form-item label="操作系统:"  prop="os" >
               <el-input v-model.number="formData.os" :clearable="true" placeholder="请输入操作系统" />
@@ -159,7 +188,7 @@
                         {{ formData.format }}
                 </el-descriptions-item>
                 <el-descriptions-item label="是否有设备id信息">
-                    {{ formatBoolean(formData.identity) }}
+                    {{ filterDict(formData.identity,identityOptions) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="操作系统">
                         {{ formData.os }}
@@ -198,6 +227,9 @@ defineOptions({
     name: 'Policy'
 })
 
+const identityOptions = ref([])
+
+
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
         platform: 0,
@@ -205,7 +237,7 @@ const formData = ref({
         publisher: 0,
         bundle: 0,
         format: 0,
-        identity: false,
+        identity: 0,
         os: 0,
         region: 0,
         price: 0,
@@ -262,7 +294,7 @@ const onSubmit = () => {
     page.value = 1
     pageSize.value = 10
     if (searchInfo.value.identity === ""){
-        searchInfo.value.identity=null
+        searchInfo.value.identity=undefined
     }
     getTableData()
   })
@@ -297,6 +329,8 @@ getTableData()
 
 // 获取需要的字典 可能为空 按需保留
 const setOptions = async () =>{
+  identityOptions.value = await getDictFunc('identityType')
+  console.log(identityOptions.value)
 }
 
 // 获取需要的字典 可能为空 按需保留
@@ -416,7 +450,7 @@ const closeDetailShow = () => {
           publisher: 0,
           bundle: 0,
           format: 0,
-          identity: false,
+          identity: 0,
           os: 0,
           region: 0,
           price: 0,
@@ -440,7 +474,7 @@ const closeDialog = () => {
         publisher: 0,
         bundle: 0,
         format: 0,
-        identity: false,
+        identity: 0,
         os: 0,
         region: 0,
         price: 0,

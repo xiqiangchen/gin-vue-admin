@@ -92,10 +92,12 @@ func Routers() *gin.Engine {
 		assertRouter := router.RouterGroupApp.Assert
 		assertRouter.InitTargetRouter(PrivateGroup)
 		assertRouter.InitPolicyRouter(PrivateGroup)
+		assertRouter.InitBlackWhiteListRouter(PrivateGroup)
 	}
 	{
 		adRouter := router.RouterGroupApp.Ad
 		adRouter.InitPlanRouter(PrivateGroup)
+		adRouter.InitCampaignRouter(PrivateGroup)
 	}
 
 	global.GVA_LOG.Info("router register success")
