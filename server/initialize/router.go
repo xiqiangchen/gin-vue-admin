@@ -98,6 +98,7 @@ func Routers() *gin.Engine {
 		adRouter := router.RouterGroupApp.Ad
 		adRouter.InitPlanRouter(PrivateGroup)
 		adRouter.InitCampaignRouter(PrivateGroup)
+		adRouter.InitCreativeRouter(PrivateGroup)
 	}
 
 	global.GVA_LOG.Info("router register success")
