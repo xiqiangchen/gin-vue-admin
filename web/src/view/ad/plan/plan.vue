@@ -53,7 +53,11 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="名称" prop="name" width="120" />
+        <el-table-column align="left" label="名称" prop="name" width="120">
+          <template #default="scope">
+            <a :href="'#' + campaignPath + '?pid=' + scope.row.ID" >{{ scope.row.name }}</a>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
             <template #default="scope">
@@ -243,6 +247,8 @@ import {
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+
 
 defineOptions({
     name: 'Plan'
@@ -337,6 +343,21 @@ const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
+const campaignPath = ref('')
+
+const router = useRouter()
+
+const setCampaignPath = () => {
+
+  for (let r of router.getRoutes()) {
+    if (r.name === 'campaign') {
+      campaignPath.value = r.path
+      break
+    }
+  }
+}
+
+setCampaignPath()
 
 // 重置
 const onReset = () => {
