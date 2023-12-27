@@ -19,7 +19,9 @@
          <el-input v-model="searchInfo.name" placeholder="搜索条件" />
         </el-form-item>
         <el-form-item label="计划" prop="plan_id">
-         <el-input v-model="searchInfo.plan_id" placeholder="搜索条件" />
+         <el-select v-model="searchInfo.plan_id" placeholder="计划" >
+            <el-option :key="key" :label="plan.name" :value="plan.ID" />
+          </el-select>
         </el-form-item>
             <el-form-item label="状态" prop="status">
             <el-select v-model="searchInfo.status" clearable placeholder="请选择">
@@ -97,13 +99,18 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="日期" width="180">
-            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
-        </el-table-column>
+        <el-table-column align="left" label="ID" prop="ID" width="80" />
+        <el-table-column align="left" label="计划" prop="plan.name" width="120" />
         <el-table-column align="left" label="名称" prop="name" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.status) }}</template>
+        </el-table-column>
+        <el-table-column align="left" label="虚拟活动" prop="is_virtually" width="120">
+            <template #default="scope">{{ formatBoolean(scope.row.is_virtually) }}</template>
+        </el-table-column>
+        <el-table-column align="left" label="允许混量" prop="allow_virtually" width="120">
+            <template #default="scope">{{ formatBoolean(scope.row.allow_virtually) }}</template>
         </el-table-column>
          <el-table-column align="left" label="开始时间" width="180">
             <template #default="scope">{{ formatDate(scope.row.start_at) }}</template>
@@ -111,19 +118,16 @@
          <el-table-column align="left" label="结束时间" width="180">
             <template #default="scope">{{ formatDate(scope.row.end_at) }}</template>
          </el-table-column>
-        <el-table-column align="left" label="总预算,元" prop="budget_total" width="120" />
-        <el-table-column align="left" label="每日预算,元" prop="budget_daily" width="120" />
+        <el-table-column align="left" label="总预算(元)" prop="budget_total" width="120" />
+        <el-table-column align="left" label="每日预(元)" prop="budget_daily" width="120" />
         <el-table-column align="left" label="总曝光数" prop="imp_total" width="120" />
         <el-table-column align="left" label="每日曝光数" prop="imp_daily" width="120" />
         <el-table-column align="left" label="曝光频制" prop="imp_frequency" width="120" />
         <el-table-column align="left" label="曝光频控周期" prop="imp_frequency_minute" width="120" />
         <el-table-column align="left" label="点击频控" prop="clk_frequency" width="120" />
         <el-table-column align="left" label="点击频控周期" prop="clk_frequency_minute" width="120" />
-        <el-table-column align="left" label="最小点击率，单位%" prop="ctr_max" width="120" />
-        <el-table-column align="left" label="最大点击率，单位%" prop="ctr_min" width="120" />
-        <el-table-column align="left" label="投放时间段，10位表示的二进制" prop="hours" width="120" />
-        <el-table-column align="left" label="定向包id" prop="target_id" width="120" />
-        <el-table-column align="left" label="黑白名单id" prop="bwlist_id" width="120" />
+        <el-table-column align="left" label="最小点击率(%)" prop="ctr_max" width="120" />
+        <el-table-column align="left" label="最大点击率(%)" prop="ctr_min" width="120" />
         <el-table-column align="left" label="出价策略id" prop="policy_id" width="120" />
         <el-table-column align="left" label="出价方式" prop="bid_method" width="120">
             <template #default="scope">
@@ -137,15 +141,7 @@
             </template>
         </el-table-column>
         <el-table-column align="left" label="品牌名称" prop="brand" width="120" />
-        <el-table-column align="left" label="允许虚拟" prop="allow_virtually" width="120">
-            <template #default="scope">{{ formatBoolean(scope.row.allow_virtually) }}</template>
-        </el-table-column>
         <el-table-column align="left" label="创意方式" prop="creative_mode" width="120" />
-        <el-table-column align="left" label="曝光监测" prop="imp_track_url" width="120" />
-        <el-table-column align="left" label="点击监测" prop="click_track_url" width="120" />
-        <el-table-column align="left" label="落地页" prop="h5" width="120" />
-        <el-table-column align="left" label="deeplink字段" prop="deeplink" width="120" />
-        <el-table-column align="left" label="universal_link字段" prop="universal_link" width="120" />
         <el-table-column align="left" label="操作" min-width="120">
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
@@ -171,54 +167,124 @@
     </div>
     <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'添加':'修改'" destroy-on-close>
       <el-scrollbar height="500px">
-          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="120px">
-            <el-form-item label="名称:"  prop="name" >
-              <el-input v-model="formData.name" :clearable="true"  placeholder="请输入名称" />
-            </el-form-item>
-            <el-form-item label="描述:"  prop="desc" >
-              <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" />
-            </el-form-item>
-            <el-form-item label="状态:"  prop="status" >
-              <el-switch v-model="formData.status" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
-            </el-form-item>
-            <el-form-item label="开始时间:"  prop="start_at" >
-              <el-date-picker v-model="formData.start_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="结束时间:"  prop="end_at" >
-              <el-date-picker v-model="formData.end_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="总预算,元:"  prop="budget_total" >
-              <el-input v-model.number="formData.budget_total" :clearable="true" placeholder="请输入总预算,元" />
-            </el-form-item>
-            <el-form-item label="每日预算,元:"  prop="budget_daily" >
-              <el-input v-model.number="formData.budget_daily" :clearable="true" placeholder="请输入每日预算,元" />
-            </el-form-item>
-            <el-form-item label="总曝光数:"  prop="imp_total" >
-              <el-input v-model.number="formData.imp_total" :clearable="true" placeholder="请输入总曝光数" />
-            </el-form-item>
-            <el-form-item label="每日曝光数:"  prop="imp_daily" >
-              <el-input v-model.number="formData.imp_daily" :clearable="true" placeholder="请输入每日曝光数" />
-            </el-form-item>
-            <el-form-item label="曝光频制:"  prop="imp_frequency" >
-              <el-input v-model.number="formData.imp_frequency" :clearable="true" placeholder="请输入曝光频制" />
-            </el-form-item>
-            <el-form-item label="曝光频控周期:"  prop="imp_frequency_minute" >
-              <el-input v-model.number="formData.imp_frequency_minute" :clearable="true" placeholder="请输入曝光频控周期" />
-            </el-form-item>
-            <el-form-item label="点击频控:"  prop="clk_frequency" >
-              <el-input v-model.number="formData.clk_frequency" :clearable="true" placeholder="请输入点击频控" />
-            </el-form-item>
-            <el-form-item label="点击频控周期:"  prop="clk_frequency_minute" >
-              <el-input v-model.number="formData.clk_frequency_minute" :clearable="true" placeholder="请输入点击频控周期" />
-            </el-form-item>
-            <el-form-item label="最小点击率，单位%:"  prop="ctr_max" >
-              <el-input-number v-model="formData.ctr_max"  style="width:100%" :precision="2" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="最大点击率，单位%:"  prop="ctr_min" >
-              <el-input-number v-model="formData.ctr_min"  style="width:100%" :precision="2" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="投放时间段，10位表示的二进制:"  prop="hours" >
-              <el-input v-model.number="formData.hours" :clearable="true" placeholder="请输入投放时间段，10位表示的二进制" />
+          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="140px">
+            <el-row>
+              <el-col :span="8" class="grid-cell">
+                <el-form-item label="计划:"  prop="plan_id" >
+                  <el-select v-model="formData.plan_id" placeholder="计划" >
+                    <el-option :key="key" :label="plan.name" :value="plan.ID" :disabled="true" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="15" class="grid-cell">
+                <el-form-item label="名称:"  prop="name" >
+                  <el-input v-model="formData.name" :clearable="true"  placeholder="请输入名称" style="width:100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="15" class="grid-cell">
+                <el-form-item label="描述:"  prop="desc" >
+                  <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" style="width:100%" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="6" class="grid-cell">
+                <el-form-item label="状态:"  prop="status" >
+                  <el-switch v-model="formData.status" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="6" class="grid-cell">
+                <el-form-item label="虚拟活动:"  prop="is_virtually" >
+                  <el-switch v-model="formData.is_virtually" active-text="是" inactive-text="否" clearable ></el-switch>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6" class="grid-cell">
+                <el-form-item label="混量:"  prop="allow_virtually" >
+                  <el-switch v-model="formData.allow_virtually"  active-text="是" inactive-text="否" clearable ></el-switch>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="开始时间:"  prop="start_at" >
+                  <el-date-picker v-model="formData.start_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="结束时间:"  prop="end_at" >
+                  <el-date-picker v-model="formData.end_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="总预算(元):"  prop="budget_total" >
+                  <el-input-number v-model.number="formData.budget_total" :clearable="true" placeholder="请输入总预算,元" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="每日预算(元):"  prop="budget_daily" >
+                  <el-input-number v-model.number="formData.budget_daily" :clearable="true" placeholder="请输入每日预算,元" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="总曝光数:"  prop="imp_total" >
+                  <el-input-number v-model.number="formData.imp_total" :clearable="true" placeholder="请输入总曝光数" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="每日曝光数:"  prop="imp_daily" >
+                  <el-input-number v-model.number="formData.imp_daily" :clearable="true" placeholder="请输入每日曝光数" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="曝光频制:"  prop="imp_frequency" >
+                  <el-input-number v-model.number="formData.imp_frequency" :clearable="true" placeholder="请输入曝光频制" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="曝光频控周期(分钟):"  prop="imp_frequency_minute" >
+                  <el-input-number v-model.number="formData.imp_frequency_minute" :clearable="true" placeholder="请输入曝光频控周期" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="点击频控:"  prop="clk_frequency" >
+                  <el-input-number v-model.number="formData.clk_frequency" :clearable="true" placeholder="请输入点击频控" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="点击频控周期(分钟):"  prop="clk_frequency_minute" >
+                  <el-input-number v-model.number="formData.clk_frequency_minute" :clearable="true" placeholder="请输入点击频控周期" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="最小点击率(%):"  prop="ctr_max" >
+                  <el-input-number v-model="formData.ctr_max" :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="最大点击率(%):"  prop="ctr_min" >
+                  <el-input-number v-model="formData.ctr_min" :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="投放时间段:"  prop="hours" >
+              <el-input v-model.number="formData.hours" :clearable="true" placeholder="请输入投放时间段" />
             </el-form-item>
             <el-form-item label="定向包id:"  prop="target_id" >
               <el-input v-model.number="formData.target_id" :clearable="true" placeholder="请输入定向包id" />
@@ -229,24 +295,30 @@
             <el-form-item label="出价策略id:"  prop="policy_id" >
               <el-input v-model.number="formData.policy_id" :clearable="true" placeholder="请输入出价策略id" />
             </el-form-item>
-            <el-form-item label="出价方式:"  prop="bid_method" >
-              <el-select v-model="formData.bid_method" placeholder="请选择出价方式" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in bidMethodOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="出价策略:"  prop="bid_price" >
-              <el-input-number v-model="formData.bid_price"  style="width:100%" :precision="2" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="出价模式:"  prop="bid_mode" >
-              <el-select v-model="formData.bid_mode" placeholder="请选择出价模式" style="width:100%" :clearable="true" >
-                <el-option v-for="(item,key) in bidModeOptions" :key="key" :label="item.label" :value="item.value" />
-              </el-select>
-            </el-form-item>
+
+            <el-row>
+              <el-col :span="8" class="grid-cell">
+                <el-form-item label="出价方式:"  prop="bid_method" >
+                  <el-select v-model="formData.bid_method" placeholder="出价方式" :clearable="true" >
+                    <el-option v-for="(item,key) in bidMethodOptions" :key="key" :label="item.label" :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" class="grid-cell">
+                <el-form-item label="出价(元):"  prop="bid_price" label-width="100px" >
+                  <el-input-number v-model="formData.bid_price"  :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="7" class="grid-cell">
+                <el-form-item label="出价模式:"  prop="bid_mode" label-width="100px" >
+                  <el-select v-model="formData.bid_mode" placeholder="出价模式"  :clearable="true" >
+                    <el-option v-for="(item,key) in bidModeOptions" :key="key" :label="item.label" :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
             <el-form-item label="品牌名称:"  prop="brand" >
               <el-input v-model="formData.brand" :clearable="true"  placeholder="请输入品牌名称" />
-            </el-form-item>
-            <el-form-item label="允许虚拟:"  prop="allow_virtually" >
-              <el-switch v-model="formData.allow_virtually" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
             </el-form-item>
             <el-form-item label="创意方式:"  prop="creative_mode" >
               <el-input v-model.number="formData.creative_mode" :clearable="true" placeholder="请输入创意方式" />
@@ -257,13 +329,13 @@
             <el-form-item label="点击监测:"  prop="click_track_url" >
               <el-input v-model="formData.click_track_url" :clearable="true"  placeholder="请输入点击监测" />
             </el-form-item>
-            <el-form-item label="落地页:"  prop="h5" >
+            <el-form-item label="落地页h5:"  prop="h5" >
               <el-input v-model="formData.h5" :clearable="true"  placeholder="请输入落地页" />
             </el-form-item>
-            <el-form-item label="deeplink字段:"  prop="deeplink" >
+            <el-form-item label="deeplink:"  prop="deeplink" >
               <el-input v-model="formData.deeplink" :clearable="true"  placeholder="请输入deeplink字段" />
             </el-form-item>
-            <el-form-item label="universal_link字段:"  prop="universal_link" >
+            <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
             </el-form-item>
           </el-form>
@@ -279,6 +351,9 @@
     <el-dialog v-model="detailShow" style="width: 800px" lock-scroll :before-close="closeDetailShow" title="查看详情" destroy-on-close>
       <el-scrollbar height="550px">
         <el-descriptions column="1" border>
+                <el-descriptions-item label="计划">
+                        {{ formData.plan.name }}
+                </el-descriptions-item>
                 <el-descriptions-item label="名称">
                         {{ formData.name }}
                 </el-descriptions-item>
@@ -287,6 +362,12 @@
                 </el-descriptions-item>
                 <el-descriptions-item label="状态">
                     {{ formatBoolean(formData.status) }}
+                </el-descriptions-item>
+                <el-descriptions-item label="是否虚拟活动">
+                    {{ formatBoolean(formData.is_virtually) }}
+                </el-descriptions-item>
+                <el-descriptions-item label="允许虚拟混量">
+                    {{ formatBoolean(formData.allow_virtually) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="开始时间">
                       {{ formatDate(formData.start_at) }}
@@ -318,13 +399,13 @@
                 <el-descriptions-item label="点击频控周期">
                         {{ formData.clk_frequency_minute }}
                 </el-descriptions-item>
-                <el-descriptions-item label="最小点击率，单位%">
+                <el-descriptions-item label="最小点击率(%)">
                         {{ formData.ctr_max }}
                 </el-descriptions-item>
-                <el-descriptions-item label="最大点击率，单位%">
+                <el-descriptions-item label="最大点击率(%)">
                         {{ formData.ctr_min }}
                 </el-descriptions-item>
-                <el-descriptions-item label="投放时间段，10位表示的二进制">
+                <el-descriptions-item label="投放时间段">
                         {{ formData.hours }}
                 </el-descriptions-item>
                 <el-descriptions-item label="定向包id">
@@ -348,9 +429,6 @@
                 <el-descriptions-item label="品牌名称">
                         {{ formData.brand }}
                 </el-descriptions-item>
-                <el-descriptions-item label="允许虚拟">
-                    {{ formatBoolean(formData.allow_virtually) }}
-                </el-descriptions-item>
                 <el-descriptions-item label="创意方式">
                         {{ formData.creative_mode }}
                 </el-descriptions-item>
@@ -363,10 +441,10 @@
                 <el-descriptions-item label="落地页">
                         {{ formData.h5 }}
                 </el-descriptions-item>
-                <el-descriptions-item label="deeplink字段">
+                <el-descriptions-item label="deeplink">
                         {{ formData.deeplink }}
                 </el-descriptions-item>
-                <el-descriptions-item label="universal_link字段">
+                <el-descriptions-item label="universal_link">
                         {{ formData.universal_link }}
                 </el-descriptions-item>
         </el-descriptions>
@@ -384,6 +462,10 @@ import {
   findCampaign,
   getCampaignList
 } from '@/api/campaign'
+
+import {
+  findPlan
+} from '@/api/plan'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
@@ -403,9 +485,13 @@ const plans = ref([])
 const bidMethodOptions = ref([])
 const bidModeOptions = ref([])
 const formData = ref({
+        plan_id: 0,
+        plan: {},
         name: '',
         desc: '',
         status: false,
+        is_virtually: false,
+        allow_virtually: false,
         start_at: new Date(),
         end_at: new Date(),
         budget_total: 0,
@@ -426,7 +512,6 @@ const formData = ref({
         bid_price: 0,
         bid_mode: undefined,
         brand: '',
-        allow_virtually: false,
         creative_mode: 0,
         imp_track_url: '',
         click_track_url: '',
@@ -524,11 +609,26 @@ const setOptions = async () =>{
 // 获取需要的字典 可能为空 按需保留
 setOptions()
 
+const plan = ref({
+  ID: 0,
+  name: '',
+})
+
+// 获得计划
+const getPlanDetails = async (pid) => {
+  const res = await findPlan({ ID: pid })
+  if (res.code === 0) {
+    plan.value = res.data.replan
+    formData.value.plan_id = plan.value.ID
+    searchInfo.value.plan_id = plan.value.ID
+  }
+}
+
 const setPlan = () => {
   const router = useRouter()
   const pid = router.currentRoute.value.query['pid']
   if (pid && pid !== '') {
-    searchInfo.value.plan_id = pid
+    getPlanDetails(pid)
   }
 } 
 
@@ -633,18 +733,25 @@ const getDetails = async (row) => {
   const res = await findCampaign({ ID: row.ID })
   if (res.code === 0) {
     formData.value = res.data.recampaign
+    console.log(res.data.recampaign.plan.name)
+    if (plan.value.ID && plan.value.ID > 0) {
+      formData.value.plan_id = plan.value.ID
+    }
     openDetailShow()
   }
 }
-
 
 // 关闭详情弹窗
 const closeDetailShow = () => {
   detailShow.value = false
   formData.value = {
+          plan_id: 0,
+          plan: {},
           name: '',
           desc: '',
           status: false,
+          allow_virtually: false,
+          is_virtually: false,
           start_at: new Date(),
           end_at: new Date(),
           budget_total: 0,
@@ -665,7 +772,6 @@ const closeDetailShow = () => {
           bid_price: 0,
           bid_mode: undefined,
           brand: '',
-          allow_virtually: false,
           creative_mode: 0,
           imp_track_url: '',
           click_track_url: '',
@@ -686,9 +792,13 @@ const openDialog = () => {
 const closeDialog = () => {
     dialogFormVisible.value = false
     formData.value = {
+        plan_id: 0,
+        plan: {},
         name: '',
         desc: '',
         status: false,
+        is_virtually: false,
+        allow_virtually: false,
         start_at: new Date(),
         end_at: new Date(),
         budget_total: 0,
@@ -709,7 +819,6 @@ const closeDialog = () => {
         bid_price: 0,
         bid_mode: undefined,
         brand: '',
-        allow_virtually: false,
         creative_mode: 0,
         imp_track_url: '',
         click_track_url: '',

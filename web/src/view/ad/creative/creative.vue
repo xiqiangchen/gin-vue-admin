@@ -11,26 +11,28 @@
           </el-tooltip>
         </span>
       </template>
-      <el-date-picker v-model="searchInfo.startCreatedAt" :style="{ width: '185px' }" type="datetime" placeholder="开始日期" :disabled-date="time=> searchInfo.endCreatedAt ? time.getTime() > searchInfo.endCreatedAt.getTime() : false"></el-date-picker>
+      <el-date-picker v-model="searchInfo.startCreatedAt" type="datetime" placeholder="开始日期" :disabled-date="time=> searchInfo.endCreatedAt ? time.getTime() > searchInfo.endCreatedAt.getTime() : false"></el-date-picker>
        —
-      <el-date-picker v-model="searchInfo.endCreatedAt" :style="{ width: '185px' }" type="datetime" placeholder="结束日期" :disabled-date="time=> searchInfo.startCreatedAt ? time.getTime() < searchInfo.startCreatedAt.getTime() : false"></el-date-picker>
+      <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束日期" :disabled-date="time=> searchInfo.startCreatedAt ? time.getTime() < searchInfo.startCreatedAt.getTime() : false"></el-date-picker>
       </el-form-item>
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="searchInfo.type" placeholder="请选择类型" style="width:80px" :clearable="true" >
-            <el-option v-for="(item,key) in materialTypeOptions" :key="key" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-form-item label="计划" prop="planId">
+            
+             <el-input v-model.number="searchInfo.planId" placeholder="搜索条件" />
+
         </el-form-item>
-        <el-form-item label="格式" prop="format">
-         <el-input v-model="searchInfo.format" placeholder="格式" :style="{ width: '80px' }" />
+        <el-form-item label="活动" prop="campaignId">
+            
+             <el-input v-model.number="searchInfo.campaignId" placeholder="搜索条件" />
+
         </el-form-item>
-        <el-form-item label="宽" prop="width">
-         <el-input v-model="searchInfo.width" placeholder="视频宽" :style="{ width: '80px' }" />
+        <el-form-item label="素材" prop="materialId">
+            
+             <el-input v-model.number="searchInfo.materialId" placeholder="搜索条件" />
+
         </el-form-item>
-        <el-form-item label="高" prop="height">
-         <el-input v-model="searchInfo.height" placeholder="视频高" :style="{ width: '80px' }" />
-        </el-form-item>
-        <el-form-item label="备注" prop="comment">
-         <el-input v-model="searchInfo.comment" placeholder="备注" :style="{ width: '100px' }" />
+        <el-form-item label="标题" prop="title">
+         <el-input v-model="searchInfo.title" placeholder="搜索条件" />
+
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
@@ -62,24 +64,19 @@
         >
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
-
-        <el-table-column align="left" label="预览" width="100">
-          <template #default="scope">
-            <CustomPic
-              pic-type="file"
-              :pic-src="scope.row.image_url"
-              preview
-            />
-          </template>
-        </el-table-column>
-        <el-table-column align="left" label="视频链接" prop="video_url" width="250" />
-        <el-table-column align="left" label="备注" prop="comment" width="200" />
-        <el-table-column align="left" label="视频格式" prop="format" width="120" />
-        <el-table-column align="left" label="宽" prop="width" width="120" />
-        <el-table-column align="left" label="高" prop="height" width="120" />
+        <el-table-column align="left" label="计划" prop="planId" width="120" />
+        <el-table-column align="left" label="活动" prop="campaignId" width="120" />
+        <el-table-column align="left" label="素材" prop="materialId" width="120" />
+        <el-table-column align="left" label="标题" prop="title" width="120" />
+        <el-table-column align="left" label="描述" prop="desc" width="120" />
+        <el-table-column align="left" label="行动语" prop="button" width="120" />
         <el-table-column align="left" label="操作" min-width="120">
             <template #default="scope">
-            <el-button type="primary" link icon="edit" class="table-button" @click="updateMaterialFunc(scope.row)">变更</el-button>
+            <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
+                <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
+                查看详情
+            </el-button>
+            <el-button type="primary" link icon="edit" class="table-button" @click="updateCreativeFunc(scope.row)">变更</el-button>
             <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
             </template>
         </el-table-column>
@@ -98,36 +95,24 @@
     </div>
     <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'添加':'修改'" destroy-on-close>
       <el-scrollbar height="500px">
-          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="120px">
-            <el-form-item label="上传视频:"  prop="video_tmp_url" >
-                <SelectImage
-                v-model="video_tmp_url"
-                file-type="video"
-                />
+          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="80px">
+            <el-form-item label="计划:"  prop="planId" >
+              <el-input v-model.number="formData.planId" :clearable="true" placeholder="请输入计划" />
             </el-form-item>
-            <el-form-item label="视频链接:"  prop="video_url" >
-              <el-input v-model="formData.video_url" :clearable="true"  placeholder="请输入视频链接" />
+            <el-form-item label="活动:"  prop="campaignId" >
+              <el-input v-model.number="formData.campaignId" :clearable="true" placeholder="请输入活动" />
             </el-form-item>
-            <el-form-item label="上传图片:"  prop="image_tmp_url" >
-                <SelectImage
-                 v-model="image_tmp_url"
-                 file-type="image"
-                />
+            <el-form-item label="素材:"  prop="materialId" >
+              <el-input v-model.number="formData.materialId" :clearable="true" placeholder="请输入素材" />
             </el-form-item>
-            <el-form-item label="图片链接:"  prop="image_url" >
-              <el-input v-model="formData.image_url" :clearable="true"  placeholder="请输入图片链接" />
+            <el-form-item label="标题:"  prop="title" >
+              <el-input v-model="formData.title" :clearable="true"  placeholder="请输入标题" />
             </el-form-item>
-            <el-form-item label="视频格式:"  prop="format" >
-              <el-input v-model="formData.format" :clearable="true"  placeholder="请输入视频格式" />
+            <el-form-item label="描述:"  prop="desc" >
+              <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" />
             </el-form-item>
-            <el-form-item label="宽:"  prop="width" >
-              <el-input v-model.number="formData.width" :clearable="true" placeholder="请输入宽" />
-            </el-form-item>
-            <el-form-item label="高:"  prop="height" >
-              <el-input v-model.number="formData.height" :clearable="true" placeholder="请输入高" />
-            </el-form-item>
-            <el-form-item label="备注:"  prop="comment" >
-              <el-input v-model="formData.comment" :clearable="true"  placeholder="请输入备注" />
+            <el-form-item label="行动语:"  prop="button" >
+              <el-input v-model="formData.button" :clearable="true"  placeholder="请输入行动语" />
             </el-form-item>
           </el-form>
       </el-scrollbar>
@@ -139,82 +124,87 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="detailShow" style="width: 800px" lock-scroll :before-close="closeDetailShow" title="查看详情" destroy-on-close>
+      <el-scrollbar height="550px">
+        <el-descriptions column="1" border>
+                <el-descriptions-item label="计划">
+                        {{ formData.planId }}
+                </el-descriptions-item>
+                <el-descriptions-item label="活动">
+                        {{ formData.campaignId }}
+                </el-descriptions-item>
+                <el-descriptions-item label="素材">
+                        {{ formData.materialId }}
+                </el-descriptions-item>
+                <el-descriptions-item label="标题">
+                        {{ formData.title }}
+                </el-descriptions-item>
+                <el-descriptions-item label="描述">
+                        {{ formData.desc }}
+                </el-descriptions-item>
+                <el-descriptions-item label="行动语">
+                        {{ formData.button }}
+                </el-descriptions-item>
+        </el-descriptions>
+      </el-scrollbar>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import {
-  createMaterial,
-  deleteMaterial,
-  deleteMaterialByIds,
-  updateMaterial,
-  findMaterial,
-  getMaterialList
-} from '@/api/material'
-import { getUrl } from '@/utils/image'
-// 图片选择组件
-import SelectImage from '@/components/selectImage/selectImage.vue'
-import CustomPic from '@/components/customPic/index.vue'
+  createCreative,
+  deleteCreative,
+  deleteCreativeByIds,
+  updateCreative,
+  findCreative,
+  getCreativeList
+} from '@/api/creative'
+
+
+import {
+  findPlan
+} from '@/api/plan'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive, watchEffect } from 'vue'
+import { ref, reactive } from 'vue'
 
 defineOptions({
-    name: 'Material'
+    name: 'Creative'
 })
-
-const materialTypeOptions = ref([])
 
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
-        video_url: '',
-        image_url: '',
-        format: '',
-        width: 0,
-        height: 0,
-        comment: '',
+        planId: 0,
+        campaignId: 0,
+        materialId: 0,
+        title: '',
+        desc: '',
+        button: '',
         })
 
-const video_tmp_url = ref('')
-const image_tmp_url = ref('')
-
-// 监听video_tmp_url 的变化
-watchEffect(() => {
-  if (video_tmp_url.value !== '') {
-    formData.value.video_url = video_tmp_url.value;
-  }
-});
-
-
-// 监听 formData 中 image_tmp_url 的变化
-watchEffect(() => {
-  if (image_tmp_url.value !== '') {
-    formData.value.image_url = image_tmp_url.value;
-  }
-});
-
-
-// 监听 formData 中 image_tmp_url 的变化
-watchEffect(() => {
-  if (formData.value.video_url !== undefined && formData.value.video_url !== '') {
-    formData.value.format = formData.value.video_url.split('.').pop();
-  }
-});
 
 // 验证规则
 const rule = reactive({
-               video_url : [{
+               planId : [{
                    required: true,
-                   message: '视频链接必须填写',
+                   message: '',
                    trigger: ['input','blur'],
                },
-               {
-                   whitespace: true,
-                   message: '不能只输入空格',
-                   trigger: ['input', 'blur'],
-              }
+              ],
+               campaignId : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               },
+              ],
+               materialId : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               },
               ],
 })
 
@@ -274,7 +264,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getMaterialList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getCreativeList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -289,7 +279,6 @@ getTableData()
 
 // 获取需要的字典 可能为空 按需保留
 const setOptions = async () =>{
-  materialTypeOptions.value = await getDictFunc('materialType')
 }
 
 // 获取需要的字典 可能为空 按需保留
@@ -310,7 +299,7 @@ const deleteRow = (row) => {
         cancelButtonText: '取消',
         type: 'warning'
     }).then(() => {
-            deleteMaterialFunc(row)
+            deleteCreativeFunc(row)
         })
     }
 
@@ -332,7 +321,7 @@ const onDelete = async() => {
         multipleSelection.value.map(item => {
           ids.push(item.ID)
         })
-      const res = await deleteMaterialByIds({ ids })
+      const res = await deleteCreativeByIds({ ids })
       if (res.code === 0) {
         ElMessage({
           type: 'success',
@@ -350,19 +339,19 @@ const onDelete = async() => {
 const type = ref('')
 
 // 更新行
-const updateMaterialFunc = async(row) => {
-    const res = await findMaterial({ ID: row.ID })
+const updateCreativeFunc = async(row) => {
+    const res = await findCreative({ ID: row.ID })
     type.value = 'update'
     if (res.code === 0) {
-        formData.value = res.data.rematerial
+        formData.value = res.data.recreative
         dialogFormVisible.value = true
     }
 }
 
 
 // 删除行
-const deleteMaterialFunc = async (row) => {
-    const res = await deleteMaterial({ ID: row.ID })
+const deleteCreativeFunc = async (row) => {
+    const res = await deleteCreative({ ID: row.ID })
     if (res.code === 0) {
         ElMessage({
                 type: 'success',
@@ -392,10 +381,9 @@ const openDetailShow = () => {
 // 打开详情
 const getDetails = async (row) => {
   // 打开弹窗
-  const res = await findMaterial({ ID: row.ID })
+  const res = await findCreative({ ID: row.ID })
   if (res.code === 0) {
-    formData.value = res.data.rematerial
-    console.log(formData.value)
+    formData.value = res.data.recreative
     openDetailShow()
   }
 }
@@ -405,12 +393,12 @@ const getDetails = async (row) => {
 const closeDetailShow = () => {
   detailShow.value = false
   formData.value = {
-          video_url: '',
-          image_url: '',
-          comment: '',
-          width: 0,
-          height: 0,
-          format: '',
+          planId: 0,
+          campaignId: 0,
+          materialId: 0,
+          title: '',
+          desc: '',
+          button: '',
           }
 }
 
@@ -425,12 +413,12 @@ const openDialog = () => {
 const closeDialog = () => {
     dialogFormVisible.value = false
     formData.value = {
-        video_url: '',
-        image_url: '',
-        comment: '',
-        width: 0,
-        height: 0,
-        format: '',
+        planId: 0,
+        campaignId: 0,
+        materialId: 0,
+        title: '',
+        desc: '',
+        button: '',
         }
 }
 // 弹窗确定
@@ -440,13 +428,13 @@ const enterDialog = async () => {
               let res
               switch (type.value) {
                 case 'create':
-                  res = await createMaterial(formData.value)
+                  res = await createCreative(formData.value)
                   break
                 case 'update':
-                  res = await updateMaterial(formData.value)
+                  res = await updateCreative(formData.value)
                   break
                 default:
-                  res = await createMaterial(formData.value)
+                  res = await createCreative(formData.value)
                   break
               }
               if (res.code === 0) {

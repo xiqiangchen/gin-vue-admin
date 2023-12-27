@@ -10,7 +10,8 @@ import (
 // 活动 结构体  Campaign
 type Campaign struct {
 	global.GVA_MODEL
-	PlanID             *int                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:关联标记"`                                                   // 关联标记
+	PlanID             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"` // 关联标记
+	Plan               Plan                   `json:"plan"`
 	Name               string                 `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                    //名称
 	Desc               string                 `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                    //描述
 	Status             *bool                  `json:"status" form:"status" gorm:"column:status;comment:状态;"`                                                       //状态
@@ -38,6 +39,7 @@ type Campaign struct {
 	BidMode            *int                   `json:"bid_mode" form:"bid_mode" gorm:"column:bid_mode;comment:出价模式;"`                                               //出价模式
 	Brand              string                 `json:"brand" form:"brand" gorm:"column:brand;comment:品牌名称;size:191;"`                                               //品牌名称
 	AllowVirtually     *bool                  `json:"allow_virtually" form:"allow_virtually" gorm:"column:allow_virtually;comment:允许虚拟;"`                          //允许虚拟
+	IsVirtually        *bool                  `json:"is_virtually" form:"is_virtually" gorm:"column:is_virtually;comment:是否虚拟活动;"`                                 //允许虚拟
 	CreativeMode       *int                   `json:"creative_mode" form:"creative_mode" gorm:"column:creative_mode;comment:创意方式;size:10;"`                        //创意方式
 	ImpTrackUrl        string                 `json:"imp_track_url" form:"imp_track_url" gorm:"column:imp_track_url;comment:曝光监测;size:2048;"`                      //曝光监测
 	ClickTrackUrl      string                 `json:"click_track_url" form:"click_track_url" gorm:"column:click_track_url;comment:点击监测;size:2048;"`                //点击监测

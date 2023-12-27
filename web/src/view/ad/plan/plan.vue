@@ -53,6 +53,7 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
+        <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="名称" prop="name" width="120">
           <template #default="scope">
             <a :href="'#' + campaignPath + '?pid=' + scope.row.ID" >{{ scope.row.name }}</a>
@@ -106,63 +107,100 @@
     </div>
     <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'添加':'修改'" destroy-on-close>
       <el-scrollbar height="500px">
-          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="120px">
+          <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="160px">
             <el-form-item label="名称:"  prop="name" >
-              <el-input v-model="formData.name" :clearable="true"  placeholder="请输入名称" />
+              <el-input v-model="formData.name" :clearable="true"  placeholder="请输入名称" style="width:80%" />
             </el-form-item>
             <el-form-item label="描述:"  prop="desc" >
-              <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" />
+              <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" style="width:80%" />
             </el-form-item>
             <el-form-item label="状态:"  prop="status" >
               <el-switch v-model="formData.status"></el-switch>
             </el-form-item>
             <el-form-item label="投放方式:"  prop="mode" >
-              <el-select v-model="formData.mode" placeholder="请选择投放方式" style="width:100%" :clearable="true" >
+              <el-select v-model="formData.mode" placeholder="请选择投放方式" style="width:30%" :clearable="true" >
                 <el-option v-for="(item,key) in adModeOptions" :key="key" :label="item.label" :value="item.value" />
                 
               </el-select>
             </el-form-item>
             <el-form-item label="时区"  prop="timezone" >
-              <el-select v-model="formData.timezone" placeholder="请选择时区" style="width:100%" :clearable="true" >
+              <el-select v-model="formData.timezone" placeholder="请选择时区" style="width:30%" :clearable="true" >
                 <el-option v-for="(item,key) in timezoneOptions" :key="key" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
-            <el-form-item label="开始时间:"  prop="startAt" >
-              <el-date-picker v-model="formData.startAt" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="结束时间:"  prop="endAt" >
-              <el-date-picker v-model="formData.endAt" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
-            </el-form-item>
-            <el-form-item label="总预算(元):"  prop="budgetTotal" >
-              <el-input v-model.number="formData.budgetTotal" :clearable="true" placeholder="请输入总预算" />
-            </el-form-item>
-            <el-form-item label="每日预算(元):"  prop="budgetDaily" >
-              <el-input v-model.number="formData.budgetDaily" :clearable="true" placeholder="请输入每日预算" />
-            </el-form-item>
-            <el-form-item label="总曝光数:"  prop="impTotal" >
-              <el-input v-model.number="formData.impTotal" :clearable="true" placeholder="请输入总曝光数" />
-            </el-form-item>
-            <el-form-item label="每日曝光数:"  prop="impDaily" >
-              <el-input v-model.number="formData.impDaily" :clearable="true" placeholder="请输入每日曝光数" />
-            </el-form-item>
-            <el-form-item label="曝光频制:"  prop="impFrequency" >
-              <el-input v-model.number="formData.impFrequency" :clearable="true" placeholder="请输入曝光频制" />
-            </el-form-item>
-            <el-form-item label="曝光频控周期:"  prop="impFrequencyMinute" >
-              <el-input v-model.number="formData.impFrequencyMinute" :clearable="true" placeholder="请输入曝光频控周期" />
-            </el-form-item>
-            <el-form-item label="点击频控:"  prop="clkFrequency" >
-              <el-input v-model.number="formData.clkFrequency" :clearable="true" placeholder="请输入点击频控" />
-            </el-form-item>
-            <el-form-item label="点击频控周期:"  prop="clkFrequencyMinute" >
-              <el-input v-model="formData.clkFrequencyMinute" :clearable="true" placeholder="请输入点击频控周期" />
-            </el-form-item>
-            <el-form-item label="最小点击率(%):"  prop="ctrMax" >
-              <el-input-number v-model="formData.ctrMax" :precision="2" :step="0.1" :clearable="true" placeholder="请输入最小点击率(%)" />
-            </el-form-item>
-            <el-form-item label="最大点击率(%):"  prop="ctrMin" >
-              <el-input-number v-model="formData.ctrMin" :precision="2" :step="0.1" :clearable="true" placeholder="请输入最大点击率(%)" />
-            </el-form-item>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="开始时间:"  prop="startAt" >
+                  <el-date-picker v-model="formData.startAt" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="结束时间:"  prop="endAt" >
+                  <el-date-picker v-model="formData.endAt" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="总预算(元):"  prop="budgetTotal" >
+                  <el-input-number v-model.number="formData.budgetTotal" :clearable="true" placeholder="请输入总预算,元" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="每日预算(元):"  prop="budgetDaily" >
+                  <el-input-number v-model.number="formData.budgetDaily" :clearable="true" placeholder="请输入每日预算,元" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="总曝光数:"  prop="impTotal" >
+                  <el-input-number v-model.number="formData.impTotal" :clearable="true" placeholder="请输入总曝光数" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="每日曝光数:"  prop="impDaily" >
+                  <el-input-number v-model.number="formData.impDaily" :clearable="true" placeholder="请输入每日曝光数" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="曝光频制:"  prop="impFrequency" >
+                  <el-input-number v-model.number="formData.impFrequency" :clearable="true" placeholder="请输入曝光频制" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="曝光频控周期(分钟):"  prop="impFrequencyMinute" >
+                  <el-input-number v-model.number="formData.impFrequencyMinute" :clearable="true" placeholder="请输入曝光频控周期" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="点击频控:"  prop="clkFrequency" >
+                  <el-input-number v-model.number="formData.clkFrequency" :clearable="true" placeholder="请输入点击频控" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="点击频控周期(分钟):"  prop="clkFrequencyMinute" >
+                  <el-input-number v-model.number="formData.clkFrequencyMinute" :clearable="true" placeholder="请输入点击频控周期" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="最小点击率(%):"  prop="ctrMax" >
+                  <el-input-number v-model="formData.ctrMax" :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="10" class="grid-cell">
+                <el-form-item label="最大点击率(%):"  prop="ctrMin" >
+                  <el-input-number v-model="formData.ctrMin" :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-form>
       </el-scrollbar>
       <template #footer>
