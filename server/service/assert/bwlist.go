@@ -83,7 +83,7 @@ func (bwlistService *BlackWhiteListService) GetBlackWhiteListInfoList(info asser
 	}
 
 	if limit != 0 {
-		db = db.Limit(limit).Offset(offset)
+		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
 	err = db.Find(&bwlists).Error

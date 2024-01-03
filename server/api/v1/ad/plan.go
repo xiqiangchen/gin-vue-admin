@@ -2,21 +2,20 @@ package ad
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-    "github.com/flipped-aurora/gin-vue-admin/server/model/ad"
-    "github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
-    adReq "github.com/flipped-aurora/gin-vue-admin/server/model/ad/request"
-    "github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
-    "github.com/flipped-aurora/gin-vue-admin/server/service"
-    "github.com/gin-gonic/gin"
-    "go.uber.org/zap"
-    "github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
+	adReq "github.com/flipped-aurora/gin-vue-admin/server/model/ad/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/service"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type PlanApi struct {
 }
 
 var planService = service.ServiceGroupApp.AdServiceGroup.PlanService
-
 
 // CreatePlan 创建广告计划
 // @Tags Plan
@@ -34,20 +33,20 @@ func (planApi *PlanApi) CreatePlan(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    plan.CreatedBy = utils.GetUserID(c)
-    verify := utils.Rules{
-        "Name":{utils.NotEmpty()},
-        "Status":{utils.NotEmpty()},
-        "Mode":{utils.NotEmpty()},
-        "Timezone":{utils.NotEmpty()},
-        "StartAt":{utils.NotEmpty()},
-    }
+	plan.CreatedBy = utils.GetUserID(c)
+	verify := utils.Rules{
+		"Name":     {utils.NotEmpty()},
+		"Status":   {utils.NotEmpty()},
+		"Mode":     {utils.NotEmpty()},
+		"Timezone": {utils.NotEmpty()},
+		"StartAt":  {utils.NotEmpty()},
+	}
 	if err := utils.Verify(plan, verify); err != nil {
-    		response.FailWithMessage(err.Error(), c)
-    		return
-    	}
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	if err := planService.CreatePlan(&plan); err != nil {
-        global.GVA_LOG.Error("创建失败!", zap.Error(err))
+		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败", c)
 	} else {
 		response.OkWithMessage("创建成功", c)
@@ -70,9 +69,9 @@ func (planApi *PlanApi) DeletePlan(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    plan.DeletedBy = utils.GetUserID(c)
+	plan.DeletedBy = utils.GetUserID(c)
 	if err := planService.DeletePlan(plan); err != nil {
-        global.GVA_LOG.Error("删除失败!", zap.Error(err))
+		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
 	} else {
 		response.OkWithMessage("删除成功", c)
@@ -90,14 +89,14 @@ func (planApi *PlanApi) DeletePlan(c *gin.Context) {
 // @Router /plan/deletePlanByIds [delete]
 func (planApi *PlanApi) DeletePlanByIds(c *gin.Context) {
 	var IDS request.IdsReq
-    err := c.ShouldBindJSON(&IDS)
+	err := c.ShouldBindJSON(&IDS)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    deletedBy := utils.GetUserID(c)
-	if err := planService.DeletePlanByIds(IDS,deletedBy); err != nil {
-        global.GVA_LOG.Error("批量删除失败!", zap.Error(err))
+	deletedBy := utils.GetUserID(c)
+	if err := planService.DeletePlanByIds(IDS, deletedBy); err != nil {
+		global.GVA_LOG.Error("批量删除失败!", zap.Error(err))
 		response.FailWithMessage("批量删除失败", c)
 	} else {
 		response.OkWithMessage("批量删除成功", c)
@@ -120,20 +119,20 @@ func (planApi *PlanApi) UpdatePlan(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    plan.UpdatedBy = utils.GetUserID(c)
-      verify := utils.Rules{
-          "Name":{utils.NotEmpty()},
-          "Status":{utils.NotEmpty()},
-          "Mode":{utils.NotEmpty()},
-          "Timezone":{utils.NotEmpty()},
-          "StartAt":{utils.NotEmpty()},
-      }
-    if err := utils.Verify(plan, verify); err != nil {
-      	response.FailWithMessage(err.Error(), c)
-      	return
-     }
+	plan.UpdatedBy = utils.GetUserID(c)
+	verify := utils.Rules{
+		"Name":     {utils.NotEmpty()},
+		"Status":   {utils.NotEmpty()},
+		"Mode":     {utils.NotEmpty()},
+		"Timezone": {utils.NotEmpty()},
+		"StartAt":  {utils.NotEmpty()},
+	}
+	if err := utils.Verify(plan, verify); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	if err := planService.UpdatePlan(plan); err != nil {
-        global.GVA_LOG.Error("更新失败!", zap.Error(err))
+		global.GVA_LOG.Error("更新失败!", zap.Error(err))
 		response.FailWithMessage("更新失败", c)
 	} else {
 		response.OkWithMessage("更新成功", c)
@@ -157,7 +156,7 @@ func (planApi *PlanApi) FindPlan(c *gin.Context) {
 		return
 	}
 	if replan, err := planService.GetPlan(plan.ID); err != nil {
-        global.GVA_LOG.Error("查询失败!", zap.Error(err))
+		global.GVA_LOG.Error("查询失败!", zap.Error(err))
 		response.FailWithMessage("查询失败", c)
 	} else {
 		response.OkWithData(gin.H{"replan": replan}, c)
@@ -180,15 +179,16 @@ func (planApi *PlanApi) GetPlanList(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	pageInfo.CreatedBy = utils.GetUserID(c)
 	if list, total, err := planService.GetPlanInfoList(pageInfo); err != nil {
-	    global.GVA_LOG.Error("获取失败!", zap.Error(err))
-        response.FailWithMessage("获取失败", c)
-    } else {
-        response.OkWithDetailed(response.PageResult{
-            List:     list,
-            Total:    total,
-            Page:     pageInfo.Page,
-            PageSize: pageInfo.PageSize,
-        }, "获取成功", c)
-    }
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     pageInfo.Page,
+			PageSize: pageInfo.PageSize,
+		}, "获取成功", c)
+	}
 }

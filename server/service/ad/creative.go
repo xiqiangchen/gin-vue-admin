@@ -92,7 +92,7 @@ func (creativeService *CreativeService) GetCreativeInfoList(info adReq.CreativeS
 	}
 
 	if limit != 0 {
-		db = db.Limit(limit).Offset(offset)
+		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
 	err = db.Find(&creatives).Error

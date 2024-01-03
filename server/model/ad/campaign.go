@@ -14,7 +14,8 @@ type Campaign struct {
 	Plan               Plan                   `json:"plan"`
 	Name               string                 `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                    //名称
 	Desc               string                 `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                    //描述
-	Status             *bool                  `json:"status" form:"status" gorm:"column:status;comment:状态;"`                                                       //状态
+	Status             *bool                  `json:"status" form:"status" gorm:"column:status;comment:状态;"`                                                       //描述
+	Filter             *bool                  `json:"filter" form:"filter" gorm:"column:filter;comment:投放过滤;"`                                                     //状态
 	StartAt            *time.Time             `json:"start_at" form:"start_at" gorm:"column:start_at;comment:开始时间;"`                                               //开始时间
 	EndAt              *time.Time             `json:"end_at" form:"end_at" gorm:"column:end_at;comment:结束时间;"`                                                     //结束时间
 	BudgetTotal        *int                   `json:"budget_total" form:"budget_total" gorm:"column:budget_total;comment:总预算,元;size:20;"`                          //总预算,元
@@ -49,6 +50,7 @@ type Campaign struct {
 	CreatedBy          uint                   `gorm:"column:created_by;comment:创建者"`
 	UpdatedBy          uint                   `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy          uint                   `gorm:"column:deleted_by;comment:删除者"`
+	Creatives          []*Creative            `json:"creatives" gorm:"foreignKey:campaign_id"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns

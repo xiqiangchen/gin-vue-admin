@@ -11,7 +11,8 @@ type Plan struct {
 	global.GVA_MODEL
 	Name               string      `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                //名称
 	Desc               string      `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                //描述
-	Status             *bool       `json:"status" form:"status" gorm:"column:status;comment:状态;size:10;"`                                           //状态
+	Status             *bool       `json:"status" form:"status" gorm:"column:status;comment:状态;size:10;"`                                           //描述
+	Filter             *bool       `json:"filter" form:"filter" gorm:"column:filter;comment:投放过滤;"`                                                 //状态
 	Mode               *int        `json:"mode" form:"mode" gorm:"column:mode;comment:投放方式;size:10;"`                                               //投放方式
 	Timezone           *int        `json:"timezone" form:"timezone" gorm:"column:timezone;comment:时区:utc;size:10;"`                                 //时区:utc
 	StartAt            *time.Time  `json:"startAt" form:"startAt" gorm:"column:start_at;comment:开始时间;"`                                             //开始时间

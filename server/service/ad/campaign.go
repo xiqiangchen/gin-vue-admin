@@ -98,15 +98,18 @@ func (campaignService *CampaignService) GetCampaignInfoList(info adReq.CampaignS
 	if info.CreativeMode != nil {
 		db = db.Where("creative_mode = ?", info.CreativeMode)
 	}
+	if info.Filter != nil {
+		db = db.Where("filter = ?", info.Filter)
+	}
 	err = db.Count(&total).Error
 	if err != nil {
 		return
 	}
 
 	if limit != 0 {
-		db = db.Limit(limit).Offset(offset)
+		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
-	err = db.Preload("Plan").Find(&campaigns).Error
+	err = db.Preload("Plan").Preload("Creatives").Find(&campaigns).Error
 	return campaigns, total, err
 }
