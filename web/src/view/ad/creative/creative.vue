@@ -15,19 +15,19 @@
        —
       <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束日期" :disabled-date="time=> searchInfo.startCreatedAt ? time.getTime() < searchInfo.startCreatedAt.getTime() : false"></el-date-picker>
       </el-form-item>
-        <el-form-item label="计划" prop="planId">
-            
-             <el-input v-model.number="searchInfo.planId" placeholder="搜索条件" />
-
+        <el-form-item label="计划" prop="plan_id">
+          <el-select v-model="searchInfo.plan_id" placeholder="计划" >
+            <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="活动" prop="campaignId">
-            
-             <el-input v-model.number="searchInfo.campaignId" placeholder="搜索条件" />
-
+        <el-form-item label="活动" prop="campaign_id">
+             <el-select v-model="searchInfo.campaign_id" placeholder="活动" >
+            <el-option v-for="(item,key) in campaigns" :key="key" :label="item.name" :value="item.ID" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="素材" prop="materialId">
+        <el-form-item label="素材" prop="material_id">
             
-             <el-input v-model.number="searchInfo.materialId" placeholder="搜索条件" />
+             <el-input v-model.number="searchInfo.material_id" placeholder="搜索条件" />
 
         </el-form-item>
         <el-form-item label="标题" prop="title">
@@ -64,9 +64,9 @@
         >
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="计划" prop="planId" width="120" />
-        <el-table-column align="left" label="活动" prop="campaignId" width="120" />
-        <el-table-column align="left" label="素材" prop="materialId" width="120" />
+        <el-table-column align="left" label="计划" prop="plan_id" width="120" />
+        <el-table-column align="left" label="活动" prop="campaign_id" width="120" />
+        <el-table-column align="left" label="素材" prop="material_id" width="120" />
         <el-table-column align="left" label="标题" prop="title" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="行动语" prop="button" width="120" />
@@ -96,14 +96,19 @@
     <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'添加':'修改'" destroy-on-close>
       <el-scrollbar height="500px">
           <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="80px">
-            <el-form-item label="计划:"  prop="planId" >
-              <el-input v-model.number="formData.planId" :clearable="true" placeholder="请输入计划" />
+            <el-form-item label="计划:"  prop="plan_id" >
+              <el-select v-model="formData.plan_id" placeholder="计划" >
+                <!-- <el-option :key="key" :label="plan.name" :value="plan.ID" :disabled="true" /> -->
+                <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID" />
+              </el-select>
             </el-form-item>
-            <el-form-item label="活动:"  prop="campaignId" >
-              <el-input v-model.number="formData.campaignId" :clearable="true" placeholder="请输入活动" />
+            <el-form-item label="活动:"  prop="campaign_id" >
+              <el-select v-model="formData.campaign_id" placeholder="活动" >
+                <el-option v-for="(item,key) in campaigns" :key="key" :label="item.name" :value="item.ID" />
+              </el-select>
             </el-form-item>
-            <el-form-item label="素材:"  prop="materialId" >
-              <el-input v-model.number="formData.materialId" :clearable="true" placeholder="请输入素材" />
+            <el-form-item label="素材:"  prop="material_id" >
+              <el-input v-model.number="formData.material_id" :clearable="true" placeholder="请输入素材" />
             </el-form-item>
             <el-form-item label="标题:"  prop="title" >
               <el-input v-model="formData.title" :clearable="true"  placeholder="请输入标题" />
@@ -128,13 +133,13 @@
       <el-scrollbar height="550px">
         <el-descriptions column="1" border>
                 <el-descriptions-item label="计划">
-                        {{ formData.planId }}
+                        {{ formData.plan_id }}
                 </el-descriptions-item>
                 <el-descriptions-item label="活动">
-                        {{ formData.campaignId }}
+                        {{ formData.campaign_id }}
                 </el-descriptions-item>
                 <el-descriptions-item label="素材">
-                        {{ formData.materialId }}
+                        {{ formData.material_id }}
                 </el-descriptions-item>
                 <el-descriptions-item label="标题">
                         {{ formData.title }}
@@ -161,15 +166,21 @@ import {
   getCreativeList
 } from '@/api/creative'
 
+import {
+  findCampaign,
+  getCampaignList
+} from '@/api/campaign'
 
 import {
-  findPlan
+  findPlan,
+  getPlanList,
 } from '@/api/plan'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 defineOptions({
     name: 'Creative'
@@ -177,30 +188,29 @@ defineOptions({
 
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
-        planId: 0,
-        campaignId: 0,
-        materialId: 0,
+        plan_id: 0,
+        campaign_id: 0,
+        material_id: 0,
         title: '',
         desc: '',
         button: '',
         })
 
-
 // 验证规则
 const rule = reactive({
-               planId : [{
+               plan_id : [{
                    required: true,
                    message: '',
                    trigger: ['input','blur'],
                },
               ],
-               campaignId : [{
+               campaign_id : [{
                    required: true,
                    message: '',
                    trigger: ['input','blur'],
                },
               ],
-               materialId : [{
+               material_id : [{
                    required: true,
                    message: '',
                    trigger: ['input','blur'],
@@ -284,6 +294,61 @@ const setOptions = async () =>{
 // 获取需要的字典 可能为空 按需保留
 setOptions()
 
+const plans = ref([])
+const campaigns = ref([])
+
+// 获得计划
+const getPlanDetails = async (pid) => {
+  const res = await findPlan({ ID: pid })
+  if (res.code === 0) {
+    formData.value.plan_id = res.data.replan.ID
+    searchInfo.value.plan_id = res.data.replan.ID
+    plans.value.push(res.data.replan)
+  }
+}
+
+const getPlans = async() => {
+  const table = await getPlanList({ page: page.value, pageSize: pageSize.value})
+  if (table.code === 0) {
+    plans.value = table.data.list
+  }
+}
+
+// 获得活动
+const getCampaignDetails = async (cid) => {
+  const res = await findCampaign({ ID: cid })
+  if (res.code === 0) {
+    formData.value.campaign_id = res.data.recampaign.ID
+    searchInfo.value.campaign_id = res.data.recampaign.ID
+    searchInfo.value.plan_id = res.data.recampaign.plan_id
+    formData.value.plan_id = res.data.recampaign.plan_id
+    plans.value.push(res.data.recampaign.plan)
+    campaigns.value.push(res.data.recampaign)
+  }
+}
+
+const getCampaigns = async() => {
+  const table = await getCampaignList({ page: page.value, pageSize: pageSize.value})
+  if (table.code === 0) {
+    campaigns.value = table.data.list
+  }
+}
+
+const setPlan = () => {
+  const router = useRouter()
+  const pid = router.currentRoute.value.query['pid']
+  const cid = router.currentRoute.value.query['cid']
+  if (cid && cid !== '') {
+
+    getCampaignDetails(cid)
+  } else {
+    getPlans()
+    getCampaigns()
+  }
+  
+} 
+
+setPlan()
 
 // 多选数据
 const multipleSelection = ref([])
@@ -393,9 +458,9 @@ const getDetails = async (row) => {
 const closeDetailShow = () => {
   detailShow.value = false
   formData.value = {
-          planId: 0,
-          campaignId: 0,
-          materialId: 0,
+          plan_id: 0,
+          campaign_id: 0,
+          material_id: 0,
           title: '',
           desc: '',
           button: '',
@@ -413,9 +478,9 @@ const openDialog = () => {
 const closeDialog = () => {
     dialogFormVisible.value = false
     formData.value = {
-        planId: 0,
-        campaignId: 0,
-        materialId: 0,
+        plan_id: 0,
+        campaign_id: 0,
+        material_id: 0,
         title: '',
         desc: '',
         button: '',

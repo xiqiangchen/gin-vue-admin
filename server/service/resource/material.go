@@ -74,16 +74,16 @@ func (materialService *MaterialService) GetMaterialInfoList(info resourceReq.Mat
 	if info.StartCreatedAt != nil && info.EndCreatedAt != nil {
 		db = db.Where("created_at BETWEEN ? AND ?", info.StartCreatedAt, info.EndCreatedAt)
 	}
-	if info.Type != nil {
+	if info.Type > 0 {
 		db = db.Where("type = ?", info.Type)
 	}
 	if info.Format != "" {
 		db = db.Where("format = ?", info.Format)
 	}
-	if info.Width != nil {
+	if info.Width > 0 {
 		db = db.Where("width = ?", info.Width)
 	}
-	if info.Height != nil {
+	if info.Height > 0 {
 		db = db.Where("height = ?", info.Height)
 	}
 	err = db.Count(&total).Error

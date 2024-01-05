@@ -10,6 +10,14 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"net/http"
+	"os"
+	"strings"
 )
 
 type MaterialApi struct {
@@ -33,13 +41,59 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	var typ int
+	url := material.VideoUrl
+	typ := 1
 	if len(material.VideoUrl) > 0 {
 		typ = 2
-	} else {
-		typ = 1
+		url = material.ImageUrl
 	}
-	material.Type = &typ
+	var read io.Reader
+	if strings.HasPrefix(url, "http") {
+		resp, err := http.Get(url)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		read = resp.Body
+		defer resp.Body.Close()
+	} else {
+		f, err := os.Open(url)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		read = f
+		defer f.Close()
+	}
+
+	switch typ {
+	case 1:
+		img, _, err := image.DecodeConfig(read)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		material.Width = img.Width
+		material.Height = img.Height
+	case 2:
+
+		/*if strings.HasPrefix(url, "http") {
+			_, fileName := path.Split(url)
+			url, err = save(fileName, read)
+			if err != nil {
+				response.FailWithMessage(err.Error(), c)
+				return
+			}
+		}
+		ctx := avformat.AvformatAllocContext()
+		if avformat.AvformatOpenInput(&ctx, url, nil, nil) < 0 {
+			response.FailWithMessage("无法打开视频", c)
+			return
+		}
+		if ctx.AvformatFindStreamInfo(nil) < 0 {
+		}*/
+	}
+	material.Type = typ
 
 	material.CreatedBy = utils.GetUserID(c)
 	verify := utils.Rules{
@@ -123,13 +177,59 @@ func (materialApi *MaterialApi) UpdateMaterial(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	var typ int
+	url := material.VideoUrl
+	typ := 1
 	if len(material.VideoUrl) > 0 {
 		typ = 2
-	} else {
-		typ = 1
+		url = material.ImageUrl
 	}
-	material.Type = &typ
+	var read io.Reader
+	if strings.HasPrefix(url, "http") {
+		resp, err := http.Get(url)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		read = resp.Body
+		defer resp.Body.Close()
+	} else {
+		f, err := os.Open(url)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		read = f
+		defer f.Close()
+	}
+
+	switch typ {
+	case 1:
+		img, _, err := image.DecodeConfig(read)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		material.Width = img.Width
+		material.Height = img.Height
+	case 2:
+
+		/*if strings.HasPrefix(url, "http") {
+			_, fileName := path.Split(url)
+			url, err = save(fileName, read)
+			if err != nil {
+				response.FailWithMessage(err.Error(), c)
+				return
+			}
+		}
+		ctx := avformat.AvformatAllocContext()
+		if avformat.AvformatOpenInput(&ctx, url, nil, nil) < 0 {
+			response.FailWithMessage("无法打开视频", c)
+			return
+		}
+		if ctx.AvformatFindStreamInfo(nil) < 0 {
+		}*/
+	}
+	material.Type = typ
 
 	material.UpdatedBy = utils.GetUserID(c)
 	verify := utils.Rules{
@@ -198,4 +298,22 @@ func (materialApi *MaterialApi) GetMaterialList(c *gin.Context) {
 			PageSize: pageInfo.PageSize,
 		}, "获取成功", c)
 	}
+}
+
+func save(fileName string, read io.Reader) (string, error) {
+	p := global.GVA_CONFIG.Local.StorePath + "/" + fileName
+
+	out, createErr := os.Create(p)
+	if createErr != nil {
+		global.GVA_LOG.Error("function os.Create() failed", zap.Any("err", createErr.Error()))
+		return "", createErr
+	}
+	defer out.Close() // 创建文件 defer 关闭
+
+	_, copyErr := io.Copy(out, read) // 传输（拷贝）文件
+	if copyErr != nil {
+		global.GVA_LOG.Error("function io.Copy() failed", zap.Any("err", copyErr.Error()))
+		return "", copyErr
+	}
+	return p, nil
 }

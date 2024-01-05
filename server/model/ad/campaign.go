@@ -51,6 +51,10 @@ type Campaign struct {
 	UpdatedBy          uint                   `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy          uint                   `gorm:"column:deleted_by;comment:删除者"`
 	Creatives          []*Creative            `json:"creatives" gorm:"foreignKey:campaign_id"`
+	Materials          []*struct {
+		ID  int    `json:"ID" form:"ID"`
+		Url string `json:"url" form:"url"`
+	} `json:"materials" form:"materials"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns

@@ -20,7 +20,8 @@
         </el-form-item>
         <el-form-item label="计划" prop="plan_id">
          <el-select v-model="searchInfo.plan_id" placeholder="计划" >
-            <el-option :key="key" :label="plan.name" :value="plan.ID" />
+            <!-- <el-option :key="key" :label="plan.name" :value="plan.ID" /> -->
+            <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID" />
           </el-select>
         </el-form-item>
             <el-form-item label="状态" prop="status">
@@ -100,8 +101,12 @@
         >
         <el-table-column type="selection" width="55" />
         <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="计划" prop="plan.name" width="120" />
-        <el-table-column align="left" label="名称" prop="name" width="120" />
+        <el-table-column align="left" label="计划" prop="plan.name" width="120"/>
+        <el-table-column align="left" label="名称" prop="name" width="120" >
+          <template #default="scope">
+            <a :href="'#' + creativePath + '?cid=' + scope.row.ID" >{{ scope.row.name }}</a>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.status) }}</template>
@@ -172,7 +177,8 @@
               <el-col :span="8" class="grid-cell">
                 <el-form-item label="计划:"  prop="plan_id" >
                   <el-select v-model="formData.plan_id" placeholder="计划" >
-                    <el-option :key="key" :label="plan.name" :value="plan.ID" :disabled="true" />
+                    <!-- <el-option :key="key" :label="plan.name" :value="plan.ID" :disabled="true" /> -->
+                    <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID" />
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -338,6 +344,12 @@
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
             </el-form-item>
+            <el-form-item label="上传素材:"  prop="material_ids" >
+                <SelectMaterial
+                v-model="material_ids"
+                multiple=true
+                />
+            </el-form-item>
           </el-form>
       </el-scrollbar>
       <template #footer>
@@ -464,15 +476,16 @@ import {
 } from '@/api/campaign'
 
 import {
-  findPlan
+  findPlan,
+  getPlanList,
 } from '@/api/plan'
 
+import SelectMaterial from '@/components/selectMaterial/selectMaterial.vue'
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-
 
 
 defineOptions({
@@ -551,6 +564,22 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({})
 
+const creativePath = ref('')
+
+const router = useRouter()
+
+const setcreativePath = () => {
+
+  for (let r of router.getRoutes()) {
+    if (r.name === 'creative') {
+      creativePath.value = r.path
+      break
+    }
+  }
+}
+
+setcreativePath()
+
 // 重置
 const onReset = () => {
   searchInfo.value = {}
@@ -609,18 +638,20 @@ const setOptions = async () =>{
 // 获取需要的字典 可能为空 按需保留
 setOptions()
 
-const plan = ref({
-  ID: 0,
-  name: '',
-})
-
 // 获得计划
 const getPlanDetails = async (pid) => {
   const res = await findPlan({ ID: pid })
   if (res.code === 0) {
-    plan.value = res.data.replan
-    formData.value.plan_id = plan.value.ID
-    searchInfo.value.plan_id = plan.value.ID
+    formData.value.plan_id = res.data.replan.ID
+    searchInfo.value.plan_id = res.data.replan.ID
+    plans.value.push(res.data.replan)
+  }
+}
+
+const getPlans = async() => {
+  const table = await getPlanList({ page: page.value, pageSize: pageSize.value})
+  if (table.code === 0) {
+    plans.value = table.data.list
   }
 }
 
@@ -629,6 +660,8 @@ const setPlan = () => {
   const pid = router.currentRoute.value.query['pid']
   if (pid && pid !== '') {
     getPlanDetails(pid)
+  } else {
+    getPlans()
   }
 } 
 

@@ -204,19 +204,7 @@ watchEffect(() => {
 });
 
 // 验证规则
-const rule = reactive({
-               video_url : [{
-                   required: true,
-                   message: '视频链接必须填写',
-                   trigger: ['input','blur'],
-               },
-               {
-                   whitespace: true,
-                   message: '不能只输入空格',
-                   trigger: ['input', 'blur'],
-              }
-              ],
-})
+const rule = reactive({})
 
 const searchRule = reactive({
   createdAt: [

@@ -14,6 +14,14 @@ type CampaignService struct {
 // CreateCampaign 创建活动记录
 // Author [piexlmax](https://github.com/piexlmax)
 func (campaignService *CampaignService) CreateCampaign(campaign *ad.Campaign) (err error) {
+	/*
+		err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+
+			// 根据素材创建创意
+			// 将创意
+			return nil
+		})*/
+
 	err = global.GVA_DB.Create(campaign).Error
 	return err
 }
