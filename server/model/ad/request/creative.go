@@ -12,3 +12,14 @@ type CreativeSearch struct {
 	EndCreatedAt   *time.Time `json:"endCreatedAt" form:"endCreatedAt"`
 	request.PageInfo
 }
+
+type CreativeBatch struct {
+	ad.Creative
+	Images []*Material `json:"images" form:"images"`
+	Videos []*Material `json:"videos" form:"videos"`
+}
+
+type Material struct {
+	Id  int    `json:"id" form:"id"`
+	Url string `json:"url" form:"url"`
+}

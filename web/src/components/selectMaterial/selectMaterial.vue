@@ -152,29 +152,19 @@
         <div class="header-img-box-list">
           <el-image
             :key="key"
-            :src="getUrl(item.video_url || item.image_url)"
+            :src="getUrl(item.url)"
             fit="cover"
             style="width: 100%;height: 100%;"
-            @click="chooseImg(item.ID, item.video_url || item.image_url)"
+            @click="chooseImg(item.ID, item.url)"
           >
             <template #error>
               <el-icon
-                v-if="isVideoExt(item.video_url || item.image_url)"
+                v-if="isVideoExt(item.url)"
                 :size="32"
                 class="video video-icon"
               >
                 <VideoPlay />
               </el-icon>
-              <video
-                v-if="isVideoExt(item.video_url || item.image_url)"
-                class="avatar video-avatar video"
-                muted
-                preload="metadata"
-                @click="chooseImg(item.ID, item.video_url || item.image_url)"
-              >
-                <source :src="getUrl(item.video_url || item.image_url) + '#t=1'">
-                您的浏览器不支持视频播放
-              </video>
               <div
                 v-else
                 class="header-img-box-list"
@@ -227,7 +217,7 @@ const pageSize = ref(20)
 const props = defineProps({
   modelValue: {
     type: [Object, Array],
-    default: {id:0, url:''}
+    default: undefined
   },
   multiple: {
     type: Boolean,

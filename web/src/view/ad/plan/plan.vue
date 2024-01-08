@@ -516,16 +516,17 @@ const updatePlanFunc = async(row) => {
 
 // 定义选项改变时的事件
 const handleSwitchChange = async(row) => {
-  const res = await findPlan({ ID: row.ID })
-  if (res.code === 0) {
-      res.data.replan.status = row.status
-      const res2 = await updatePlan(res.data.replan)
-      if (res2.code === 0) {
-        console.log("修改成功")
-        //getTableData()
-      }
+  if (row.status) {
+    const res = await findPlan({ ID: row.ID })
+    if (res.code === 0) {
+        res.data.replan.status = row.status
+        const res2 = await updatePlan(res.data.replan)
+        if (res2.code === 0) {
+          console.log("修改成功")
+          //getTableData()
+        }
+    }
   }
-  
 }
 
 // 删除行

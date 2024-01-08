@@ -17,6 +17,22 @@ export const createCreative = (data) => {
 }
 
 // @Tags Creative
+// @Summary 创建创意表
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body model.Creative true "创建创意表"
+// @Success 200 {string} string "{"success":true,"data":{},"msg":"创建成功"}"
+// @Router /creative/createCreatives [post]
+export const createCreatives = (data) => {
+  return service({
+    url: '/creative/createCreatives',
+    method: 'post',
+    data
+  })
+}
+
+// @Tags Creative
 // @Summary 删除创意表
 // @Security ApiKeyAuth
 // @accept application/json

@@ -17,7 +17,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
+)
+
+var (
+	imageTypeList = []string{"png", "jpg", "jpeg", "gif", "bmp", "webp"}
+	videoTyteList = []string{"mp4", "avi", "rmvb", "rm", "asf", "divx", "mpg", "mpeg", "mpe", "wmv", "mkv", "vob"}
 )
 
 type MaterialApi struct {
@@ -41,15 +47,17 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	url := material.VideoUrl
-	typ := 1
-	if len(material.VideoUrl) > 0 {
+
+	var typ int
+	if slices.Contains(imageTypeList, material.Format) {
+		typ = 1
+	} else if slices.Contains(videoTyteList, material.Format) {
 		typ = 2
-		url = material.ImageUrl
 	}
+
 	var read io.Reader
-	if strings.HasPrefix(url, "http") {
-		resp, err := http.Get(url)
+	if strings.HasPrefix(material.Url, "http") {
+		resp, err := http.Get(material.Url)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -57,7 +65,7 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 		read = resp.Body
 		defer resp.Body.Close()
 	} else {
-		f, err := os.Open(url)
+		f, err := os.Open(material.Url)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -177,15 +185,17 @@ func (materialApi *MaterialApi) UpdateMaterial(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	url := material.VideoUrl
-	typ := 1
-	if len(material.VideoUrl) > 0 {
+
+	var typ int
+	if slices.Contains(imageTypeList, material.Format) {
+		typ = 1
+	} else if slices.Contains(videoTyteList, material.Format) {
 		typ = 2
-		url = material.ImageUrl
 	}
+
 	var read io.Reader
-	if strings.HasPrefix(url, "http") {
-		resp, err := http.Get(url)
+	if strings.HasPrefix(material.Url, "http") {
+		resp, err := http.Get(material.Url)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return
@@ -193,7 +203,7 @@ func (materialApi *MaterialApi) UpdateMaterial(c *gin.Context) {
 		read = resp.Body
 		defer resp.Body.Close()
 	} else {
-		f, err := os.Open(url)
+		f, err := os.Open(material.Url)
 		if err != nil {
 			response.FailWithMessage(err.Error(), c)
 			return

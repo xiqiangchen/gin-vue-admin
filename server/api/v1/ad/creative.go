@@ -51,6 +51,55 @@ func (creativeApi *CreativeApi) CreateCreative(c *gin.Context) {
 	}
 }
 
+// CreateCreatives 批量创建创意表
+// @Tags Creatives
+// @Summary 创建创意表
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body ad.CreativeBatch true "创建创意表"
+// @Success 200 {string} string "{"success":true,"data":{},"msg":"创建成功"}"
+// @Router /creative/createCreatives [post]
+func (creativeApi *CreativeApi) CreateCreatives(c *gin.Context) {
+	var creativeBatch adReq.CreativeBatch
+	err := c.ShouldBindJSON(&creativeBatch)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	verify := utils.Rules{
+		"PlanId":     {utils.NotEmpty()},
+		"CampaignId": {utils.NotEmpty()},
+	}
+	if err := utils.Verify(creativeBatch, verify); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	// 将creatives转为标准的creative结构
+	var creatives []*ad.Creative
+	uid := utils.GetUserID(c)
+	materials := append(creativeBatch.Images, creativeBatch.Videos...)
+	for _, c := range materials {
+		creatives = append(creatives, &ad.Creative{
+			CreatedBy:  uid,
+			PlanId:     creativeBatch.PlanId,
+			CampaignId: creativeBatch.CampaignId,
+			MaterialId: c.Id,
+			Title:      creativeBatch.Title,
+			Desc:       creativeBatch.Desc,
+			Button:     creativeBatch.Button,
+		})
+	}
+
+	if err := creativeService.CreateCreativeBatch(creatives); err != nil {
+		global.GVA_LOG.Error("创建失败!", zap.Error(err))
+		response.FailWithMessage("创建失败", c)
+	} else {
+		response.OkWithMessage("创建成功", c)
+	}
+}
+
 // DeleteCreative 删除创意表
 // @Tags Creative
 // @Summary 删除创意表

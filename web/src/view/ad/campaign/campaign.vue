@@ -107,9 +107,22 @@
             <a :href="'#' + creativePath + '?cid=' + scope.row.ID" >{{ scope.row.name }}</a>
           </template>
         </el-table-column>
+        <el-table-column align="left" label="操作" min-width="250">
+            <template #default="scope">
+            <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
+                <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
+                查看详情
+            </el-button>
+            <el-button type="primary" link icon="edit" class="table-button" @click="updateCampaignFunc(scope.row)">变更</el-button>
+            <el-button type="primary" link icon="plus" class="table-button" @click="createCreativeFunc(scope.row)">添加创意</el-button>
+            <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
+            </template>
+        </el-table-column>
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
-            <template #default="scope">{{ formatBoolean(scope.row.status) }}</template>
+            <template #default="scope">
+              <el-switch v-model="scope.row.status" @change="handleSwitchChange(scope.row)"></el-switch>
+            </template>
         </el-table-column>
         <el-table-column align="left" label="虚拟活动" prop="is_virtually" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.is_virtually) }}</template>
@@ -147,16 +160,7 @@
         </el-table-column>
         <el-table-column align="left" label="品牌名称" prop="brand" width="120" />
         <el-table-column align="left" label="创意方式" prop="creative_mode" width="120" />
-        <el-table-column align="left" label="操作" min-width="120">
-            <template #default="scope">
-            <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
-                <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
-                查看详情
-            </el-button>
-            <el-button type="primary" link icon="edit" class="table-button" @click="updateCampaignFunc(scope.row)">变更</el-button>
-            <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
-            </template>
-        </el-table-column>
+        
         </el-table>
         <div class="gva-pagination">
             <el-pagination
@@ -344,18 +348,13 @@
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
             </el-form-item>
-            <el-form-item label="上传素材:"  prop="material_ids" >
-                <SelectMaterial
-                v-model="material_ids"
-                multiple=true
-                />
-            </el-form-item>
           </el-form>
       </el-scrollbar>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="closeDialog">取 消</el-button>
           <el-button type="primary" @click="enterDialog">确 定</el-button>
+          <el-button type="primary" @click="openDialogCreative">确定并添加创意</el-button>
         </div>
       </template>
     </el-dialog>
@@ -462,6 +461,50 @@
         </el-descriptions>
       </el-scrollbar>
     </el-dialog>
+
+    <el-dialog v-model="dialogFormCreative" :before-close="closeDialogCreative" :title="'添加创意'" destroy-on-close>
+      <el-scrollbar height="500px">
+          <el-form :model="creatives" label-position="right" ref="elFormRefCreative" :rules="rule" label-width="140px">
+            <el-form-item label="计划:"  prop="plan_id" >
+              <el-input v-model="creatives.plan_id" placeholder="计划" />
+            </el-form-item>
+            <el-form-item label="活动:"  prop="campaign_id" >
+              <el-input v-model="creatives.campaign_id" placeholder="活动" />
+            </el-form-item>
+            <el-form-item label="标题:"  prop="title" >
+              <el-input v-model="creatives.title" :clearable="true"  placeholder="请输入标题" />
+            </el-form-item>
+            <el-form-item label="描述:"  prop="desc" >
+              <el-input v-model="creatives.desc" :clearable="true"  placeholder="请输入描述" />
+            </el-form-item>
+            <el-form-item label="行动语:"  prop="desc" >
+              <el-input v-model="creatives.button" :clearable="true"  placeholder="请输入行动语" />
+            </el-form-item>
+            <el-form-item label="图片:"  prop="images">
+              <SelectMaterial
+                v-model="creatives.images"
+                multiple=true
+                 file-type="image"
+                @selection-change="handleMaterialChangeImages"
+                />
+            </el-form-item>
+            <el-form-item label="视频:"  prop="videos">
+              <SelectMaterial
+                v-model="creatives.videos"
+                multiple=true
+                 file-type="video"
+                @selection-change="handleMaterialChangeVideos"
+                />
+            </el-form-item>
+          </el-form>
+      </el-scrollbar>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="closeDialogCreative">取 消</el-button>
+          <el-button type="primary" @click="enterDialogCreative">确 定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -474,6 +517,10 @@ import {
   findCampaign,
   getCampaignList
 } from '@/api/campaign'
+
+import {
+  createCreatives
+} from '@/api/creative'
 
 import {
   findPlan,
@@ -493,6 +540,17 @@ defineOptions({
 })
 
 const plans = ref([])
+const materials = ref([])
+
+        
+const initCreative = ref({
+  plan_id: 0,
+  campaign_id: 0,
+  material_id: 0,
+  title: '',
+  desc: '',
+  button: '',
+})
 
 // 自动化生成的字典（可能为空）以及字段
 const bidMethodOptions = ref([])
@@ -531,8 +589,18 @@ const formData = ref({
         h5: '',
         deeplink: '',
         universal_link: '',
+        creatives: [initCreative],
         })
 
+const creatives = ref({
+  plan_id: 0,
+  campaign_id: 0,
+  title: '',
+  desc: '',
+  button: '',
+  videos: [],
+  images: [],
+})
 
 // 验证规则
 const rule = reactive({
@@ -555,6 +623,7 @@ const searchRule = reactive({
 })
 
 const elFormRef = ref()
+const elFormRefCreative = ref()
 const elSearchFormRef = ref()
 
 // =========== 表格控制部分 ===========
@@ -614,6 +683,60 @@ const handleCurrentChange = (val) => {
   getTableData()
 }
 
+const handleMaterialChangeImages = (val) => {
+  console.log(val)
+  if (props.multiple && val && val.length > 0) {
+    for (let i = 0; i < val.length; i++) {
+      creatives.value.images.push(val[i].id)
+    }
+  } else if (!props.multiple) {
+    creatives.value.images.push(val.id)
+  }
+  /* 
+  if (formData.value.creatives && formData.value.creatives.length > 0) {
+    if (formData.value.creatives.length === 1) {
+      formData.value.creatives[0].material_id = val.id
+    } else {
+      for ((c, idx) in formData.value.creatives) {
+
+      }
+    }
+  } */
+}
+const handleMaterialChangeVideos = (val) => {
+  console.log(val)
+  if (props.multiple && val && val.length > 0) {
+    for (let i = 0; i < val.length; i++) {
+      creatives.value.videos.push(val[i].id)
+      /* if (i > formData.value.creatives.length - 1) {
+        let a = ref({
+          plan_id: initCreative.value.plan_id,
+          campaign_id: initCreative.value.campaign_id,
+          material_id: val[i].id,
+          title: initCreative.value.title,
+          desc: initCreative.value.desc,
+          button: initCreative.value.button,
+        })
+        formData.value.creatives.push(a)
+      } else {
+        formData.value.creatives[i].value.material_id = c.id
+      } */
+    }
+  } else if (!props.multiple) {
+    creatives.value.videos.push(val.id)
+  }
+  /* 
+  if (formData.value.creatives && formData.value.creatives.length > 0) {
+    if (formData.value.creatives.length === 1) {
+      formData.value.creatives[0].material_id = val.id
+    } else {
+      for ((c, idx) in formData.value.creatives) {
+
+      }
+    }
+  } */
+}
+
 // 查询
 const getTableData = async() => {
   const table = await getCampaignList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
@@ -624,8 +747,6 @@ const getTableData = async() => {
     pageSize.value = table.data.pageSize
   }
 }
-
-getTableData()
 
 // ============== 表格控制部分结束 ===============
 
@@ -645,6 +766,7 @@ const getPlanDetails = async (pid) => {
     formData.value.plan_id = res.data.replan.ID
     searchInfo.value.plan_id = res.data.replan.ID
     plans.value.push(res.data.replan)
+    getTableData()
   }
 }
 
@@ -652,6 +774,7 @@ const getPlans = async() => {
   const table = await getPlanList({ page: page.value, pageSize: pageSize.value})
   if (table.code === 0) {
     plans.value = table.data.list
+    formData.value.plan_id = plans.value[0].ID
   }
 }
 
@@ -662,6 +785,7 @@ const setPlan = () => {
     getPlanDetails(pid)
   } else {
     getPlans()
+    getTableData()
   }
 } 
 
@@ -720,6 +844,23 @@ const onDelete = async() => {
 // 行为控制标记（弹窗内部需要增还是改）
 const type = ref('')
 
+
+// 定义选项改变时的事件
+const handleSwitchChange = async(row) => {
+  if (row.status) {
+    const res = await findCampaign({ ID: row.ID })
+    if (res.code === 0) {
+        res.data.recampaign.status = row.status
+        const res2 = await updateCampaign(res.data.recampaign)
+        if (res2.code === 0) {
+          console.log("修改成功")
+          //getTableData()
+        }
+    }
+  }
+  
+}
+
 // 更新行
 const updateCampaignFunc = async(row) => {
     const res = await findCampaign({ ID: row.ID })
@@ -748,6 +889,7 @@ const deleteCampaignFunc = async (row) => {
 
 // 弹窗控制标记
 const dialogFormVisible = ref(false)
+const dialogFormCreative = ref(false)
 
 
 // 查看详情控制标记
@@ -767,8 +909,9 @@ const getDetails = async (row) => {
   if (res.code === 0) {
     formData.value = res.data.recampaign
     console.log(res.data.recampaign.plan.name)
-    if (plan.value.ID && plan.value.ID > 0) {
-      formData.value.plan_id = plan.value.ID
+    console.log(res.data.recampaign.materials)
+    if (plans.length > 0) {
+      formData.value.plan_id = plans.value[0].ID
     }
     openDetailShow()
   }
@@ -811,6 +954,7 @@ const closeDetailShow = () => {
           h5: '',
           deeplink: '',
           universal_link: '',
+          creatives: [initCreative],
           }
 }
 
@@ -819,6 +963,27 @@ const closeDetailShow = () => {
 const openDialog = () => {
     type.value = 'create'
     dialogFormVisible.value = true
+}
+
+
+// 打开弹窗
+const openDialogCreative = async () => {
+    let succ = await enterDialog()
+    console.log(succ)
+    if (succ) {
+      openCreativeDialog()
+    }
+}
+
+const createCreativeFunc = (row) => {
+  creatives.value.plan_id = row.plan_id
+  creatives.value.campaign_id = row.ID
+  openCreativeDialog()
+}
+
+const openCreativeDialog = () => {
+  type.value = 'create'
+  dialogFormCreative.value = true
 }
 
 // 关闭弹窗
@@ -858,12 +1023,22 @@ const closeDialog = () => {
         h5: '',
         deeplink: '',
         universal_link: '',
+        creatives: [initCreative],
         }
 }
+
+
+// 关闭弹窗
+const closeDialogCreative = () => {
+    dialogFormCreative.value = false
+    formData.value.creatives = []
+}
+
+
 // 弹窗确定
 const enterDialog = async () => {
-     elFormRef.value?.validate( async (valid) => {
-             if (!valid) return
+     return elFormRef.value?.validate( async (valid) => {
+             if (!valid) return false
               let res
               switch (type.value) {
                 case 'create':
@@ -877,12 +1052,49 @@ const enterDialog = async () => {
                   break
               }
               if (res.code === 0) {
+                console.log(res)
+                if (res.data.recampaign) {
+                  creatives.value.plan_id = res.data.recampaign.plan_id
+                  creatives.value.campaign_id = res.data.recampaign.ID
+                } else if (formData.value.ID) {
+                  creatives.value.plan_id = formData.value.plan_id
+                  creatives.value.campaign_id = formData.value.ID
+                }
+                
+                console.log(creatives.value)
+
                 ElMessage({
                   type: 'success',
                   message: '创建/更改成功'
                 })
                 closeDialog()
                 getTableData()
+                return true
+              }
+              return false
+      })
+}
+
+// 弹窗确定
+const enterDialogCreative = async () => {
+     elFormRefCreative.value?.validate( async (valid) => {
+             if (!valid) return
+              let res
+              switch (type.value) {
+                case 'create':
+                  res = await createCreatives(creatives.value)
+                  break
+                default:
+                  res = await createCreatives(creatives.value)
+                  break
+              }
+              if (res.code === 0) {
+                ElMessage({
+                  type: 'success',
+                  message: '创建/更改成功'
+                })
+                closeDialogCreative()
+                //getTableData()
               }
       })
 }

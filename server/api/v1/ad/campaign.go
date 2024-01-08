@@ -38,7 +38,8 @@ func (campaignApi *CampaignApi) CreateCampaign(c *gin.Context) {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败", c)
 	} else {
-		response.OkWithMessage("创建成功", c)
+		//response.OkWithMessage("创建成功", c)
+		response.OkWithDetailed(gin.H{"recampaign": campaign}, "创建成功", c)
 	}
 }
 

@@ -67,14 +67,13 @@
           <template #default="scope">
             <CustomPic
               pic-type="file"
-              :pic-src="scope.row.image_url"
+              :pic-src="scope.row.url"
               preview
             />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="视频链接" prop="video_url" width="250" />
         <el-table-column align="left" label="备注" prop="comment" width="200" />
-        <el-table-column align="left" label="视频格式" prop="format" width="120" />
+        <el-table-column align="left" label="格式" prop="format" width="120" />
         <el-table-column align="left" label="宽" prop="width" width="120" />
         <el-table-column align="left" label="高" prop="height" width="120" />
         <el-table-column align="left" label="操作" min-width="120">
@@ -99,23 +98,13 @@
     <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'添加':'修改'" destroy-on-close>
       <el-scrollbar height="500px">
           <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="120px">
-            <el-form-item label="上传视频:"  prop="video_tmp_url" >
+            <el-form-item label="上传图片:"  prop="tmp_url" >
                 <SelectImage
-                v-model="video_tmp_url"
-                file-type="video"
+                 v-model="tmp_url"
                 />
             </el-form-item>
-            <el-form-item label="视频链接:"  prop="video_url" >
-              <el-input v-model="formData.video_url" :clearable="true"  placeholder="请输入视频链接" />
-            </el-form-item>
-            <el-form-item label="上传图片:"  prop="image_tmp_url" >
-                <SelectImage
-                 v-model="image_tmp_url"
-                 file-type="image"
-                />
-            </el-form-item>
-            <el-form-item label="图片链接:"  prop="image_url" >
-              <el-input v-model="formData.image_url" :clearable="true"  placeholder="请输入图片链接" />
+            <el-form-item label="图片链接:"  prop="url" >
+              <el-input v-model="formData.url" :clearable="true"  placeholder="请输入图片链接" />
             </el-form-item>
             <el-form-item label="视频格式:"  prop="format" >
               <el-input v-model="formData.format" :clearable="true"  placeholder="请输入视频格式" />
@@ -169,37 +158,28 @@ const materialTypeOptions = ref([])
 
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
-        video_url: '',
-        image_url: '',
+        url: '',
         format: '',
         width: 0,
         height: 0,
         comment: '',
         })
 
-const video_tmp_url = ref('')
-const image_tmp_url = ref('')
+const tmp_url = ref('')
 
-// 监听video_tmp_url 的变化
+
+// 监听 formData 中 tmp_url 的变化
 watchEffect(() => {
-  if (video_tmp_url.value !== '') {
-    formData.value.video_url = video_tmp_url.value;
+  if (tmp_url.value !== '') {
+    formData.value.url = tmp_url.value;
   }
 });
 
 
-// 监听 formData 中 image_tmp_url 的变化
+// 监听 formData 中 tmp_url 的变化
 watchEffect(() => {
-  if (image_tmp_url.value !== '') {
-    formData.value.image_url = image_tmp_url.value;
-  }
-});
-
-
-// 监听 formData 中 image_tmp_url 的变化
-watchEffect(() => {
-  if (formData.value.video_url !== undefined && formData.value.video_url !== '') {
-    formData.value.format = formData.value.video_url.split('.').pop();
+  if (formData.value.url !== undefined && formData.value.url !== '') {
+    formData.value.format = formData.value.url.split('.').pop();
   }
 });
 
@@ -393,8 +373,7 @@ const getDetails = async (row) => {
 const closeDetailShow = () => {
   detailShow.value = false
   formData.value = {
-          video_url: '',
-          image_url: '',
+          url: '',
           comment: '',
           width: 0,
           height: 0,
@@ -413,8 +392,7 @@ const openDialog = () => {
 const closeDialog = () => {
     dialogFormVisible.value = false
     formData.value = {
-        video_url: '',
-        image_url: '',
+        url: '',
         comment: '',
         width: 0,
         height: 0,

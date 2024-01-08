@@ -21,7 +21,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="活动" prop="campaign_id">
-             <el-select v-model="searchInfo.campaign_id" placeholder="活动" >
+          <el-select v-model="searchInfo.campaign_id" placeholder="活动" @change="changeCampaign(val)" >
             <el-option v-for="(item,key) in campaigns" :key="key" :label="item.name" :value="item.ID" />
           </el-select>
         </el-form-item>
@@ -63,10 +63,53 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
+        <el-table-column align="left" label="预览" width="100" class="media-box">
+          <template #default="scope">
+            <CustomPic
+              v-if="!isVideoExt(scope.row.material.url)"
+              pic-type="file"
+              :pic-src="scope.row.material.url"
+              preview
+            />
+              <el-icon
+                v-if="isVideoExt(scope.row.material.url)"
+                :size="32"
+                class="video video-icon"
+              >
+                <VideoPlay />
+              </el-icon>
+              
+              <video
+                v-if="isVideoExt(scope.row.material.url)"
+                class="avatar video-avatar video"
+                style="width: 75px; height: 80px"
+
+                muted
+                preload="metadata"
+                
+              >
+                <source :src="getUrl(scope.row.material.url) + '#t=1'">
+                您的浏览器不支持视频播放
+              </video>
+              <div
+                v-else
+                class="header-img-box-list"
+              >
+                <el-icon class="lost-image">
+                  <icon-picture />
+                </el-icon>
+              </div>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="计划" prop="plan_id" width="120" />
         <el-table-column align="left" label="活动" prop="campaign_id" width="120" />
         <el-table-column align="left" label="素材" prop="material_id" width="120" />
+        <el-table-column align="left" label="状态" prop="status" width="120">
+            <template #default="scope">
+              <el-switch v-model="scope.row.status"></el-switch>
+            </template>
+        </el-table-column>
         <el-table-column align="left" label="标题" prop="title" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="行动语" prop="button" width="120" />
@@ -177,6 +220,9 @@ import {
 } from '@/api/plan'
 
 // 全量引入格式化工具 请按需保留
+import CustomPic from '@/components/customPic/index.vue'
+
+import { getUrl, isVideoExt } from '@/utils/image'
 import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
@@ -191,6 +237,7 @@ const formData = ref({
         plan_id: 0,
         campaign_id: 0,
         material_id: 0,
+        status: false,
         title: '',
         desc: '',
         button: '',
@@ -283,7 +330,7 @@ const getTableData = async() => {
   }
 }
 
-getTableData()
+
 
 // ============== 表格控制部分结束 ===============
 
@@ -324,6 +371,7 @@ const getCampaignDetails = async (cid) => {
     formData.value.plan_id = res.data.recampaign.plan_id
     plans.value.push(res.data.recampaign.plan)
     campaigns.value.push(res.data.recampaign)
+    getTableData()
   }
 }
 
@@ -339,11 +387,11 @@ const setPlan = () => {
   const pid = router.currentRoute.value.query['pid']
   const cid = router.currentRoute.value.query['cid']
   if (cid && cid !== '') {
-
     getCampaignDetails(cid)
   } else {
     getPlans()
     getCampaigns()
+    getTableData()
   }
   
 } 
@@ -429,6 +477,23 @@ const deleteCreativeFunc = async (row) => {
     }
 }
 
+
+// 定义选项改变时的事件
+const handleSwitchChange = async(row) => {
+  if (row.status) {
+    const res = await findCreative({ ID: row.ID })
+    if (res.code === 0) {
+        res.data.recreative.status = row.status
+        const res2 = await updateCreative(res.data.recreative)
+        if (res2.code === 0) {
+          console.log("修改成功")
+          //getTableData()
+        }
+    }
+  }
+  
+}
+
 // 弹窗控制标记
 const dialogFormVisible = ref(false)
 
@@ -461,6 +526,7 @@ const closeDetailShow = () => {
           plan_id: 0,
           campaign_id: 0,
           material_id: 0,
+          status: false,
           title: '',
           desc: '',
           button: '',
@@ -481,6 +547,7 @@ const closeDialog = () => {
         plan_id: 0,
         campaign_id: 0,
         material_id: 0,
+        status: false,
         title: '',
         desc: '',
         button: '',
@@ -515,6 +582,20 @@ const enterDialog = async () => {
 
 </script>
 
-<style>
+
+<style scoped lang="scss">
+
+.video-icon {
+  position: absolute;
+  left: calc(50% - 16px);
+  top: calc(50% - 16px);
+}
+
+video {
+  object-fit: cover;
+  max-width: 100%;
+  min-height: 100%;
+  border-radius: 8px;
+}
 
 </style>

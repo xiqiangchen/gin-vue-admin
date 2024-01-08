@@ -15,6 +15,7 @@ func (s *CreativeRouter) InitCreativeRouter(Router *gin.RouterGroup) {
 	creativeRouterWithoutRecord := Router.Group("creative")
 	var creativeApi = v1.ApiGroupApp.AdApiGroup.CreativeApi
 	{
+		creativeRouter.POST("createCreatives", creativeApi.CreateCreatives)           // 批量新建创意表
 		creativeRouter.POST("createCreative", creativeApi.CreateCreative)             // 新建创意表
 		creativeRouter.DELETE("deleteCreative", creativeApi.DeleteCreative)           // 删除创意表
 		creativeRouter.DELETE("deleteCreativeByIds", creativeApi.DeleteCreativeByIds) // 批量删除创意表

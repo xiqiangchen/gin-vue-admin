@@ -18,6 +18,12 @@ func (creativeService *CreativeService) CreateCreative(creative *ad.Creative) (e
 	return err
 }
 
+// CreateCreativeBatch 批量创建创意表记录
+func (creativeService *CreativeService) CreateCreativeBatch(creatives []*ad.Creative) (err error) {
+	err = global.GVA_DB.CreateInBatches(creatives, len(creatives)).Error
+	return err
+}
+
 // DeleteCreative 删除创意表记录
 // Author [piexlmax](https://github.com/piexlmax)
 func (creativeService *CreativeService) DeleteCreative(creative ad.Creative) (err error) {
@@ -74,14 +80,17 @@ func (creativeService *CreativeService) GetCreativeInfoList(info adReq.CreativeS
 	if info.StartCreatedAt != nil && info.EndCreatedAt != nil {
 		db = db.Where("created_at BETWEEN ? AND ?", info.StartCreatedAt, info.EndCreatedAt)
 	}
-	if info.PlanId != nil {
+	if info.PlanId > 0 {
 		db = db.Where("plan_id = ?", info.PlanId)
 	}
-	if info.CampaignId != nil {
+	if info.CampaignId > 0 {
 		db = db.Where("campaign_id = ?", info.CampaignId)
 	}
-	if info.MaterialId != nil {
+	if info.MaterialId > 0 {
 		db = db.Where("material_id = ?", info.MaterialId)
+	}
+	if info.Status != nil {
+		db = db.Where("status = ?", info.Status)
 	}
 	if info.Title != "" {
 		db = db.Where("title LIKE ?", "%"+info.Title+"%")
@@ -95,6 +104,6 @@ func (creativeService *CreativeService) GetCreativeInfoList(info adReq.CreativeS
 		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
-	err = db.Find(&creatives).Error
+	err = db.Preload("Material").Find(&creatives).Error
 	return creatives, total, err
 }
