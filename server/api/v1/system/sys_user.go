@@ -91,6 +91,7 @@ func (b *BaseApi) TokenNext(c *gin.Context, user system.SysUser) {
 		return
 	}
 	if !global.GVA_CONFIG.System.UseMultipoint {
+		utils.SetToken(c, token, int(claims.RegisteredClaims.ExpiresAt.Unix()-time.Now().Unix()))
 		response.OkWithDetailed(systemRes.LoginResponse{
 			User:      user,
 			Token:     token,
@@ -105,6 +106,7 @@ func (b *BaseApi) TokenNext(c *gin.Context, user system.SysUser) {
 			response.FailWithMessage("设置登录状态失败", c)
 			return
 		}
+		utils.SetToken(c, token, int(claims.RegisteredClaims.ExpiresAt.Unix()-time.Now().Unix()))
 		response.OkWithDetailed(systemRes.LoginResponse{
 			User:      user,
 			Token:     token,
@@ -124,6 +126,7 @@ func (b *BaseApi) TokenNext(c *gin.Context, user system.SysUser) {
 			response.FailWithMessage("设置登录状态失败", c)
 			return
 		}
+		utils.SetToken(c, token, int(claims.RegisteredClaims.ExpiresAt.Unix()-time.Now().Unix()))
 		response.OkWithDetailed(systemRes.LoginResponse{
 			User:      user,
 			Token:     token,
@@ -269,6 +272,7 @@ func (b *BaseApi) SetUserAuthority(c *gin.Context) {
 	} else {
 		c.Header("new-token", token)
 		c.Header("new-expires-at", strconv.FormatInt(claims.ExpiresAt.Unix(), 10))
+		utils.SetToken(c, token, int((claims.ExpiresAt.Unix()-time.Now().Unix())/60))
 		response.OkWithMessage("修改成功", c)
 	}
 }

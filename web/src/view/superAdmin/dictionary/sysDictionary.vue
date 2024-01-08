@@ -35,6 +35,7 @@
                 <Edit />
               </el-icon>
               <el-popover
+                v-model:visible="dictionary.visible"
                 placement="top"
                 width="160"
               >
@@ -150,7 +151,7 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
 import sysDictionaryDetail from './sysDictionaryDetail.vue'
-import { Edit, Plus } from '@element-plus/icons-vue'
+import { Edit } from '@element-plus/icons-vue'
 
 defineOptions({
   name: 'SysDictionary',
