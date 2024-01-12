@@ -16,12 +16,12 @@
       <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束日期" :disabled-date="time=> searchInfo.startCreatedAt ? time.getTime() < searchInfo.startCreatedAt.getTime() : false"></el-date-picker>
       </el-form-item>
         <el-form-item label="计划" prop="plan_id">
-          <el-select v-model="searchInfo.plan_id" placeholder="计划" >
-            <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID" />
+          <el-select v-model="searchInfo.plan_id" placeholder="计划" @change="changePlan" >
+            <el-option v-for="(item,key) in plans" :key="key" :label="item.name" :value="item.ID"  />
           </el-select>
         </el-form-item>
         <el-form-item label="活动" prop="campaign_id">
-          <el-select v-model="searchInfo.campaign_id" placeholder="活动" @change="changeCampaign(val)" >
+          <el-select v-model="searchInfo.campaign_id" placeholder="活动" >
             <el-option v-for="(item,key) in campaigns" :key="key" :label="item.name" :value="item.ID" />
           </el-select>
         </el-form-item>
@@ -103,7 +103,12 @@
         </el-table-column>
         <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="计划" prop="plan_id" width="120" />
-        <el-table-column align="left" label="活动" prop="campaign_id" width="120" />
+        <el-table-column align="left" label="活动id" prop="campaign_id" width="120" />
+        <el-table-column align="left" label="活动名称" prop="campaign.name" width="120" >
+          <template #default="scope">
+            <a @click="getCreativesByCampaign(scope.row.campaign_id)">{{ scope.row.campaign.name }}</a>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="素材" prop="material_id" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
             <template #default="scope">
@@ -237,7 +242,7 @@ const formData = ref({
         plan_id: 0,
         campaign_id: 0,
         material_id: 0,
-        status: false,
+        status: true,
         title: '',
         desc: '',
         button: '',
@@ -323,6 +328,7 @@ const handleCurrentChange = (val) => {
 const getTableData = async() => {
   const table = await getCreativeList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
+    console.log(table.data.list)
     tableData.value = table.data.list
     total.value = table.data.total
     page.value = table.data.page
@@ -382,6 +388,19 @@ const getCampaigns = async() => {
   }
 }
 
+const getCreativesByCampaign = async(id) => {
+  searchInfo.value.campaign_id = id
+  getTableData()
+}
+
+const getCampaignsByPlan = async(id) => {
+  const table = await getCampaignList({ page: page.value, pageSize: pageSize.value, plan_id: id})
+  if (table.code === 0) {
+    campaigns.value = table.data.list
+    searchInfo.value.campaign_id = undefined
+  }
+}
+
 const setPlan = () => {
   const router = useRouter()
   const pid = router.currentRoute.value.query['pid']
@@ -393,10 +412,13 @@ const setPlan = () => {
     getCampaigns()
     getTableData()
   }
-  
 } 
 
 setPlan()
+
+const changePlan = (val) => {
+  getCampaignsByPlan(val)
+}
 
 // 多选数据
 const multipleSelection = ref([])
@@ -526,7 +548,7 @@ const closeDetailShow = () => {
           plan_id: 0,
           campaign_id: 0,
           material_id: 0,
-          status: false,
+          status: true,
           title: '',
           desc: '',
           button: '',
@@ -547,7 +569,7 @@ const closeDialog = () => {
         plan_id: 0,
         campaign_id: 0,
         material_id: 0,
-        status: false,
+        status: true,
         title: '',
         desc: '',
         button: '',

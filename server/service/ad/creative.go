@@ -64,7 +64,7 @@ func (creativeService *CreativeService) UpdateCreative(creative ad.Creative) (er
 // GetCreative 根据id获取创意表记录
 // Author [piexlmax](https://github.com/piexlmax)
 func (creativeService *CreativeService) GetCreative(id uint) (creative ad.Creative, err error) {
-	err = global.GVA_DB.Where("id = ?", id).First(&creative).Error
+	err = global.GVA_DB.Where("id = ?", id).Preload("Material").Preload("Plan").Preload("Campaign").First(&creative).Error
 	return
 }
 
@@ -104,6 +104,6 @@ func (creativeService *CreativeService) GetCreativeInfoList(info adReq.CreativeS
 		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
-	err = db.Preload("Material").Find(&creatives).Error
+	err = db.Preload("Material").Preload("Plan").Preload("Campaign").Find(&creatives).Error
 	return creatives, total, err
 }

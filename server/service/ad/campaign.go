@@ -66,7 +66,7 @@ func (campaignService *CampaignService) UpdateCampaign(campaign ad.Campaign) (er
 // GetCampaign 根据id获取活动记录
 // Author [piexlmax](https://github.com/piexlmax)
 func (campaignService *CampaignService) GetCampaign(id uint) (campaign ad.Campaign, err error) {
-	err = global.GVA_DB.Where("id = ?", id).Preload("Plan").First(&campaign).Error
+	err = global.GVA_DB.Where("id = ?", id).Preload("Plan").Preload("Creatives").First(&campaign).Error
 	return
 }
 
@@ -82,8 +82,8 @@ func (campaignService *CampaignService) GetCampaignInfoList(info adReq.CampaignS
 	if info.StartCreatedAt != nil && info.EndCreatedAt != nil {
 		db = db.Where("created_at BETWEEN ? AND ?", info.StartCreatedAt, info.EndCreatedAt)
 	}
-	if info.PlanID != 0 {
-		db = db.Where("plan_id = ?", info.PlanID)
+	if info.PlanId != 0 {
+		db = db.Where("plan_id = ?", info.PlanId)
 	}
 	if info.Name != "" {
 		db = db.Where("name LIKE ?", "%"+info.Name+"%")

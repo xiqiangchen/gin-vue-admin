@@ -197,6 +197,7 @@ system:
     use-multipoint: false
     use-redis: false
     use-mongo: false
+    use-kafka: false
 tencent-cos:
     bucket: xxxxx-10005608
     region: ap-shanghai
@@ -214,3 +215,17 @@ zap:
     max-age: 0
     show-line: true
     log-in-console: true
+kafka:
+    brokers:
+        - 127.0.0.1:9092
+    producer:
+        topic: test
+        parallel: 1
+    consumer:
+        group: test
+        topics:
+            - test
+        parallel: 1
+        oldest: false
+
+

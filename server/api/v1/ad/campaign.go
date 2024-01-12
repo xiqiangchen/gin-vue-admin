@@ -33,6 +33,14 @@ func (campaignApi *CampaignApi) CreateCampaign(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	verify := utils.Rules{
+		"PlanId": {utils.NotEmpty()},
+		"Name":   {utils.NotEmpty()},
+	}
+	if err := utils.Verify(campaign, verify); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
 	campaign.CreatedBy = utils.GetUserID(c)
 	if err := campaignService.CreateCampaign(&campaign); err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))

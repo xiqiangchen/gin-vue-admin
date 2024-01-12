@@ -560,7 +560,7 @@ const formData = ref({
         plan: {},
         name: '',
         desc: '',
-        status: false,
+        status: true,
         is_virtually: false,
         allow_virtually: false,
         start_at: new Date(),
@@ -604,6 +604,16 @@ const creatives = ref({
 
 // 验证规则
 const rule = reactive({
+  name : [{
+      required: true,
+      message: '',
+      trigger: ['input','blur'],
+  },
+  {
+      whitespace: true,
+      message: '不能只输入空格',
+      trigger: ['input', 'blur'],
+  }]
 })
 
 const searchRule = reactive({
@@ -925,7 +935,7 @@ const closeDetailShow = () => {
           plan: {},
           name: '',
           desc: '',
-          status: false,
+          status: true,
           allow_virtually: false,
           is_virtually: false,
           start_at: new Date(),
@@ -994,7 +1004,7 @@ const closeDialog = () => {
         plan: {},
         name: '',
         desc: '',
-        status: false,
+        status: true,
         is_virtually: false,
         allow_virtually: false,
         start_at: new Date(),

@@ -10,7 +10,7 @@ import (
 // 活动 结构体  Campaign
 type Campaign struct {
 	global.GVA_MODEL
-	PlanID             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"` // 关联标记
+	PlanId             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"` // 关联标记
 	Plan               Plan                   `json:"plan"`
 	Name               string                 `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                    //名称
 	Desc               string                 `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                    //描述

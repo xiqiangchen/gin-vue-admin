@@ -20,6 +20,8 @@ type Creative struct {
 	UpdatedBy  uint              `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy  uint              `gorm:"column:deleted_by;comment:删除者"`
 	Material   resource.Material `json:"material"`
+	Plan       Plan              `json:"plan"`
+	Campaign   Campaign          `json:"campaign"`
 }
 
 // TableName 创意表 Creative自定义表名 creatives

@@ -1,12 +1,15 @@
 package config
 
 type Server struct {
-	JWT     JWT     `mapstructure:"jwt" json:"jwt" yaml:"jwt"`
-	Zap     Zap     `mapstructure:"zap" json:"zap" yaml:"zap"`
-	Redis   Redis   `mapstructure:"redis" json:"redis" yaml:"redis"`
-	Mongo   Mongo   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
-	Email   Email   `mapstructure:"email" json:"email" yaml:"email"`
-	System  System  `mapstructure:"system" json:"system" yaml:"system"`
+	JWT    JWT    `mapstructure:"jwt" json:"jwt" yaml:"jwt"`
+	Zap    Zap    `mapstructure:"zap" json:"zap" yaml:"zap"`
+	Redis  Redis  `mapstructure:"redis" json:"redis" yaml:"redis"`
+	Mongo  Mongo  `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
+	Email  Email  `mapstructure:"email" json:"email" yaml:"email"`
+	System System `mapstructure:"system" json:"system" yaml:"system"`
+	Dsp    Dsp    `mapstructure:"dsp" json:"dsp" yaml:"dsp"`
+	Kafka  Kafka  `mapstructure:"kafka" json:"kafka" yaml:"kafka"`
+
 	Captcha Captcha `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
 	// auto
 	AutoCode Autocode `mapstructure:"autocode" json:"autocode" yaml:"autocode"`
