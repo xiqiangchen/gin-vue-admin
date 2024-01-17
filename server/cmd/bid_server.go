@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
@@ -27,8 +28,7 @@ import (
 // @BasePath                    /
 func main() {
 	global.GVA_VP = core.Viper() // 初始化Viper
-	initialize.OtherInit()
-	global.GVA_LOG = core.Zap() // 初始化zap日志库
+	global.GVA_LOG = core.Zap()  // 初始化zap日志库
 	zap.ReplaceGlobals(global.GVA_LOG)
 	global.GVA_DB = initialize.Gorm() // gorm连接数据库
 	//initialize.Timer()
@@ -48,5 +48,5 @@ func main() {
 		db, _ := global.GVA_DB.DB()
 		defer db.Close()
 	}
-	core.RunWindowsServer()
+	dsp.RunServer()
 }

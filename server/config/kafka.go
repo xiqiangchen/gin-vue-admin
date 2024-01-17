@@ -1,9 +1,9 @@
 package config
 
 type Kafka struct {
-	Brokers  []string `json:"brokers" yaml:"brokers" mapstructure:"brokers"`
-	Producer Producer `json:"producer" yaml:"producer" mapstructure:"producer"`
-	Consumer Consumer `json:"consumer" yaml:"consumer" mapstructure:"consumer"`
+	Brokers  []string  `json:"brokers" yaml:"brokers" mapstructure:"brokers"`
+	Producer *Producer `json:"producer" yaml:"producer" mapstructure:"producer"`
+	Consumer *Consumer `json:"consumer" yaml:"consumer" mapstructure:"consumer"`
 }
 
 type Producer struct {

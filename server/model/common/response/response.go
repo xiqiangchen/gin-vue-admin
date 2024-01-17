@@ -15,6 +15,7 @@ type Response struct {
 const (
 	ERROR   = 7
 	SUCCESS = 0
+	Illegal = -1
 )
 
 func Result(code int, data interface{}, msg string, c *gin.Context) {
@@ -52,4 +53,8 @@ func FailWithMessage(message string, c *gin.Context) {
 
 func FailWithDetailed(data interface{}, message string, c *gin.Context) {
 	Result(ERROR, data, message, c)
+}
+
+func IllegalWithMessage(message string, c *gin.Context) {
+	Result(Illegal, map[string]interface{}{}, message, c)
 }

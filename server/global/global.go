@@ -1,30 +1,27 @@
 package global
 
 import (
-	"github.com/qiniu/qmgo"
-	"sync"
-
-	"github.com/flipped-aurora/gin-vue-admin/server/utils/timer"
-	"github.com/songzhibin97/gkit/cache/local_cache"
-
-	"golang.org/x/sync/singleflight"
-
-	"go.uber.org/zap"
-
+	"github.com/IBM/sarama"
 	"github.com/flipped-aurora/gin-vue-admin/server/config"
-
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/timer"
+	"github.com/qiniu/qmgo"
 	"github.com/redis/go-redis/v9"
+	"github.com/songzhibin97/gkit/cache/local_cache"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
+	"sync"
 )
 
 var (
-	GVA_DB     *gorm.DB
-	GVA_DBList map[string]*gorm.DB
-	GVA_REDIS  *redis.Client
-	GVA_MONGO  *qmgo.QmgoClient
-	GVA_CONFIG config.Server
-	GVA_VP     *viper.Viper
+	GVA_DB             *gorm.DB
+	GVA_DBList         map[string]*gorm.DB
+	GVA_REDIS          *redis.Client
+	GVA_MONGO          *qmgo.QmgoClient
+	GVA_KAFKA_PRODUCER sarama.AsyncProducer
+	GVA_CONFIG         config.Server
+	GVA_VP             *viper.Viper
 	// GVA_LOG    *oplogging.Logger
 	GVA_LOG                 *zap.Logger
 	GVA_Timer               timer.Timer = timer.NewTimerTask()

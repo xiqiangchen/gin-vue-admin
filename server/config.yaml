@@ -197,7 +197,6 @@ system:
     use-multipoint: false
     use-redis: false
     use-mongo: false
-    use-kafka: false
 tencent-cos:
     bucket: xxxxx-10005608
     region: ap-shanghai
@@ -217,7 +216,7 @@ zap:
     log-in-console: true
 kafka:
     brokers:
-        - 127.0.0.1:9092
+        - 192.168.10.60:29092
     producer:
         topic: test
         parallel: 1
@@ -227,5 +226,17 @@ kafka:
             - test
         parallel: 1
         oldest: false
-
+dsp:
+    env: local
+    router-prefix: ""
+    use-kafka: true
+    use-mongo: false
+    use-redis: false
+    bid:
+        port: 18888
+        uri: /bid
+    track:
+        port: 18889
+        impression-uri: /imp
+        click-uri: /clk
 
