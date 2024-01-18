@@ -13,7 +13,7 @@ type (
 	kafkaProducer struct{}
 )
 
-func (KafkaProducer *kafkaProducer) Initialization() error {
+func (kafkaProducer *kafkaProducer) Initialization() error {
 
 	// Kafka 配置
 	config := sarama.NewConfig()

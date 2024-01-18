@@ -237,6 +237,10 @@ dsp:
         uri: /bid
     track:
         port: 18889
-        impression-uri: /imp
-        click-uri: /clk
+        impression:
+            uri: /imp
+            topic: test
+        click:
+            uri: /clk
+            topic: test
 

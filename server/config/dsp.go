@@ -15,7 +15,17 @@ type Bid struct {
 	Uri  string `mapstructure:"uri" json:"uri" yaml:"uri"`
 }
 type Track struct {
-	Port          int    `mapstructure:"port" json:"port" yaml:"port"` // 端口值
-	ImpressionUri string `mapstructure:"impression-uri" json:"impression-uri" yaml:"impression-uri"`
-	ClickUri      string `mapstructure:"click-uri" json:"click-uri" yaml:"click-uri"`
+	Port       int        `mapstructure:"port" json:"port" yaml:"port"` // 端口值
+	Impression Impression `mapstructure:"impression" json:"impression" yaml:"impression"`
+	Click      Click      `mapstructure:"click" json:"click" yaml:"click"`
+}
+
+type Impression struct {
+	Uri   string `mapstructure:"uri" json:"uri" yaml:"uri"`
+	Topic string `json:"topic" yaml:"topic" mapstructure:"topic"`
+}
+
+type Click struct {
+	Uri   string `mapstructure:"uri" json:"uri" yaml:"uri"`
+	Topic string `json:"topic" yaml:"topic" mapstructure:"topic"`
 }
