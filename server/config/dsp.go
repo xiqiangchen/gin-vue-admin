@@ -11,8 +11,9 @@ type Dsp struct {
 }
 
 type Bid struct {
-	Port int    `mapstructure:"port" json:"port" yaml:"port"` // 端口值
-	Uri  string `mapstructure:"uri" json:"uri" yaml:"uri"`
+	Port  int    `mapstructure:"port" json:"port" yaml:"port"` // 端口值
+	Uri   string `mapstructure:"uri" json:"uri" yaml:"uri"`
+	Topic string `json:"topic" yaml:"topic" mapstructure:"topic"`
 }
 type Track struct {
 	Port       int        `mapstructure:"port" json:"port" yaml:"port"` // 端口值

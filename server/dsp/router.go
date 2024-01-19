@@ -43,8 +43,7 @@ func Routers() *gin.Engine {
 	}
 	{
 		dspRouter.InitBidRouter(PublicGroup)
-		dspRouter.InitImpressionRouter(PublicGroup) // 注册基础功能路由 不做鉴权
-		dspRouter.InitClickRouter(PublicGroup)      // 自动初始化相关
+		dspRouter.InitTrackRouter(PublicGroup) // 注册监测功能路由
 	}
 	global.GVA_LOG.Info("router register success")
 	return Router

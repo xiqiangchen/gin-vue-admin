@@ -235,6 +235,7 @@ dsp:
     bid:
         port: 18888
         uri: /bid
+        topic: test
     track:
         port: 18889
         impression:
