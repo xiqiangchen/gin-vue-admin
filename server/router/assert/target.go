@@ -15,13 +15,13 @@ func (s *TargetRouter) InitTargetRouter(Router *gin.RouterGroup) {
 	targetRouterWithoutRecord := Router.Group("target")
 	var targetApi = v1.ApiGroupApp.AssertApiGroup.TargetApi
 	{
-		targetRouter.POST("createTarget", targetApi.CreateTarget)   // 新建定向包
-		targetRouter.DELETE("deleteTarget", targetApi.DeleteTarget) // 删除定向包
+		targetRouter.POST("createTarget", targetApi.CreateTarget)             // 新建定向包
+		targetRouter.DELETE("deleteTarget", targetApi.DeleteTarget)           // 删除定向包
 		targetRouter.DELETE("deleteTargetByIds", targetApi.DeleteTargetByIds) // 批量删除定向包
-		targetRouter.PUT("updateTarget", targetApi.UpdateTarget)    // 更新定向包
+		targetRouter.PUT("updateTarget", targetApi.UpdateTarget)              // 更新定向包
 	}
 	{
-		targetRouterWithoutRecord.GET("findTarget", targetApi.FindTarget)        // 根据ID获取定向包
-		targetRouterWithoutRecord.GET("getTargetList", targetApi.GetTargetList)  // 获取定向包列表
+		targetRouterWithoutRecord.GET("findTarget", targetApi.FindTarget)       // 根据ID获取定向包
+		targetRouterWithoutRecord.GET("getTargetList", targetApi.GetTargetList) // 获取定向包列表
 	}
 }

@@ -15,13 +15,13 @@ func (s *PlanRouter) InitPlanRouter(Router *gin.RouterGroup) {
 	planRouterWithoutRecord := Router.Group("plan")
 	var planApi = v1.ApiGroupApp.AdApiGroup.PlanApi
 	{
-		planRouter.POST("createPlan", planApi.CreatePlan)   // 新建广告计划
-		planRouter.DELETE("deletePlan", planApi.DeletePlan) // 删除广告计划
+		planRouter.POST("createPlan", planApi.CreatePlan)             // 新建广告计划
+		planRouter.DELETE("deletePlan", planApi.DeletePlan)           // 删除广告计划
 		planRouter.DELETE("deletePlanByIds", planApi.DeletePlanByIds) // 批量删除广告计划
-		planRouter.PUT("updatePlan", planApi.UpdatePlan)    // 更新广告计划
+		planRouter.PUT("updatePlan", planApi.UpdatePlan)              // 更新广告计划
 	}
 	{
-		planRouterWithoutRecord.GET("findPlan", planApi.FindPlan)        // 根据ID获取广告计划
-		planRouterWithoutRecord.GET("getPlanList", planApi.GetPlanList)  // 获取广告计划列表
+		planRouterWithoutRecord.GET("findPlan", planApi.FindPlan)       // 根据ID获取广告计划
+		planRouterWithoutRecord.GET("getPlanList", planApi.GetPlanList) // 获取广告计划列表
 	}
 }

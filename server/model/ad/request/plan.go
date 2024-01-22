@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-type PlanSearch struct{
-    ad.Plan
-    StartCreatedAt *time.Time `json:"startCreatedAt" form:"startCreatedAt"`
-    EndCreatedAt   *time.Time `json:"endCreatedAt" form:"endCreatedAt"`
-    request.PageInfo
+type PlanSearch struct {
+	ad.Plan
+	StartCreatedAt *time.Time `json:"startCreatedAt" form:"startCreatedAt"`
+	EndCreatedAt   *time.Time `json:"endCreatedAt" form:"endCreatedAt"`
+	request.PageInfo
 }

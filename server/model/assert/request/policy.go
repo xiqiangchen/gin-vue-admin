@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-type PolicySearch struct{
-    assert.Policy
-    StartCreatedAt *time.Time `json:"startCreatedAt" form:"startCreatedAt"`
-    EndCreatedAt   *time.Time `json:"endCreatedAt" form:"endCreatedAt"`
-    request.PageInfo
+type PolicySearch struct {
+	assert.Policy
+	StartCreatedAt *time.Time `json:"startCreatedAt" form:"startCreatedAt"`
+	EndCreatedAt   *time.Time `json:"endCreatedAt" form:"endCreatedAt"`
+	request.PageInfo
 }

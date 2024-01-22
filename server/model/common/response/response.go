@@ -58,3 +58,7 @@ func FailWithDetailed(data interface{}, message string, c *gin.Context) {
 func IllegalWithMessage(message string, c *gin.Context) {
 	Result(Illegal, map[string]interface{}{}, message, c)
 }
+
+func NoContent(c *gin.Context) {
+	c.Writer.WriteHeader(http.StatusNoContent)
+}

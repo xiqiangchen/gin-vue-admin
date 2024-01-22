@@ -18,6 +18,7 @@ func (clickApi *ClickApi) ClickTrack(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+
 	if err := clk.Check(); err != nil {
 		response.IllegalWithMessage("非法请求", c)
 		return
