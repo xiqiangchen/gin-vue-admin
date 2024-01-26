@@ -3,7 +3,6 @@ package {{.Package}}
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
     "github.com/flipped-aurora/gin-vue-admin/server/model/{{.Package}}"
-    "github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
     {{.Package}}Req "github.com/flipped-aurora/gin-vue-admin/server/model/{{.Package}}/request"
     "github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
     "github.com/flipped-aurora/gin-vue-admin/server/service"
@@ -58,16 +57,11 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Create{{.StructName}}(c *gin.Con
 // @Success 200 {string} string "{"success":true,"data":{},"msg":"删除成功"}"
 // @Router /{{.Abbreviation}}/delete{{.StructName}} [delete]
 func ({{.Abbreviation}}Api *{{.StructName}}Api) Delete{{.StructName}}(c *gin.Context) {
-	var {{.Abbreviation}} {{.Package}}.{{.StructName}}
-	err := c.ShouldBindJSON(&{{.Abbreviation}})
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
+	{{.PrimaryField.FieldJson}} := c.Query("{{.PrimaryField.FieldJson}}")
 		{{- if .AutoCreateResource }}
-    {{.Abbreviation}}.DeletedBy = utils.GetUserID(c)
+    	userID := utils.GetUserID(c)
         {{- end }}
-	if err := {{.Abbreviation}}Service.Delete{{.StructName}}({{.Abbreviation}}); err != nil {
+	if err := {{.Abbreviation}}Service.Delete{{.StructName}}({{.PrimaryField.FieldJson}} {{- if .AutoCreateResource -}},userID{{- end -}}); err != nil {
         global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
 	} else {
@@ -81,20 +75,14 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Delete{{.StructName}}(c *gin.Con
 // @Security ApiKeyAuth
 // @accept application/json
 // @Produce application/json
-// @Param data body request.IdsReq true "批量删除{{.Description}}"
 // @Success 200 {string} string "{"success":true,"data":{},"msg":"批量删除成功"}"
 // @Router /{{.Abbreviation}}/delete{{.StructName}}ByIds [delete]
 func ({{.Abbreviation}}Api *{{.StructName}}Api) Delete{{.StructName}}ByIds(c *gin.Context) {
-	var IDS request.IdsReq
-    err := c.ShouldBindJSON(&IDS)
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
+	{{.PrimaryField.FieldJson}}s := c.QueryArray("{{.PrimaryField.FieldJson}}s[]")
     	{{- if .AutoCreateResource }}
-    deletedBy := utils.GetUserID(c)
+    userID := utils.GetUserID(c)
         {{- end }}
-	if err := {{.Abbreviation}}Service.Delete{{.StructName}}ByIds(IDS{{- if .AutoCreateResource }},deletedBy{{- end }}); err != nil {
+	if err := {{.Abbreviation}}Service.Delete{{.StructName}}ByIds({{.PrimaryField.FieldJson}}s{{- if .AutoCreateResource }},userID{{- end }}); err != nil {
         global.GVA_LOG.Error("批量删除失败!", zap.Error(err))
 		response.FailWithMessage("批量删除失败", c)
 	} else {
@@ -140,13 +128,8 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Update{{.StructName}}(c *gin.Con
 // @Success 200 {string} string "{"success":true,"data":{},"msg":"查询成功"}"
 // @Router /{{.Abbreviation}}/find{{.StructName}} [get]
 func ({{.Abbreviation}}Api *{{.StructName}}Api) Find{{.StructName}}(c *gin.Context) {
-	var {{.Abbreviation}} {{.Package}}.{{.StructName}}
-	err := c.ShouldBindQuery(&{{.Abbreviation}})
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	if re{{.Abbreviation}}, err := {{.Abbreviation}}Service.Get{{.StructName}}({{.Abbreviation}}.ID); err != nil {
+	{{.PrimaryField.FieldJson}} := c.Query("{{.PrimaryField.FieldJson}}")
+	if re{{.Abbreviation}}, err := {{.Abbreviation}}Service.Get{{.StructName}}({{.PrimaryField.FieldJson}}); err != nil {
         global.GVA_LOG.Error("查询失败!", zap.Error(err))
 		response.FailWithMessage("查询失败", c)
 	} else {

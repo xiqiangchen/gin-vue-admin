@@ -11,6 +11,7 @@ import vuePlugin from '@vitejs/plugin-vue'
 import GvaPosition from './vitePlugin/gvaPosition'
 import GvaPositionServer from './vitePlugin/codeServer'
 import fullImportPlugin from './vitePlugin/fullImport/fullImport.js'
+import { svgBuilder } from './vitePlugin/svgIcon/svgIcon.js'
 // @see https://cn.vitejs.dev/config/
 export default ({
   command,
@@ -42,9 +43,9 @@ export default ({
 
   const rollupOptions = {
     output: {
-      entryFileNames: '087AC4D233B64EB0[name].js',
-      chunkFileNames: '087AC4D233B64EB0[name].js',
-      assetFileNames: '087AC4D233B64EB0[name].[ext]',
+      entryFileNames: 'assets/087AC4D233B64EB0[name].js',
+      chunkFileNames: 'assets/087AC4D233B64EB0[name].js',
+      assetFileNames: 'assets/087AC4D233B64EB0[name].[ext]',
     },
   }
 
@@ -81,12 +82,13 @@ export default ({
     esbuild,
     optimizeDeps,
     plugins: [
-      GvaPositionServer(),
-      GvaPosition(),
+      process.env.VITE_POSITION === 'open' && GvaPositionServer(),
+      process.env.VITE_POSITION === 'open' && GvaPosition(),
       legacyPlugin({
         targets: ['Android > 39', 'Chrome >= 60', 'Safari >= 10.1', 'iOS >= 10.3', 'Firefox >= 54', 'Edge >= 15'],
       }),
       vuePlugin(),
+      svgBuilder('./src/assets/icons/'),
       [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)]
     ],
     css: {
