@@ -77,15 +77,18 @@ captcha:
 # mysql connect configuration
 # 未初始化之前请勿手动修改数据库信息！！！如果一定要手动初始化请看（https://gin-vue-admin.com/docs/first_master）
 mysql:
-  path: ""
-  port: ""
-  config: ""
-  db-name: ""
-  username: ""
-  password: ""
+  prefix: ""
+  port: "3306"
+  config: charset=utf8mb4&parseTime=True&loc=Local
+  db-name: gva
+  username: root
+  password: 1q2w3e4r
+  path: 127.0.0.1
+  engine: ""
+  log-mode: error
   max-idle-conns: 10
   max-open-conns: 100
-  log-mode: ""
+  singular: false
   log-zap: false
 
 # pgsql connect configuration
@@ -241,3 +244,34 @@ cors:
       allow-methods: GET, POST
       expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
       allow-credentials: true # 布尔值
+
+kafka:
+  brokers:
+    - 192.168.10.60:29092
+  producer:
+    topic: test
+    parallel: 1
+  consumer:
+    group: test
+    topics:
+      - test
+    parallel: 1
+    oldest: false
+dsp:
+  env: local
+  router-prefix: ""
+  use-kafka: true
+  use-mongo: false
+  use-redis: false
+  bid:
+    port: 18888
+    uri: /bid
+    topic: test
+  track:
+    port: 18889
+    impression:
+      uri: /imp
+      topic: test
+    click:
+      uri: /clk
+      topic: test
