@@ -1,7 +1,7 @@
 package adapter
 
 import (
-	"github.com/flipped-aurora/gin-vue-admin/server/dsp"
+	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/golang/protobuf/proto"
@@ -18,7 +18,7 @@ func NewDefaultAdapter(adxId ...int) *defaultAdapter {
 	if len(adxId) > 0 {
 		return &defaultAdapter{AdxId: adxId[0]}
 	}
-	return &defaultAdapter{AdxId: dsp.DefaultAdxId}
+	return &defaultAdapter{AdxId: constant.DefaultAdxId}
 
 }
 
@@ -41,9 +41,9 @@ func (d *defaultAdapter) GetAdxId() int {
 }
 
 func (d *defaultAdapter) GetProtocol() int {
-	return dsp.DefaultProtocol
+	return constant.DefaultProtocol
 }
 
 func (d *defaultAdapter) GetAdxPriceMacro() string {
-	return dsp.DefaultPriceMacro
+	return constant.DefaultPriceMacro
 }

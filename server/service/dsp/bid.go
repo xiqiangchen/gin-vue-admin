@@ -1,12 +1,14 @@
 package dsp
 
 import (
+	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/adapter"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type BidService struct {
@@ -55,6 +57,37 @@ func filters(req *bid.BidRequest) (campaigns []*ad.Campaign) {
 	// 填充曝光
 	// 填充点击
 	// 响应
+	for _, c := range dbid.ActiveCampaigns {
+		if v, exists := dbid.AdFrequency[c.GetImpFrequencyKey()]; !exists {
+			continue
+		} else if dev := req.GetDevice(); dev != nil {
+			switch strings.ToLower(dev.GetOs()) {
+			case "ios":
+				if len(dev.GetCaid()) > 0 {
+					if times, e := v.Get(dev.GetCaid()); e {
+						if times.(int) >= c.GetImpFrequency() {
+							continue
+						}
+					}
+				}
+			case "android":
+				if len(dev.GetOaidmd5()) > 0 {
+					if times, e := v.Get(dev.GetOaidmd5()); e {
+						if times.(int) >= c.GetImpFrequency() {
+							continue
+						}
+					}
+				} else if len(dev.GetDidmd5()) > 0 {
+					if times, e := v.Get(dev.GetDidmd5()); e {
+						if times.(int) >= c.GetImpFrequency() {
+							continue
+						}
+					}
+				}
+			}
+		}
+		campaigns = append(campaigns, c)
+	}
 
 	return
 }

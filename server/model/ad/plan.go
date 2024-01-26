@@ -37,3 +37,39 @@ type Plan struct {
 func (Plan) TableName() string {
 	return "plans"
 }
+
+func (p Plan) GetImpFrequencyKey() int {
+	return int(p.CreatedBy*10000+p.ID*10) + 1
+}
+
+func (p Plan) GetClkFrequencyKey() int {
+	return int(p.CreatedBy*10000+p.ID*10) + 1
+}
+
+func (p Plan) GetClkFrequency() int {
+	if p.ClkFrequency != nil {
+		return *p.ClkFrequency
+	}
+	return 0
+}
+
+func (p Plan) GetImpFrequency() int {
+	if p.ImpFrequency != nil {
+		return *p.ImpFrequency
+	}
+	return 0
+}
+
+func (p Plan) GetImpFrequencyMinute() int {
+	if p.ImpFrequencyMinute != nil {
+		return *p.ImpFrequencyMinute
+	}
+	return 0
+}
+
+func (p Plan) GetClkFrequencyMinute() int {
+	if p.ClkFrequencyMinute != nil {
+		return *p.ClkFrequencyMinute
+	}
+	return 0
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/dsp"
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
@@ -47,6 +48,9 @@ func main() {
 		// 程序结束前关闭数据库链接
 		db, _ := global.GVA_DB.DB()
 		defer db.Close()
+
+		bid.Load()
+		initialize.BidTimer()
 	}
 	dsp.RunServer()
 }

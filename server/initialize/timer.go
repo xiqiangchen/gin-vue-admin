@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"fmt"
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/task"
 
 	"github.com/robfig/cron/v3"
@@ -33,5 +34,23 @@ func Timer() {
 		//if err != nil {
 		//	fmt.Println("add timer error:", err)
 		//}
+	}()
+}
+
+func BidTimer() {
+
+	go func() {
+		var option []cron.Option
+		option = append(option, cron.WithSeconds())
+		// 清理DB定时任务
+		_, err := global.GVA_Timer.AddTaskByFunc("LoadPlans", "@every 5m", func() {
+			if e := bid.Load(); e != nil {
+				fmt.Println("bid load campaigns error:", e)
+			}
+		}, "定时更新计划和活动", option...)
+		if err != nil {
+			fmt.Println("add bid timer error:", err)
+		}
+
 	}()
 }

@@ -4,6 +4,8 @@ package ad
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/assert"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"math/rand"
 	"time"
 )
 
@@ -56,4 +58,73 @@ type Campaign struct {
 // TableName 活动 Campaign自定义表名 campaigns
 func (Campaign) TableName() string {
 	return "campaigns"
+}
+
+func (c Campaign) GetHours() []int {
+	if c.Hours != nil {
+		return utils.ToArrFromBitInt(*(c.Hours))
+	}
+	return nil
+}
+
+func (c Campaign) IsInHours() bool {
+	if c.Hours == nil {
+		return true
+	}
+	now := time.Now().Hour()
+
+	for _, hour := range c.GetHours() {
+		if now == hour {
+			return true
+		}
+	}
+	return false
+}
+
+func (c Campaign) GetBidPrice() float64 {
+	if c.BidMode == nil {
+		return *c.BidPrice
+	}
+	switch *c.BidMode {
+	case 0, 2:
+		return ((rand.Float64()-0.5)*0.2 + 1) * (*c.BidPrice)
+	default:
+		return *c.BidPrice
+	}
+}
+
+func (c Campaign) GetImpFrequencyKey() int {
+	return int(c.CreatedBy*10000000+c.PlanId*10000+c.ID*10) + 1
+}
+
+func (c Campaign) GetClkFrequencyKey() int {
+	return int(c.CreatedBy*10000000+c.PlanId*10000+c.ID*10) + 2
+}
+
+func (c Campaign) GetClkFrequency() int {
+	if c.ClkFrequency != nil {
+		return *c.ClkFrequency
+	}
+	return 0
+}
+
+func (c Campaign) GetImpFrequency() int {
+	if c.ImpFrequency != nil {
+		return *c.ImpFrequency
+	}
+	return 0
+}
+
+func (c Campaign) GetImpFrequencyMinute() int {
+	if c.ImpFrequencyMinute != nil {
+		return *c.ImpFrequencyMinute
+	}
+	return 0
+}
+
+func (c Campaign) GetClkFrequencyMinute() int {
+	if c.ClkFrequencyMinute != nil {
+		return *c.ClkFrequencyMinute
+	}
+	return 0
 }
