@@ -14,6 +14,7 @@ import (
 var ActiveCampaigns []*ad.Campaign
 var AdFrequency = make(map[int]local_cache.Cache) // 曝光、点击控制
 
+// 定期扫描符合投放条件的活动
 func Load() error {
 	plans := loadPlans()
 	var campaigns []*ad.Campaign

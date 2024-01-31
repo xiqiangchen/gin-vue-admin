@@ -51,43 +51,15 @@ func filters(req *bid.BidRequest) (campaigns []*ad.Campaign) {
 	// 活动定向包过滤
 	// 模板创意素材过滤
 	// 价格过滤
-
 	// 计算出价
 	// 填充创意
 	// 填充曝光
 	// 填充点击
 	// 响应
-	for _, c := range dbid.ActiveCampaigns {
-		if v, exists := dbid.AdFrequency[c.GetImpFrequencyKey()]; !exists {
-			continue
-		} else if dev := req.GetDevice(); dev != nil {
-			switch strings.ToLower(dev.GetOs()) {
-			case "ios":
-				if len(dev.GetCaid()) > 0 {
-					if times, e := v.Get(dev.GetCaid()); e {
-						if times.(int) >= c.GetImpFrequency() {
-							continue
-						}
-					}
-				}
-			case "android":
-				if len(dev.GetOaidmd5()) > 0 {
-					if times, e := v.Get(dev.GetOaidmd5()); e {
-						if times.(int) >= c.GetImpFrequency() {
-							continue
-						}
-					}
-				} else if len(dev.GetDidmd5()) > 0 {
-					if times, e := v.Get(dev.GetDidmd5()); e {
-						if times.(int) >= c.GetImpFrequency() {
-							continue
-						}
-					}
-				}
-			}
-		}
-		campaigns = append(campaigns, c)
-	}
+
+	// 状态过滤、投放周期过滤、投放时间段、预算过滤都在dbid.ActiveCampaigns
+	// 曝光频次过滤
+	campaigns = filterByFrequencies(req, dbid.ActiveCampaigns)
 
 	return
 }
@@ -100,4 +72,48 @@ func bids() {
 // 补充必要信息
 func fill() {
 
+}
+
+func filterByFrequencies(req *bid.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
+	for _, c := range cs {
+		if filterByFrequency(req, c.GetImpFrequencyKey(), c.GetImpFrequencyMinute()) {
+			continue
+		}
+		if filterByFrequency(req, c.GetClkFrequencyKey(), c.GetClkFrequencyMinute()) {
+			continue
+		}
+	}
+	return
+}
+
+func filterByFrequency(req *bid.BidRequest, frequencyKey, frequency int) bool {
+	if v, exists := dbid.AdFrequency[frequencyKey]; !exists {
+		return false
+	} else if dev := req.GetDevice(); dev != nil {
+		switch strings.ToLower(dev.GetOs()) {
+		case "ios":
+			if len(dev.GetCaid()) > 0 {
+				if times, e := v.Get(dev.GetCaid()); e {
+					if times.(int) >= frequency {
+						return true
+					}
+				}
+			}
+		case "android":
+			if len(dev.GetOaidmd5()) > 0 {
+				if times, e := v.Get(dev.GetOaidmd5()); e {
+					if times.(int) >= frequency {
+						return true
+					}
+				}
+			} else if len(dev.GetDidmd5()) > 0 {
+				if times, e := v.Get(dev.GetDidmd5()); e {
+					if times.(int) >= frequency {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
