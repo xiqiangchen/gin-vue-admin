@@ -5,6 +5,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -125,6 +126,116 @@ func (c Campaign) GetImpFrequencyMinute() int {
 func (c Campaign) GetClkFrequencyMinute() int {
 	if c.ClkFrequencyMinute != nil {
 		return *c.ClkFrequencyMinute
+	}
+	return 0
+}
+
+func (c Campaign) GetStatus() bool {
+	if c.Status != nil {
+		return *c.Status
+	}
+	return false
+}
+func (c Campaign) GetFilter() bool {
+	if c.Filter != nil {
+		return *c.Filter
+	}
+	return false
+}
+func (c Campaign) GetStartAt() time.Time {
+	if c.StartAt != nil {
+		return *c.StartAt
+	}
+	return time.Unix(1715149854, 0)
+}
+
+func (c Campaign) GetEndAt() time.Time {
+	if c.EndAt != nil {
+		return *c.EndAt
+	}
+	return time.Unix(4081300254, 0)
+}
+func (c Campaign) GetBudgetTotal() int {
+	if c.BudgetTotal != nil {
+		return *c.BudgetTotal
+	}
+	return math.MaxInt
+}
+func (c Campaign) GetBudgetDaily() int {
+	if c.BudgetDaily != nil {
+		return *c.BudgetDaily
+	}
+	return math.MaxInt
+}
+func (c Campaign) GetImpTotal() int {
+	if c.ImpTotal != nil {
+		return *c.ImpTotal
+	}
+	return math.MaxInt
+}
+func (c Campaign) GetImpDaily() int {
+	if c.ImpDaily != nil {
+		return *c.ImpDaily
+	}
+	return math.MaxInt
+}
+func (c Campaign) GetCtrMax() float64 {
+	if c.CtrMax != nil {
+		return *c.CtrMax
+	}
+	return math.MaxInt
+}
+func (c Campaign) GetCtrMin() float64 {
+	if c.CtrMin != nil {
+		return *c.CtrMin
+	}
+	return 0
+}
+func (c Campaign) GetTargetId() int {
+	if c.TargetId != nil {
+		return *c.TargetId
+	}
+	return 0
+}
+func (c Campaign) GetBwlistId() int {
+	if c.BwlistId != nil {
+		return *c.BwlistId
+	}
+	return 0
+}
+func (c Campaign) GetPolicyId() int {
+	if c.PolicyId != nil {
+		return *c.PolicyId
+	}
+	return 0
+}
+func (c Campaign) GetBidMethod() int {
+	if c.BidMethod != nil {
+		return *c.BidMethod
+	}
+	return 0
+}
+func (c Campaign) GetBidMode() int {
+	if c.BidMode != nil {
+		return *c.BidMode
+	}
+	return 0
+}
+func (c Campaign) GetAllowVirtually() bool {
+	if c.AllowVirtually != nil {
+		return *c.AllowVirtually
+	}
+	return false
+}
+func (c Campaign) GetIsVirtually() bool {
+	if c.IsVirtually != nil {
+		return *c.IsVirtually
+	}
+	return false
+}
+func (c Campaign) GetCreativeMode() int {
+	if c.CreativeMode != nil {
+		return *c.CreativeMode
 	}
 	return 0
 }
