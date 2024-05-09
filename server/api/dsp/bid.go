@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"io"
-	"net/http"
 	"strconv"
 )
 
@@ -16,7 +15,7 @@ type BidApi struct {
 
 var bidService = service.ServiceGroupApp.DspGroup.BidService
 
-func (bidApi *BidApi) Req(c *gin.Context) {
+func (bidApi *BidApi) Rtb(c *gin.Context) {
 	adx, ok := c.GetQuery("adx")
 	if !ok {
 		response.IllegalWithMessage("adx必填", c)
@@ -28,13 +27,9 @@ func (bidApi *BidApi) Req(c *gin.Context) {
 	if bodyBytes, err := io.ReadAll(c.Request.Body); err != nil {
 		response.NoContent(c)
 		global.GVA_LOG.Error("渠道解释失败", zap.Error(err))
-		return
-	} else if resp, offer = bidService.Bid(adxId, bodyBytes); !offer {
+	} else if resp, offer = bidService.Bid(adxId, bodyBytes, c); !offer {
 		response.NoContent(c)
-		return
 	} else {
-		c.Writer.WriteHeader(http.StatusOK)
-		c.Writer.Write(resp)
-		return
+		response.ByteContent(resp, c)
 	}
 }

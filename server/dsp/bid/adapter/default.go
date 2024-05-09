@@ -1,11 +1,14 @@
 package adapter
 
 import (
+	"encoding/json"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
+	"net/http"
+	"strings"
 )
 
 var _ Adapter = (*defaultAdapter)(nil)
@@ -22,11 +25,21 @@ func NewDefaultAdapter(adxId ...int) *defaultAdapter {
 
 }
 
-func (d *defaultAdapter) From(byt []byte) (*bid.BidRequest, error) {
+func (d *defaultAdapter) From(header http.Header, byt []byte) (*bid.BidRequest, error) {
 	req := new(bid.BidRequest)
-	if err := proto.Unmarshal(byt, req); err != nil {
-		global.GVA_LOG.Error("请求解释失败", zap.Error(err))
-		return nil, err
+	// 暂不处理压缩
+	contentType := strings.ToLower(header.Get("content-type"))
+	switch {
+	case strings.Contains(contentType, "application/json"):
+		if err := json.Unmarshal(byt, req); err != nil {
+			global.GVA_LOG.Error("请求解释失败", zap.Error(err))
+			return nil, err
+		}
+	default:
+		if err := proto.Unmarshal(byt, req); err != nil {
+			global.GVA_LOG.Error("请求解释失败", zap.Error(err))
+			return nil, err
+		}
 	}
 
 	return req, nil

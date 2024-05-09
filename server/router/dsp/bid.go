@@ -13,6 +13,6 @@ func (s *BidRouter) InitBidRouter(Router *gin.RouterGroup) {
 	bidRouter := Router.Group("bid")
 	var bidApi = dsp.ApiGroupApp.BidApi
 	{
-		bidRouter.POST("req", bidApi.Req) // 更新广告计划
+		bidRouter.POST("rtb", bidApi.Rtb) // 更新广告计划
 	}
 }

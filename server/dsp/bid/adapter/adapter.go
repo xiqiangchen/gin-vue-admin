@@ -1,9 +1,12 @@
 package adapter
 
-import "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
+import (
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
+	"net/http"
+)
 
 type Adapter interface {
-	From(byt []byte) (*bid.BidRequest, error)
+	From(http.Header, []byte) (*bid.BidRequest, error)
 	To(response *bid.BidResponse) ([]byte, error)
 	GetAdxId() int
 	GetProtocol() int

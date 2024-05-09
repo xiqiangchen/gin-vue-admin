@@ -9,6 +9,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"math/rand"
@@ -22,12 +23,12 @@ func (bidService *BidService) SendMsg(msg []byte) {
 	utils.SendMsg(global.GVA_KAFKA_PRODUCER, global.GVA_CONFIG.Dsp.Bid.Topic, msg)
 }
 
-func (bidService *BidService) Bid(adxId int, body []byte) (resp []byte, offer bool) {
+func (bidService *BidService) Bid(adxId int, body []byte, c *gin.Context) (resp []byte, offer bool) {
 	// 从对接适配器中获取适配器
 	adxAdapter := adapter.GetAdapter(adxId)
 	var req *bid_adapter.BidRequest
 	var err error
-	if req, err = adxAdapter.From(body); err != nil {
+	if req, err = adxAdapter.From(c.Request.Header, body); err != nil {
 		global.GVA_LOG.Error("协议转换失败", zap.Error(err))
 		return nil, false
 	}
@@ -180,6 +181,9 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 	var v *ad.Creative
 	var exist bool
 
+	// TODO
+	v = campaign.Creatives[0]
+
 	//spotId, randC := kehudsp.GetYorkUCreative()
 	if imp.Banner != nil {
 		var creativeUrl string
@@ -211,9 +215,9 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 
 		tpls := imp.Native.GetTemplates()
 		if len(tpls) > 0 {
-			//tpl := tpls[0]
+			tpl := tpls[0]
 			var native *bid_adapter.NativeResponse
-			//v, native = getNative(adxId, spotId, tpl)
+			v, native = getNative(adxId, tpl, campaign.Creatives)
 			bid.AdmOneof = &bid_adapter.BidResponse_SeatBid_Bid_AdmNative{AdmNative: native}
 		}
 
@@ -252,10 +256,12 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 	return
 }
 
-func getNative(adxId int32, dspSpotId int, tpl *bid_adapter.NativeRequest) *bid_adapter.NativeResponse {
+func getNative(adxId int32, tpl *bid_adapter.NativeRequest, creatives []*ad.Creative) (*ad.Creative, *bid_adapter.NativeResponse) {
 	var imageCnt int
 	var assets []*bid_adapter.NativeResponse_Asset
 	var v *ad.Creative
+	// TODO
+	v = creatives[0]
 	for _, asset := range tpl.Assets {
 		if img := asset.GetImg(); img != nil {
 			if v == nil && img.GetType() != bid_adapter.NativeRequest_Asset_Image_MAIN {
@@ -373,7 +379,7 @@ func getNative(adxId int32, dspSpotId int, tpl *bid_adapter.NativeRequest) *bid_
 		}
 
 	}
-	return &bid_adapter.NativeResponse{
+	return v, &bid_adapter.NativeResponse{
 		Assets:     assets,
 		TemplateId: proto.String(tpl.GetTemplateId()),
 	}

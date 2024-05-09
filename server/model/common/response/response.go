@@ -62,3 +62,9 @@ func IllegalWithMessage(message string, c *gin.Context) {
 func NoContent(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
+
+func ByteContent(content []byte, c *gin.Context) {
+	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.Write(content)
+}
