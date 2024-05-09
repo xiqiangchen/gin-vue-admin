@@ -140,6 +140,7 @@ func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campai
 		if filterByFrequency(req, c.GetClkFrequencyKey(), c.GetClkFrequencyMinute()) {
 			continue
 		}
+		campaigns = append(campaigns, c)
 	}
 	return
 }
@@ -182,6 +183,9 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 	var exist bool
 
 	// TODO
+	if len(campaign.Creatives) == 0 {
+		return nil, fmt.Errorf("活动%d不存在创意", campaign.ID)
+	}
 	v = campaign.Creatives[0]
 
 	//spotId, randC := kehudsp.GetYorkUCreative()

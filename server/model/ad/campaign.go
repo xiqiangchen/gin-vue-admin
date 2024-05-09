@@ -14,7 +14,7 @@ import (
 type Campaign struct {
 	global.GVA_MODEL
 	PlanId             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"` // 关联标记
-	Plan               Plan                   `json:"plan"`
+	Plan               *Plan                  `json:"plan"`
 	Name               string                 `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                    //名称
 	Desc               string                 `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                    //描述
 	Status             *bool                  `json:"status" form:"status" gorm:"column:status;comment:状态;"`                                                       //描述
@@ -69,7 +69,7 @@ func (c Campaign) GetHours() []int {
 }
 
 func (c Campaign) IsInHours() bool {
-	if c.Hours == nil {
+	if c.Hours == nil || *c.Hours == 0 {
 		return true
 	}
 	now := time.Now().Hour()

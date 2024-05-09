@@ -85,11 +85,11 @@ mysql:
   password: 1q2w3e4r
   path: 127.0.0.1
   engine: ""
-  log-mode: error
+  log-mode: debug
   max-idle-conns: 10
   max-open-conns: 100
   singular: false
-  log-zap: false
+  log-zap: true
 
 # pgsql connect configuration
 # 未初始化之前请勿手动修改数据库信息！！！如果一定要手动初始化请看（https://gin-vue-admin.com/docs/first_master）
