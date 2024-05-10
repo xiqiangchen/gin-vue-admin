@@ -12,6 +12,7 @@ import (
 )
 
 var ActiveCampaigns []*ad.Campaign
+var Campaigns map[uint]*ad.Campaign
 var AdFrequency = make(map[int]local_cache.Cache) // 曝光、点击控制
 
 // 定期扫描符合投放条件的活动
@@ -45,8 +46,10 @@ func Load() error {
 		}
 	}
 	ActiveCampaigns = campaigns
+	cs := make(map[uint]*ad.Campaign, len(campaigns))
 
 	for _, c := range campaigns {
+		cs[c.ID] = c
 		if c.GetImpFrequency() > 0 && c.GetImpFrequencyMinute() > 0 {
 			if _, exist := AdFrequency[c.GetImpFrequencyKey()]; !exist {
 				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *c.ImpFrequencyMinute)); err != nil {
@@ -71,7 +74,7 @@ func Load() error {
 			}
 		}
 	}
-
+	Campaigns = cs
 	return nil
 }
 
