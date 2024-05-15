@@ -45,8 +45,10 @@ func (d *defaultAdapter) From(header http.Header, byt []byte) (*bid.BidRequest, 
 	return req, nil
 }
 
-func (d *defaultAdapter) To(response *bid.BidResponse) ([]byte, error) {
-	return response.Marshal()
+func (d *defaultAdapter) To(response *bid.BidResponse) (any, error) {
+	return response, nil
+	//return json.Marshal(response)
+	//return response.Marshal()
 }
 
 func (d *defaultAdapter) GetAdxId() int {

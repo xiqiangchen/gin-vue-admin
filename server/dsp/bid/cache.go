@@ -49,6 +49,7 @@ func Load() error {
 	cs := make(map[uint]*ad.Campaign, len(campaigns))
 
 	for _, c := range campaigns {
+		c.BuildCreatives()
 		cs[c.ID] = c
 		if c.GetImpFrequency() > 0 && c.GetImpFrequencyMinute() > 0 {
 			if _, exist := AdFrequency[c.GetImpFrequencyKey()]; !exist {
@@ -84,7 +85,7 @@ func loadPlans() (plans []*bid.Plan) {
 	db.Where("status = ? AND (filter is null or filter = ?) AND (start_at < ? OR start_at is null) AND (end_at > ? OR end_at is null)", constant.StatusOn, constant.Pass,
 		time.Now(), time.Now())
 
-	if err := db.Preload("Campaigns").Preload("Campaigns.Creatives").Find(&ps).Error; err != nil {
+	if err := db.Preload("Campaigns").Preload("Campaigns.Creatives").Preload("Campaigns.Creatives.Material").Find(&ps).Error; err != nil {
 
 	} else {
 		for _, p := range ps {

@@ -7,7 +7,7 @@ import (
 
 type Adapter interface {
 	From(http.Header, []byte) (*bid.BidRequest, error)
-	To(response *bid.BidResponse) ([]byte, error)
+	To(response *bid.BidResponse) (any, error)
 	GetAdxId() int
 	GetProtocol() int
 	GetAdxPriceMacro() string

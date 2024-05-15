@@ -25,6 +25,6 @@ type Creative struct {
 }
 
 // TableName 创意表 Creative自定义表名 creatives
-func (Creative) TableName() string {
+func (*Creative) TableName() string {
 	return "creatives"
 }

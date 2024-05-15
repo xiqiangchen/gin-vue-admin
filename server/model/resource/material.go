@@ -20,6 +20,10 @@ type Material struct {
 }
 
 // TableName 素材库 Material自定义表名 materials
-func (Material) TableName() string {
+func (*Material) TableName() string {
 	return "materials"
+}
+
+func (m *Material) GetAbsoluteUrl() string {
+	return global.GVA_CONFIG.System.URLPrefix + m.Url
 }

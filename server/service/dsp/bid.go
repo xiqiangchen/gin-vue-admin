@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
-	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/adapter"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
@@ -23,30 +22,21 @@ func (bidService *BidService) SendMsg(msg []byte) {
 	utils.SendMsg(global.GVA_KAFKA_PRODUCER, global.GVA_CONFIG.Dsp.Bid.Topic, msg)
 }
 
-func (bidService *BidService) Bid(adxId int, body []byte, c *gin.Context) (resp []byte, offer bool) {
-	// 从对接适配器中获取适配器
-	adxAdapter := adapter.GetAdapter(adxId)
-	var req *bid_adapter.BidRequest
-	var err error
-	if req, err = adxAdapter.From(c.Request.Header, body); err != nil {
-		global.GVA_LOG.Error("协议转换失败", zap.Error(err))
-		return nil, false
-	}
+func (bidService *BidService) Bid(req *bid_adapter.BidRequest, c *gin.Context) (*bid_adapter.BidResponse, bool) {
+
 	var campaigns []*ad.Campaign
 	if campaigns = filters(req); len(campaigns) == 0 {
 		return nil, false
 	}
 	if winCampaign := selectCampaign(campaigns); winCampaign != nil {
-		if bidResp, err := offerByCampaign(req, winCampaign); err != nil {
+		if resp, err := offerByCampaign(req, winCampaign); err != nil {
 			global.GVA_LOG.Error("出价活动转换bidResp协议失败", zap.Error(err))
-		} else if resp, err = adxAdapter.To(bidResp); err != nil {
-			global.GVA_LOG.Error("bidResp转换协议失败", zap.Error(err))
 		} else {
-			offer = true
+			return resp, true
 		}
 	}
+	return nil, false
 
-	return
 }
 
 // 根据活动填充出价响应
@@ -179,6 +169,7 @@ func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int)
 
 func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaign *ad.Campaign) (bid *bid_adapter.BidResponse_SeatBid_Bid, err error) {
 
+	var cid uint
 	var v *ad.Creative
 	var exist bool
 
@@ -186,7 +177,7 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 	if len(campaign.Creatives) == 0 {
 		return nil, fmt.Errorf("活动%d不存在创意", campaign.ID)
 	}
-	v = campaign.Creatives[0]
+	//v = campaign.Creatives[0]
 
 	//spotId, randC := kehudsp.GetYorkUCreative()
 	if imp.Banner != nil {
@@ -194,6 +185,10 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 		//v, creativeUrl, exist = GetNearlyCreative(imp.Banner.GetW(), imp.Banner.GetH())
 		if !exist {
 			//return nil, fmt.Errorf("创意尺寸不存在，广告位: %d, 尺寸:%dx%d", spotId, imp.Banner.GetW(), imp.Banner.GetH())
+		}
+
+		if v, exist = campaign.SelectCreative(1, int(imp.Banner.GetW()), int(imp.Banner.GetH())); v != nil && exist && v.Material != nil {
+			creativeUrl = v.Material.GetAbsoluteUrl()
 		}
 
 		bid = &bid_adapter.BidResponse_SeatBid_Bid{
@@ -221,13 +216,13 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 		if len(tpls) > 0 {
 			tpl := tpls[0]
 			var native *bid_adapter.NativeResponse
-			v, native = getNative(adxId, tpl, campaign.Creatives)
+			v, native = getNative(adxId, tpl, campaign)
 			bid.AdmOneof = &bid_adapter.BidResponse_SeatBid_Bid_AdmNative{AdmNative: native}
 		}
 
 	}
 	if video := imp.Video; video != nil {
-
+		v, exist = campaign.SelectCreative(2, int(imp.Video.GetW()), int(imp.Video.GetH()))
 		bid = &bid_adapter.BidResponse_SeatBid_Bid{
 			Id:    proto.String(id),
 			Impid: proto.String(imp.GetId()),
@@ -242,9 +237,12 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 		if !exist {
 			//return nil, fmt.Errorf("创意尺寸不存在，广告位: %d, 尺寸:%dx%d", spotId, imp.Banner.GetW(), imp.Banner.GetH())
 		}
-		bid.CreativeUrl = proto.String(v.Material.Url)
+		bid.CreativeUrl = proto.String(v.Material.GetAbsoluteUrl())
 	}
-	bid.Crid = proto.String(fmt.Sprintf("%v_%v_%v", campaign.PlanId, campaign.ID, v.ID))
+	if v != nil {
+		cid = v.ID
+	}
+	bid.Crid = proto.String(fmt.Sprintf("%v_%v_%v", campaign.PlanId, campaign.ID, cid))
 
 	// 监测
 	//bid.Nurl = proto.String(kehudsp.GetGlobalImpUrl(randC.ImpUrl))
@@ -260,22 +258,23 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 	return
 }
 
-func getNative(adxId int32, tpl *bid_adapter.NativeRequest, creatives []*ad.Creative) (*ad.Creative, *bid_adapter.NativeResponse) {
+func getNative(adxId int32, tpl *bid_adapter.NativeRequest, campaign *ad.Campaign) (*ad.Creative, *bid_adapter.NativeResponse) {
 	var imageCnt int
 	var assets []*bid_adapter.NativeResponse_Asset
-	var v *ad.Creative
+	//var v *ad.Creative
 	// TODO
-	v = creatives[0]
-	for _, asset := range tpl.Assets {
-		if img := asset.GetImg(); img != nil {
-			if v == nil && img.GetType() != bid_adapter.NativeRequest_Asset_Image_MAIN {
-				//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
-			} else if img.GetType() == bid_adapter.NativeRequest_Asset_Image_MAIN {
-				//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
+	/*
+		for _, asset := range tpl.Assets {
+			if img := asset.GetImg(); img != nil {
+				if v == nil && img.GetType() != bid_adapter.NativeRequest_Asset_Image_MAIN {
+					//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
+				} else if img.GetType() == bid_adapter.NativeRequest_Asset_Image_MAIN {
+					//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
+				}
 			}
-		}
-	}
+		}*/
 
+	var titleAd *ad.Creative
 	for _, asset := range tpl.Assets {
 		if img := asset.GetImg(); img != nil {
 			switch adxId {
@@ -284,45 +283,44 @@ func getNative(adxId int32, tpl *bid_adapter.NativeRequest, creatives []*ad.Crea
 					continue
 				}
 			}
-
+			if v, exist := campaign.SelectCreative(1, int(img.GetW()), int(img.GetH())); exist && v.Material != nil {
+				titleAd = v
+				assets = append(assets, &bid_adapter.NativeResponse_Asset{
+					Id:       asset.Id,
+					Required: asset.Required,
+					AssetOneof: &bid_adapter.NativeResponse_Asset_Img{Img: &bid_adapter.NativeResponse_Asset_Image{
+						Url:  proto.String(v.Material.GetAbsoluteUrl()),
+						W:    img.W,
+						H:    img.H,
+						Type: bid_adapter.NativeResponse_Asset_Image_ImageAssetType(img.GetType()).Enum(),
+					}},
+				})
+				imageCnt++
+			}
 			//_, creativeUrl, _ := kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
 
-			assets = append(assets, &bid_adapter.NativeResponse_Asset{
-				Id:       asset.Id,
-				Required: asset.Required,
-				AssetOneof: &bid_adapter.NativeResponse_Asset_Img{Img: &bid_adapter.NativeResponse_Asset_Image{
-					//		Url:  proto.String(creativeUrl),
-					W:    img.W,
-					H:    img.H,
-					Type: bid_adapter.NativeResponse_Asset_Image_ImageAssetType(img.GetType()).Enum(),
-				}},
-			})
-			imageCnt++
 		}
 
 		if video := asset.GetVideo(); video != nil {
-			//videoUrl := kehudsp.CadillacGTAVideo12800720
-			var videoUrl string
-			if video.GetW() < video.GetH() {
-				//	videoUrl = kehudsp.CadillacGTAVideo7201280
+			if v, exist := campaign.SelectCreative(2, int(video.GetW()), int(video.GetH())); exist && v.Material != nil {
+				assets = append(assets, &bid_adapter.NativeResponse_Asset{
+					Id:       asset.Id,
+					Required: asset.Required,
+					AssetOneof: &bid_adapter.NativeResponse_Asset_Video_{Video: &bid_adapter.NativeResponse_Asset_Video{
+						Url:      proto.String(v.Material.GetAbsoluteUrl()),
+						W:        proto.Int32(video.GetW()),
+						H:        proto.Int32(video.GetH()),
+						Duration: proto.Int32(15),
+					}},
+				})
 			}
-			assets = append(assets, &bid_adapter.NativeResponse_Asset{
-				Id:       asset.Id,
-				Required: asset.Required,
-				AssetOneof: &bid_adapter.NativeResponse_Asset_Video_{Video: &bid_adapter.NativeResponse_Asset_Video{
-					Url:      proto.String(videoUrl),
-					W:        proto.Int32(video.GetW()),
-					H:        proto.Int32(video.GetH()),
-					Duration: proto.Int32(15),
-				}},
-			})
 		}
 
 		if title := asset.GetTitle(); title != nil {
 			//var val kehudsp.CommonTitle
 			var val []rune
-			if v != nil && len(v.Title) > 0 {
-				val = []rune(v.Title)
+			if titleAd != nil && len(titleAd.Title) > 0 {
+				val = []rune(titleAd.Title)
 				switch adxId {
 				case 30120:
 				case 30190:
@@ -362,8 +360,8 @@ func getNative(adxId int32, tpl *bid_adapter.NativeRequest, creatives []*ad.Crea
 			default:
 				var desc []rune
 				//desc := kehudsp.CommonTitle
-				if v != nil && len(v.Desc) > 0 {
-					desc = []rune(v.Desc)
+				if titleAd != nil && len(titleAd.Desc) > 0 {
+					desc = []rune(titleAd.Desc)
 				}
 				//if len(kehudsp.CommonTitle) >= int(data.GetLen()) {
 				//	desc = desc[:int(data.GetLen())]
@@ -383,7 +381,7 @@ func getNative(adxId int32, tpl *bid_adapter.NativeRequest, creatives []*ad.Crea
 		}
 
 	}
-	return v, &bid_adapter.NativeResponse{
+	return titleAd, &bid_adapter.NativeResponse{
 		Assets:     assets,
 		TemplateId: proto.String(tpl.GetTemplateId()),
 	}

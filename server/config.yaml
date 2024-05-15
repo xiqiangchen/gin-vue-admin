@@ -65,6 +65,8 @@ system:
   iplimit-time: 3600
   #  路由全局前缀
   router-prefix: ""
+  # 素材url前缀
+  url-prefix: "http://localhost:8080/api/"
 
 # captcha configuration
 captcha:

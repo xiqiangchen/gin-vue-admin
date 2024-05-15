@@ -2,6 +2,7 @@ package response
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,8 +64,14 @@ func NoContent(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
-func ByteContent(content []byte, c *gin.Context) {
-	c.Writer.WriteHeader(http.StatusOK)
-	c.Writer.WriteHeader(http.StatusOK)
-	c.Writer.Write(content)
+func AutoContent(resp any, c *gin.Context) {
+	// 暂不处理压缩
+	contentType := strings.ToLower(c.Request.Header.Get("content-type"))
+	switch {
+	case strings.Contains(contentType, "application/json"):
+		c.JSON(http.StatusOK, resp)
+	default:
+		c.ProtoBuf(http.StatusOK, resp)
+	}
+
 }

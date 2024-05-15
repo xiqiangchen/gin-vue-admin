@@ -857,16 +857,14 @@ const type = ref('')
 
 // 定义选项改变时的事件
 const handleSwitchChange = async(row) => {
-  if (row.status) {
-    const res = await findCampaign({ ID: row.ID })
-    if (res.code === 0) {
-        res.data.recampaign.status = row.status
-        const res2 = await updateCampaign(res.data.recampaign)
-        if (res2.code === 0) {
-          console.log("修改成功")
-          //getTableData()
-        }
-    }
+  const res = await findCampaign({ ID: row.ID })
+  if (res.code === 0) {
+      res.data.recampaign.status = row.status
+      const res2 = await updateCampaign(res.data.recampaign)
+      if (res2.code === 0) {
+        console.log("修改成功")
+        //getTableData()
+      }
   }
   
 }

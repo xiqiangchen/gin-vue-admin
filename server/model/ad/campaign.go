@@ -54,21 +54,23 @@ type Campaign struct {
 	UpdatedBy          uint                   `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy          uint                   `gorm:"column:deleted_by;comment:删除者"`
 	Creatives          []*Creative            `json:"creatives" gorm:"foreignKey:campaign_id"`
+	Images             map[int][]*Creative    `json:"images" gorm:"-"`
+	Videos             map[int][]*Creative    `json:"Videos" gorm:"-"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns
-func (Campaign) TableName() string {
+func (*Campaign) TableName() string {
 	return "campaigns"
 }
 
-func (c Campaign) GetHours() []int {
+func (c *Campaign) GetHours() []int {
 	if c.Hours != nil {
 		return utils.ToArrFromBitInt(*(c.Hours))
 	}
 	return nil
 }
 
-func (c Campaign) IsInHours() bool {
+func (c *Campaign) IsInHours() bool {
 	if c.Hours == nil || *c.Hours == 0 {
 		return true
 	}
@@ -82,7 +84,7 @@ func (c Campaign) IsInHours() bool {
 	return false
 }
 
-func (c Campaign) GetBidPrice() float64 {
+func (c *Campaign) GetBidPrice() float64 {
 	if c.BidMode == nil {
 		return *c.BidPrice
 	}
@@ -94,116 +96,116 @@ func (c Campaign) GetBidPrice() float64 {
 	}
 }
 
-func (c Campaign) GetImpFrequencyKey() int {
+func (c *Campaign) GetImpFrequencyKey() int {
 	return int(c.CreatedBy*10000000+c.PlanId*10000+c.ID*10) + 1
 }
 
-func (c Campaign) GetClkFrequencyKey() int {
+func (c *Campaign) GetClkFrequencyKey() int {
 	return int(c.CreatedBy*10000000+c.PlanId*10000+c.ID*10) + 2
 }
 
-func (c Campaign) GetClkFrequency() int {
+func (c *Campaign) GetClkFrequency() int {
 	if c.ClkFrequency != nil {
 		return *c.ClkFrequency
 	}
 	return 0
 }
 
-func (c Campaign) GetImpFrequency() int {
+func (c *Campaign) GetImpFrequency() int {
 	if c.ImpFrequency != nil {
 		return *c.ImpFrequency
 	}
 	return 0
 }
 
-func (c Campaign) GetImpFrequencyMinute() int {
+func (c *Campaign) GetImpFrequencyMinute() int {
 	if c.ImpFrequencyMinute != nil {
 		return *c.ImpFrequencyMinute
 	}
 	return 0
 }
 
-func (c Campaign) GetClkFrequencyMinute() int {
+func (c *Campaign) GetClkFrequencyMinute() int {
 	if c.ClkFrequencyMinute != nil {
 		return *c.ClkFrequencyMinute
 	}
 	return 0
 }
 
-func (c Campaign) GetStatus() bool {
+func (c *Campaign) GetStatus() bool {
 	if c.Status != nil {
 		return *c.Status
 	}
 	return false
 }
-func (c Campaign) GetFilter() bool {
+func (c *Campaign) GetFilter() bool {
 	if c.Filter != nil {
 		return *c.Filter
 	}
 	return false
 }
-func (c Campaign) GetStartAt() time.Time {
+func (c *Campaign) GetStartAt() time.Time {
 	if c.StartAt != nil {
 		return *c.StartAt
 	}
 	return time.Unix(1715149854, 0)
 }
 
-func (c Campaign) GetEndAt() time.Time {
+func (c *Campaign) GetEndAt() time.Time {
 	if c.EndAt != nil {
 		return *c.EndAt
 	}
 	return time.Unix(4081300254, 0)
 }
-func (c Campaign) GetBudgetTotal() int {
+func (c *Campaign) GetBudgetTotal() int {
 	if c.BudgetTotal != nil {
 		return *c.BudgetTotal
 	}
 	return math.MaxInt
 }
-func (c Campaign) GetBudgetDaily() int {
+func (c *Campaign) GetBudgetDaily() int {
 	if c.BudgetDaily != nil {
 		return *c.BudgetDaily
 	}
 	return math.MaxInt
 }
-func (c Campaign) GetImpTotal() int {
+func (c *Campaign) GetImpTotal() int {
 	if c.ImpTotal != nil {
 		return *c.ImpTotal
 	}
 	return math.MaxInt
 }
-func (c Campaign) GetImpDaily() int {
+func (c *Campaign) GetImpDaily() int {
 	if c.ImpDaily != nil {
 		return *c.ImpDaily
 	}
 	return math.MaxInt
 }
-func (c Campaign) GetCtrMax() float64 {
+func (c *Campaign) GetCtrMax() float64 {
 	if c.CtrMax != nil {
 		return *c.CtrMax
 	}
 	return math.MaxInt
 }
-func (c Campaign) GetCtrMin() float64 {
+func (c *Campaign) GetCtrMin() float64 {
 	if c.CtrMin != nil {
 		return *c.CtrMin
 	}
 	return 0
 }
-func (c Campaign) GetTargetId() int {
+func (c *Campaign) GetTargetId() int {
 	if c.TargetId != nil {
 		return *c.TargetId
 	}
 	return 0
 }
-func (c Campaign) GetBwlistId() int {
+func (c *Campaign) GetBwlistId() int {
 	if c.BwlistId != nil {
 		return *c.BwlistId
 	}
 	return 0
 }
-func (c Campaign) GetPolicyId() int {
+func (c *Campaign) GetPolicyId() int {
 	if c.PolicyId != nil {
 		return *c.PolicyId
 	}
@@ -215,27 +217,73 @@ func (c Campaign) GetBidMethod() int {
 	}
 	return 0
 }
-func (c Campaign) GetBidMode() int {
+func (c *Campaign) GetBidMode() int {
 	if c.BidMode != nil {
 		return *c.BidMode
 	}
 	return 0
 }
-func (c Campaign) GetAllowVirtually() bool {
+func (c *Campaign) GetAllowVirtually() bool {
 	if c.AllowVirtually != nil {
 		return *c.AllowVirtually
 	}
 	return false
 }
-func (c Campaign) GetIsVirtually() bool {
+func (c *Campaign) GetIsVirtually() bool {
 	if c.IsVirtually != nil {
 		return *c.IsVirtually
 	}
 	return false
 }
-func (c Campaign) GetCreativeMode() int {
+func (c *Campaign) GetCreativeMode() int {
 	if c.CreativeMode != nil {
 		return *c.CreativeMode
 	}
 	return 0
+}
+func (c *Campaign) BuildCreatives() {
+	c.Images = make(map[int][]*Creative, len(c.Creatives))
+	c.Videos = make(map[int][]*Creative, len(c.Creatives))
+	for _, cr := range c.Creatives {
+		if m := cr.Material; m != nil {
+			switch m.Type {
+			case 1:
+				c.Images[m.Width*10000+m.Height] = append(c.Images[m.Width*10000+m.Height], cr)
+			case 2:
+				c.Videos[m.Width*10000+m.Height] = append(c.Videos[m.Width*10000+m.Height], cr)
+			}
+		}
+	}
+
+}
+func (c *Campaign) SelectCreative(creativeType, width, height int) (*Creative, bool) {
+	var cMap map[int][]*Creative
+	switch creativeType {
+	case 1:
+		cMap = c.Images
+	case 2:
+		cMap = c.Videos
+	}
+	if len(cMap) > 0 {
+		if cr, exist := cMap[width*10000+height]; exist && len(cr) > 0 {
+			return cr[rand.Intn(len(cr))], true
+		}
+		return c.getNearlyCreative(cMap, width, height)
+	} else {
+		return nil, false
+	}
+}
+
+func (c *Campaign) getNearlyCreative(cmap map[int][]*Creative, w, h int) (*Creative, bool) {
+	var minC *Creative
+	var minRate = math.MaxFloat64
+	rate := float64(w) / float64(h)
+	for k, v := range cmap {
+		r := math.Abs(rate - float64(k/10000)/float64(k%10000))
+		if r < minRate {
+			minRate = r
+			minC = v[rand.Intn(len(v))]
+		}
+	}
+	return minC, minC != nil
 }
