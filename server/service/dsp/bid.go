@@ -252,6 +252,9 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 		PvtrackUrl: []string{campaign.ImpTrackUrl},
 		CtrackUrl:  []string{campaign.ClickTrackUrl},
 	}
+	if len(campaign.Deeplink)+len(campaign.UniversalLink) > 0 {
+		bid.BidExt.LdpType = bid_adapter.BidResponse_SeatBid_Bid_BidExt_DeepLink.Enum()
+	}
 
 	//bid.DspSpotId = proto.Int64(int64(spotId))
 
