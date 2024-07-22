@@ -13,8 +13,8 @@ import (
 // 活动 结构体  Campaign
 type Campaign struct {
 	global.GVA_MODEL
-	PlanId             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"` // 关联标记
-	Plan               *Plan                  `json:"plan"`
+	PlanId             uint                   `json:"plan_id" form:"plan_id" gorm:"column:plan_id;comment:计划id"`                                                   // 关联标记
+	Plan               *Plan                  `json:"plan"`                                                                                                        // 广告计划
 	Name               string                 `json:"name" form:"name" gorm:"column:name;comment:名称;size:191;"`                                                    //名称
 	Desc               string                 `json:"desc" form:"desc" gorm:"column:desc;comment:描述;size:191;"`                                                    //描述
 	Status             *bool                  `json:"status" form:"status" gorm:"column:status;comment:状态;"`                                                       //描述
@@ -41,6 +41,7 @@ type Campaign struct {
 	BidMethod          *int                   `json:"bid_method" form:"bid_method" gorm:"column:bid_method;comment:出价方式;size:10;"`                                 //出价方式
 	BidPrice           *float64               `json:"bid_price" form:"bid_price" gorm:"column:bid_price;comment:出价策略;size:10;"`                                    //出价策略
 	BidMode            *int                   `json:"bid_mode" form:"bid_mode" gorm:"column:bid_mode;comment:出价模式;"`                                               //出价模式
+	BidRate            *float64               `json:"bid_rate" form:"bid_rate" gorm:"column:bid_rate;comment:指定出价率;"`                                              //指定出价率
 	Brand              string                 `json:"brand" form:"brand" gorm:"column:brand;comment:品牌名称;size:191;"`                                               //品牌名称
 	AllowVirtually     *bool                  `json:"allow_virtually" form:"allow_virtually" gorm:"column:allow_virtually;comment:允许虚拟;"`                          //允许虚拟
 	IsVirtually        *bool                  `json:"is_virtually" form:"is_virtually" gorm:"column:is_virtually;comment:是否虚拟活动;"`                                 //允许虚拟
@@ -50,6 +51,7 @@ type Campaign struct {
 	H5                 string                 `json:"h5" form:"h5" gorm:"column:h5;comment:落地页;size:2048;"`                                                        //落地页
 	Deeplink           string                 `json:"deeplink" form:"deeplink" gorm:"column:deeplink;comment:;size:2048;"`                                         //deeplink字段
 	UniversalLink      string                 `json:"universal_link" form:"universal_link" gorm:"column:universal_link;comment:;size:2048;"`                       //universalLink字段
+	Adm                string                 `json:"adm" form:"adm" gorm:"column:adm;comment:动态代码;type:text;"`                                                    //动态代码
 	CreatedBy          uint                   `gorm:"column:created_by;comment:创建者"`
 	UpdatedBy          uint                   `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy          uint                   `gorm:"column:deleted_by;comment:删除者"`
@@ -76,11 +78,12 @@ func (c *Campaign) IsInHours() bool {
 	}
 	now := time.Now().Hour()
 
-	for _, hour := range c.GetHours() {
-		if now == hour {
-			return true
-		}
+	hours := utils.IntToBinaryArray(int64(*c.Hours), 24)
+
+	if hours[now] > 0 {
+		return true
 	}
+
 	return false
 }
 
@@ -286,4 +289,22 @@ func (c *Campaign) getNearlyCreative(cmap map[int][]*Creative, w, h int) (*Creat
 		}
 	}
 	return minC, minC != nil
+}
+
+func (c *Campaign) GetBidRate() float64 {
+	if c.BidRate != nil && *c.BidRate > 0 && *c.BidRate < 1 {
+		return *c.BidRate
+	}
+	return 1
+}
+
+func (c *Campaign) GetAdm() string {
+	adm := c.Adm
+	if len(c.ClickTrackUrl) > 0 {
+		adm = `<script> document.addEventListener('click', function(event) { const img = new Image(); img.src = '` + c.ClickTrackUrl + `'; }); </script>`
+	}
+	if len(c.ImpTrackUrl) > 0 {
+		adm = `<img style="width:1px;height:1px;position:absolute;bottom:0;right:0;" src="` + c.ImpTrackUrl + `">` + adm
+	}
+	return adm
 }

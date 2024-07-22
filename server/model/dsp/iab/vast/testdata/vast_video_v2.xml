@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="3.0">
+    <Ad id="123">
+        <InLine>
+            <AdSystem>
+                <![CDATA[DSP]]>
+            </AdSystem>
+            <Impression id="11111">
+                <![CDATA[http://impressionv1.track.com]]>
+            </Impression>
+            <Impression id="11112">
+                <![CDATA[http://impressionv2.track.com]]>
+            </Impression>
+            <AdTitle>
+                <![CDATA[懒得出门，点份美味外卖慰劳自己！]]>
+            </AdTitle>
+            <Creatives>
+                <Creative id="987">
+                    <Linear>
+                        <TrackingEvents></TrackingEvents>
+                        <Duration>00:00:15</Duration>
+                        <MediaFiles>
+                            <MediaFile delivery="progressive" type="video/mp4" width="1024" height="576">
+                                <![CDATA[http://mp4.res.xxx.com/new_video/2020/01/14/1485/335928CBA9D02E95E63ED9F4D45DF6DF_20200114_1_1_1051.mp4]]>
+                            </MediaFile>
+                        </MediaFiles>
+                        <VideoClicks>
+                            <ClickTracking>
+                                <![CDATA[https://ct.bidex.cn/bidex/click/r.gif?slt=7&rid=e47d9e00792d6ee625fd5114ae893d97]]>
+                            </ClickTracking>
+                            <ClickThrough>
+                                <![CDATA[https://www.baidu.com]]>
+                            </ClickThrough>
+                        </VideoClicks>
+                    </Linear>
+                    <CompanionAds>
+                        <Companion id="postroll" width="720" height="1280">
+                            <StaticResource creativeType="image/jpg">
+                                <![CDATA[https://p0.meituan.net/waimaiad/8327cab6f4f18ba20bc8d597f07cf739841883.jpg]]>
+                            </StaticResource>
+                            <TrackingEvents></TrackingEvents>
+                        </Companion>
+                    </CompanionAds>
+                </Creative>
+            </Creatives>
+            <Description>
+                <![CDATA[美团外卖，送啥都快!]]>
+            </Description>
+        </InLine>
+    </Ad>
+</VAST>

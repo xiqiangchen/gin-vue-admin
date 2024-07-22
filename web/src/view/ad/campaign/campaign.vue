@@ -293,9 +293,31 @@
                 </el-form-item>
               </el-col>
             </el-row>
+            <!--
             <el-form-item label="投放时间段:"  prop="hours" >
               <el-input v-model.number="formData.hours" :clearable="true" placeholder="请输入投放时间段" />
             </el-form-item>
+            <el-form-item label="时间段预览:"  prop="__hours" >
+                <pre class="bg-gray-100 p-2 rounded">{{ JSON.stringify(selectedHours) }}</pre>
+              </el-form-item>
+            -->
+            <el-row>
+              <el-col :span="24" class="grid-cell">
+                <el-form-item label="投放时间段:"  prop="_hours" >
+                  <button
+                    v-for="(selected, index) in selectedHours"
+                    :key="index"
+                    @click="toggleHour(index)"
+                    :class="[
+                      'w-8 h-8 text-xs rounded flex items-center justify-center',
+                      selected ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-200 hover:bg-gray-300'
+                    ]"
+                  >
+                    {{ String(index).padStart(2, '0') }}
+                  </button>
+                </el-form-item>
+              </el-col>
+            </el-row>
             <el-form-item label="定向包id:"  prop="target_id" >
               <el-input v-model.number="formData.target_id" :clearable="true" placeholder="请输入定向包id" />
             </el-form-item>
@@ -307,26 +329,35 @@
             </el-form-item>
 
             <el-row>
-              <el-col :span="8" class="grid-cell">
+              <el-col :span="12" class="grid-cell">
                 <el-form-item label="出价方式:"  prop="bid_method" >
                   <el-select v-model="formData.bid_method" placeholder="出价方式" :clearable="true" >
                     <el-option v-for="(item,key) in bidMethodOptions" :key="key" :label="item.label" :value="item.value" />
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="8" class="grid-cell">
-                <el-form-item label="出价(元):"  prop="bid_price" label-width="100px" >
-                  <el-input-number v-model="formData.bid_price"  :precision="2" :clearable="true"  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="7" class="grid-cell">
-                <el-form-item label="出价模式:"  prop="bid_mode" label-width="100px" >
+              <el-col :span="12" class="grid-cell">
+                <el-form-item label="出价模式:"  prop="bid_mode" >
                   <el-select v-model="formData.bid_mode" placeholder="出价模式"  :clearable="true" >
                     <el-option v-for="(item,key) in bidModeOptions" :key="key" :label="item.label" :value="item.value" />
                   </el-select>
                 </el-form-item>
               </el-col>
             </el-row>
+
+            <el-row>
+              <el-col :span="12" class="grid-cell">
+                <el-form-item label="出价(元):"  prop="bid_price">
+                  <el-input-number v-model="formData.bid_price"  :precision="2" :clearable="true"  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" class="grid-cell">
+                <el-form-item label="出价率:"  prop="bid_rate" >
+                  <el-input-number v-model="formData.bid_rate"  :precision="2" :clearable="true"  />%
+                </el-form-item>
+              </el-col>
+            </el-row>
+            
             <el-form-item label="品牌名称:"  prop="brand" >
               <el-input v-model="formData.brand" :clearable="true"  placeholder="请输入品牌名称" />
             </el-form-item>
@@ -347,6 +378,9 @@
             </el-form-item>
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
+            </el-form-item>
+            <el-form-item label="动态代码:"  prop="adm" >
+              <el-input v-model="formData.adm" type="textarea" :rows="10" :clearable="true"  placeholder="请输入动态代码" />
             </el-form-item>
           </el-form>
       </el-scrollbar>
@@ -533,6 +567,8 @@ import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDow
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { toBitInt, toArrFromBitInt } from '@/utils/bit'
+
 
 
 defineOptions({
@@ -551,6 +587,30 @@ const initCreative = ref({
   desc: '',
   button: '',
 })
+
+// 时间选择器
+const selectedHours = ref(new Array(24).fill(0))
+
+const toggleHour = (index) => {
+  selectedHours.value[index] = selectedHours.value[index] === 0 ? 1 : 0
+  formData.value.hours = binaryArrayToDecimal(selectedHours.value)
+  console.log(toBitInt(selectedHours.value))
+  //console.log(toArrFromBitInt(toBitInt(selectedHours.value)))
+  console.log(binaryArrayToDecimal(selectedHours.value))
+}
+
+const binaryArrayToDecimal = (arr) => { 
+  return arr.reduce((acc, curr, index) => {
+    return acc + curr * Math.pow(2, arr.length - 1 - index)
+  }, 0)
+}
+
+// 将十进制数转为二进制数组
+const decimalToBinaryArray = (decimal) => {
+  const binaryStr = decimal.toString(2).padStart(24, '0')
+  return Array.from(binaryStr).map(Number)
+}
+
 
 // 自动化生成的字典（可能为空）以及字段
 const bidMethodOptions = ref([])
@@ -875,6 +935,8 @@ const updateCampaignFunc = async(row) => {
     type.value = 'update'
     if (res.code === 0) {
         formData.value = res.data.recampaign
+        selectedHours.value = decimalToBinaryArray(formData.value.hours)
+        console.log(selectedHours.value)
         dialogFormVisible.value = true
     }
 }
@@ -916,6 +978,8 @@ const getDetails = async (row) => {
   const res = await findCampaign({ ID: row.ID })
   if (res.code === 0) {
     formData.value = res.data.recampaign
+    selectedHours.value = decimalToBinaryArray(formData.value.hours)
+    console.log(selectedHours.value)
     console.log(res.data.recampaign.plan.name)
     console.log(res.data.recampaign.materials)
     if (plans.length > 0) {

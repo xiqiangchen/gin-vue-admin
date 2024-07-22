@@ -8,6 +8,15 @@ const (
 	Real      = 0
 	Filter    = 1
 	Pass      = 0
+
+	BidModeFixed = 1
+	BidModeAvg   = 2
+
+	BidMethodCpm = 1
+	BidMethodCpc = 2
+	BidMethodCpa = 3
+
+	MarkupTypeBanner = 1
 )
 
 const (

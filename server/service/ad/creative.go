@@ -104,6 +104,6 @@ func (creativeService *CreativeService) GetCreativeInfoList(info adReq.CreativeS
 		db = db.Limit(limit).Offset(offset).Order("ID DESC")
 	}
 
-	err = db.Preload("Material").Preload("Plan").Preload("Campaign").Find(&creatives).Error
+	err = db.Preload("Material").Preload("Campaign").Preload("Plan").Find(&creatives).Error
 	return creatives, total, err
 }

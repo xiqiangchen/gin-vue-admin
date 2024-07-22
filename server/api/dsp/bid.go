@@ -4,7 +4,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/adapter"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
-	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
+	protocol "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6"
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -26,7 +26,8 @@ func (bidApi *BidApi) Rtb(c *gin.Context) {
 	adxId, _ := strconv.Atoi(adx)
 	// 从对接适配器中获取适配器
 	adxAdapter := adapter.GetAdapter(adxId)
-	var req *bid_adapter.BidRequest
+	//var req *bid_adapter.BidRequest
+	var req *protocol.BidRequest
 	var resp any
 
 	if bodyBytes, err := io.ReadAll(c.Request.Body); err != nil {

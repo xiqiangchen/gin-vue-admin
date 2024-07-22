@@ -3,10 +3,12 @@ package dsp
 import (
 	"errors"
 	"fmt"
+	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
-	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
+	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid/protocol/bsw"
+	protocol "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
@@ -22,7 +24,8 @@ func (bidService *BidService) SendMsg(msg []byte) {
 	utils.SendMsg(global.GVA_KAFKA_PRODUCER, global.GVA_CONFIG.Dsp.Bid.Topic, msg)
 }
 
-func (bidService *BidService) Bid(req *bid_adapter.BidRequest, c *gin.Context) (*bid_adapter.BidResponse, bool) {
+// func (bidService *BidService) Bid(req *bid_adapter.BidRequest, c *gin.Context) (*bid_adapter.BidResponse, bool) {
+func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*protocol.BidResponse, bool) {
 
 	var campaigns []*ad.Campaign
 	if campaigns = filters(req); len(campaigns) == 0 {
@@ -40,15 +43,15 @@ func (bidService *BidService) Bid(req *bid_adapter.BidRequest, c *gin.Context) (
 }
 
 // 根据活动填充出价响应
-func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *bid_adapter.BidResponse, err error) {
+// func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *bid_adapter.BidResponse, err error) {
+func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *protocol.BidResponse, err error) {
 
-	bids := make([]*bid_adapter.BidResponse_SeatBid_Bid, 0, len(req.GetImp()))
-	for _, imp := range req.GetImp() {
-		// 底价超过12人民币
-		if imp.GetBidfloor() > 13 {
+	bids := make([]protocol.Bid, 0, len(req.Impressions))
+	for _, imp := range req.Impressions {
+		if imp.BidFloor > campaign.GetBidPrice() || rand.Float64() > campaign.GetBidRate()/100 {
 			continue
 		}
-		_bid, err := getRespBid(req.GetAdxid(), req.GetId(), imp, campaign)
+		_bid, err := getRespBid(req.ID, imp, campaign)
 		if err != nil {
 			continue
 		}
@@ -63,11 +66,13 @@ func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *
 		return
 	}
 
-	resp = &bid_adapter.BidResponse{
-		Id: req.Id,
-		Seatbid: []*bid_adapter.BidResponse_SeatBid{
+	resp = &protocol.BidResponse{
+		ID:       req.ID,
+		BidID:    req.ID,
+		Currency: "USD",
+		SeatBids: []protocol.SeatBid{
 			{
-				Bid: bids,
+				Bids: bids,
 			},
 		},
 	}
@@ -80,7 +85,8 @@ func selectCampaign(campaigns []*ad.Campaign) *ad.Campaign {
 }
 
 // 筛选符合条件的账户、计划、活动
-func filters(req *bid_adapter.BidRequest) (campaigns []*ad.Campaign) {
+// func filters(req *bid_adapter.BidRequest) (campaigns []*ad.Campaign) {
+func filters(req *protocol.BidRequest) (campaigns []*ad.Campaign) {
 	// 基础过滤
 	// 计划状态过滤
 	// 计划投放周期过滤
@@ -122,7 +128,8 @@ func fill() {
 
 }
 
-func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
+// func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
+func filterByFrequencies(req *protocol.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
 	for _, c := range cs {
 		if filterByFrequency(req, c.GetImpFrequencyKey(), c.GetImpFrequencyMinute()) {
 			continue
@@ -135,28 +142,23 @@ func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campai
 	return
 }
 
-func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int) bool {
+// func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int) bool {
+func filterByFrequency(req *protocol.BidRequest, frequencyKey, frequency int) bool {
 	if v, exists := dbid.AdFrequency[frequencyKey]; !exists {
 		return false
-	} else if dev := req.GetDevice(); dev != nil {
-		switch strings.ToLower(dev.GetOs()) {
+	} else if dev := req.Device; dev != nil {
+		switch strings.ToLower(dev.OS) {
 		case "ios":
-			if len(dev.GetCaid()) > 0 {
-				if times, e := v.Get(dev.GetCaid()); e {
+			if len(dev.IDMD5) > 0 {
+				if times, e := v.Get(dev.IDMD5); e {
 					if times.(int) >= frequency {
 						return true
 					}
 				}
 			}
 		case "android":
-			if len(dev.GetOaidmd5()) > 0 {
-				if times, e := v.Get(dev.GetOaidmd5()); e {
-					if times.(int) >= frequency {
-						return true
-					}
-				}
-			} else if len(dev.GetDidmd5()) > 0 {
-				if times, e := v.Get(dev.GetDidmd5()); e {
+			if len(dev.IDMD5) > 0 {
+				if times, e := v.Get(dev.IDMD5); e {
 					if times.(int) >= frequency {
 						return true
 					}
@@ -167,15 +169,19 @@ func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int)
 	return false
 }
 
-func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaign *ad.Campaign) (bid *bid_adapter.BidResponse_SeatBid_Bid, err error) {
+// func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaign *ad.Campaign) (bid *bid_adapter.BidResponse_SeatBid_Bid, err error) {
+func getRespBid(id string, imp protocol.Impression, campaign *ad.Campaign) (bid protocol.Bid, err error) {
 
-	var cid uint
 	var v *ad.Creative
 	var exist bool
+	bid = protocol.Bid{
+		ID:         id,
+		ImpID:      imp.ID,
+		MarkupType: constant.MarkupTypeBanner,
+	}
 
-	// TODO
-	if len(campaign.Creatives) == 0 {
-		return nil, fmt.Errorf("活动%d不存在创意", campaign.ID)
+	if len(campaign.Creatives) == 0 && len(campaign.Adm) == 0 {
+		return bid, fmt.Errorf("活动%d不存在创意/动态代码", campaign.ID)
 	}
 	//v = campaign.Creatives[0]
 
@@ -187,77 +193,41 @@ func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaig
 			//return nil, fmt.Errorf("创意尺寸不存在，广告位: %d, 尺寸:%dx%d", spotId, imp.Banner.GetW(), imp.Banner.GetH())
 		}
 
-		if v, exist = campaign.SelectCreative(1, int(imp.Banner.GetW()), int(imp.Banner.GetH())); v != nil && exist && v.Material != nil {
+		if v, exist = campaign.SelectCreative(1, imp.Banner.Width, imp.Banner.Height); v != nil && exist && v.Material != nil {
 			creativeUrl = v.Material.GetAbsoluteUrl()
 		}
-
-		bid = &bid_adapter.BidResponse_SeatBid_Bid{
-			Id:    proto.String(id),
-			Impid: proto.String(imp.GetId()),
-			Price: proto.Float64(campaign.GetBidPrice()),
-			//Nurl:  proto.String(""),
+		switch campaign.GetBidMode() {
+		case constant.BidModeFixed:
+			bid.Price = campaign.GetBidPrice()
+		case constant.BidModeAvg:
+			bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
+		default:
+			return bid, errors.New("不支持的出价模式")
 		}
-
-		bid.W = proto.Int32(imp.Banner.GetW())
-		bid.H = proto.Int32(imp.Banner.GetH())
+		switch campaign.GetBidMethod() {
+		case constant.BidMethodCpm:
+		default:
+			return bid, errors.New("不支持的出价方法")
+		}
+		bid.Width = imp.Banner.Width
+		bid.Height = imp.Banner.Height
 		//bid.CreativeUrl = proto.String(getImg(imp.Banner.GetW(), imp.Banner.GetH()))
-		bid.CreativeUrl = proto.String(creativeUrl)
+
+		if adm := campaign.GetAdm(); len(adm) > 0 {
+			bid.AdMarkup = campaign.GetAdm()
+			//bid.CreativeID = strconv.Itoa(len(adm))
+			bid.CreativeID = utils.MD5(adm)
+		} else {
+			return bid, errors.New("暂时只支持adm代码投放")
+		}
+		_ = creativeUrl
 	}
 	if imp.Native != nil {
-
-		bid = &bid_adapter.BidResponse_SeatBid_Bid{
-			Id:    proto.String(id),
-			Impid: proto.String(imp.GetId()),
-			Price: proto.Float64(campaign.GetBidPrice()),
-			//Nurl:  proto.String(""),
-		}
-
-		tpls := imp.Native.GetTemplates()
-		if len(tpls) > 0 {
-			tpl := tpls[0]
-			var native *bid_adapter.NativeResponse
-			v, native = getNative(adxId, tpl, campaign)
-			bid.AdmOneof = &bid_adapter.BidResponse_SeatBid_Bid_AdmNative{AdmNative: native}
-		}
-
+		// TODO
 	}
 	if video := imp.Video; video != nil {
-		v, exist = campaign.SelectCreative(2, int(imp.Video.GetW()), int(imp.Video.GetH()))
-		bid = &bid_adapter.BidResponse_SeatBid_Bid{
-			Id:    proto.String(id),
-			Impid: proto.String(imp.GetId()),
-			Price: proto.Float64(35),
-			//Nurl:  proto.String(""),
-		}
-
-		bid.W = proto.Int32(imp.Video.GetW())
-		bid.H = proto.Int32(imp.Video.GetH())
-		bid.Crtype = proto.Int32(int32(3))
-		//v, _, exist = GetNearlyCreative(spotId, imp.Video.GetW(), imp.Video.GetH())
-		if !exist {
-			//return nil, fmt.Errorf("创意尺寸不存在，广告位: %d, 尺寸:%dx%d", spotId, imp.Banner.GetW(), imp.Banner.GetH())
-		}
-		bid.CreativeUrl = proto.String(v.Material.GetAbsoluteUrl())
+		// TODO
 	}
-	if v != nil {
-		cid = v.ID
-	}
-	bid.Crid = proto.String(fmt.Sprintf("%v_%v_%v", campaign.PlanId, campaign.ID, cid))
-
-	// 监测
-	//bid.Nurl = proto.String(kehudsp.GetGlobalImpUrl(randC.ImpUrl))
-	bid.BidExt = &bid_adapter.BidResponse_SeatBid_Bid_BidExt{
-		LdpType:    bid_adapter.BidResponse_SeatBid_Bid_BidExt_Web.Enum(),
-		Ldp:        proto.String(campaign.H5),
-		PvtrackUrl: []string{campaign.ImpTrackUrl},
-		CtrackUrl:  []string{campaign.ClickTrackUrl},
-	}
-	if len(campaign.Deeplink)+len(campaign.UniversalLink) > 0 {
-		bid.BidExt.LdpType = bid_adapter.BidResponse_SeatBid_Bid_BidExt_DeepLink.Enum()
-	}
-
-	//bid.DspSpotId = proto.Int64(int64(spotId))
-
 	return
 }
 

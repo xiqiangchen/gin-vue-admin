@@ -29,3 +29,7 @@ func MD5V(str []byte, b ...byte) string {
 	h.Write(str)
 	return hex.EncodeToString(h.Sum(b))
 }
+
+func MD5(s string) string {
+	return MD5V([]byte(s))
+}
