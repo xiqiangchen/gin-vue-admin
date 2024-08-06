@@ -1,11 +1,12 @@
 package middleware
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
@@ -29,6 +30,7 @@ func CasbinHandler() gin.HandlerFunc {
 			success, _ := e.Enforce(sub, obj, act)
 			if !success {
 				response.FailWithDetailed(gin.H{}, "权限不足", c)
+				global.GVA_LOG.Warn("权限不足", zap.String("权限不足", path))
 				c.Abort()
 				return
 			}

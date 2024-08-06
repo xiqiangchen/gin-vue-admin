@@ -12,4 +12,8 @@ type Metrics struct {
 	Active   int `json:"active,omitempty"`   // 激活
 	Register int `json:"register,omitempty"` // 注册
 	Purchase int `json:"purchase,omitempty"` // 购买
+
+	// 价格相关
+	Price    float64 `json:"pr,omitempty"` // 结算结果
+	BidFloor float64 `json:"bf,omitempty"` // 底价
 }

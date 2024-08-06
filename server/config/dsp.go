@@ -6,6 +6,7 @@ type Dsp struct {
 	UseRedis     bool   `mapstructure:"use-redis" json:"use-redis" yaml:"use-redis"`             // 使用redis
 	UseMongo     bool   `mapstructure:"use-mongo" json:"use-mongo" yaml:"use-mongo"`             // 使用mongo
 	UseKafka     bool   `mapstructure:"use-kafka" json:"use-kafka" yaml:"use-kafka"`             // 使用kafka
+	Domain       string `mapstructure:"domain" json:"domain" yaml:"domain"`
 	Bid          Bid    `mapstructure:"bid" json:"bid" yaml:"bid"`
 	Track        Track  `mapstructure:"track" json:"track" yaml:"track"`
 }

@@ -1,10 +1,12 @@
 package dsp
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp"
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type ClickApi struct {
@@ -26,10 +28,12 @@ func (clickApi *ClickApi) ClickTrack(c *gin.Context) {
 
 	// 格式化
 	clk.Parse()
+	clk.Click = 1
 
 	// 进入统计
 	for _, cl := range clk.Expand() {
-		clickService.SendMsg(cl.Marshal())
+		global.GVA_LOG.Info("收到点击：", zap.ByteString("clk", cl.Marshal()))
+		//clickService.SendMsg(cl.Marshal())
 	}
 
 }

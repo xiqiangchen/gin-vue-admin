@@ -2,6 +2,7 @@
 package ad
 
 import (
+	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/assert"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
@@ -31,7 +32,7 @@ type Campaign struct {
 	ClkFrequencyMinute *int                   `json:"clk_frequency_minute" form:"clk_frequency_minute" gorm:"column:clk_frequency_minute;comment:点击频控周期;size:10;"` //点击频控周期
 	CtrMax             *float64               `json:"ctr_max" form:"ctr_max" gorm:"column:ctr_max;comment:最小点击率，单位%;"`                                             //最小点击率，单位%
 	CtrMin             *float64               `json:"ctr_min" form:"ctr_min" gorm:"column:ctr_min;comment:最大点击率，单位%;"`                                             //最大点击率，单位%
-	Hours              *int                   `json:"hours" form:"hours" gorm:"column:hours;comment:投放时间段，10位表示的二进制;size:10;"`                                     //投放时间段，10位表示的二进制
+	Hours              *int64                 `json:"hours" form:"hours" gorm:"column:hours;comment:投放时间段，10位表示的二进制;size:30;"`                                     //投放时间段，10位表示的二进制
 	TargetId           *int                   `json:"target_id" form:"target_id" gorm:"column:target_id;comment:定向包id;size:19;"`                                   //定向包id
 	Target             *assert.Target         `json:"target" gorm:"foreignKey:target_id"`                                                                          // 定向包
 	BwlistId           *int                   `json:"bwlist_id" form:"bwlist_id" gorm:"column:bwlist_id;comment:黑白名单id;size:19;"`                                  // 黑白名单
@@ -292,19 +293,55 @@ func (c *Campaign) getNearlyCreative(cmap map[int][]*Creative, w, h int) (*Creat
 }
 
 func (c *Campaign) GetBidRate() float64 {
-	if c.BidRate != nil && *c.BidRate > 0 && *c.BidRate < 1 {
+	if c.BidRate != nil && *c.BidRate > 0 && *c.BidRate < 100 {
 		return *c.BidRate
 	}
-	return 1
+	return 100
 }
 
 func (c *Campaign) GetAdm() string {
-	adm := c.Adm
+	return c.Adm
+}
+
+func (c *Campaign) buildAdmFor(imp, clk string) string {
+	var imps, clks []string
 	if len(c.ClickTrackUrl) > 0 {
-		adm = `<script> document.addEventListener('click', function(event) { const img = new Image(); img.src = '` + c.ClickTrackUrl + `'; }); </script>`
+		clks = append(clks, c.ClickTrackUrl)
+	}
+	if len(clk) > 0 {
+		clks = append(clks, clk)
 	}
 	if len(c.ImpTrackUrl) > 0 {
-		adm = `<img style="width:1px;height:1px;position:absolute;bottom:0;right:0;" src="` + c.ImpTrackUrl + `">` + adm
+		imps = append(imps, c.ImpTrackUrl)
+	}
+	if len(imp) > 0 {
+		imps = append(imps, imp)
+	}
+
+	var adm string
+	if len(clks) > 0 {
+		admClk := ""
+		for i, ck := range clks {
+			admClk = admClk + fmt.Sprintf("const img%d = new Image(); img%d.src = '%s';", i, i, ck)
+		}
+		adm = `<script> document.addEventListener('click', function(event) { ` + admClk + `}); </script>`
+	}
+	if len(imps) > 0 {
+		admImp := ""
+		for _, im := range imps {
+			admImp = admImp + fmt.Sprintf("<img style='width:1px;height:1px;position:absolute;bottom:0;right:0;' src='%s'>", im)
+		}
+		adm = admImp + adm
+
 	}
 	return adm
+}
+
+func (c *Campaign) BuildAdmForIframe(imp, clk string) string {
+	iframe := "<iframe src='" + c.Adm + "' frameborder='no' scrolling='no' style='width: 100%; height: 100%'  allow='cross-origin-isolated'></iframe>"
+	return c.buildAdmFor(imp, clk) + iframe
+}
+
+func (c *Campaign) BuildAdmForCode(imp, clk string) string {
+	return c.buildAdmFor(imp, clk) + c.Adm
 }

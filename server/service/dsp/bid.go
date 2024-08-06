@@ -12,8 +12,12 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 	"math/rand"
+	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -32,10 +36,12 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 		return nil, false
 	}
 	if winCampaign := selectCampaign(campaigns); winCampaign != nil {
-		if resp, err := offerByCampaign(req, winCampaign); err != nil {
+		if resp, offer, err := offerByCampaign(req, winCampaign); err != nil {
 			global.GVA_LOG.Error("出价活动转换bidResp协议失败", zap.Error(err))
-		} else {
+		} else if offer {
 			return resp, true
+		} else {
+			return nil, false
 		}
 	}
 	return nil, false
@@ -44,14 +50,15 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 
 // 根据活动填充出价响应
 // func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *bid_adapter.BidResponse, err error) {
-func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *protocol.BidResponse, err error) {
+func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *protocol.BidResponse, offer bool, err error) {
 
 	bids := make([]protocol.Bid, 0, len(req.Impressions))
+	// 暂时只支持对第一个曝光进行处理
 	for _, imp := range req.Impressions {
-		if imp.BidFloor > campaign.GetBidPrice() || rand.Float64() > campaign.GetBidRate()/100 {
+		if imp.BidFloor > campaign.GetBidPrice() || (rand.Float64() > campaign.GetBidRate()/100) {
 			continue
 		}
-		_bid, err := getRespBid(req.ID, imp, campaign)
+		_bid, err := getRespBid(req.ID, req, imp, campaign)
 		if err != nil {
 			continue
 		}
@@ -62,7 +69,8 @@ func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *pro
 	}
 
 	if len(bids) == 0 {
-		err = errors.New("offerByCampaign异常，没找到匹配的素材")
+		offer = false
+		//err = errors.New("offerByCampaign异常，没找到匹配的素材")
 		return
 	}
 
@@ -72,10 +80,12 @@ func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *pro
 		Currency: "USD",
 		SeatBids: []protocol.SeatBid{
 			{
+				Seat: fmt.Sprintf("seat-%d", campaign.CreatedBy),
 				Bids: bids,
 			},
 		},
 	}
+	offer = true
 	return
 }
 
@@ -170,7 +180,7 @@ func filterByFrequency(req *protocol.BidRequest, frequencyKey, frequency int) bo
 }
 
 // func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaign *ad.Campaign) (bid *bid_adapter.BidResponse_SeatBid_Bid, err error) {
-func getRespBid(id string, imp protocol.Impression, campaign *ad.Campaign) (bid protocol.Bid, err error) {
+func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, campaign *ad.Campaign) (bid protocol.Bid, err error) {
 
 	var v *ad.Creative
 	var exist bool
@@ -178,6 +188,10 @@ func getRespBid(id string, imp protocol.Impression, campaign *ad.Campaign) (bid 
 		ID:         id,
 		ImpID:      imp.ID,
 		MarkupType: constant.MarkupTypeBanner,
+		// 暂时默认写死
+		Categories: []protocol.ContentCategory{protocol.ContentCategoryContestsFreebies},
+		AdID:       "shopee",
+		AdvDomains: []string{"shopee.com"},
 	}
 
 	if len(campaign.Creatives) == 0 && len(campaign.Adm) == 0 {
@@ -214,10 +228,16 @@ func getRespBid(id string, imp protocol.Impression, campaign *ad.Campaign) (bid 
 		//bid.CreativeUrl = proto.String(getImg(imp.Banner.GetW(), imp.Banner.GetH()))
 
 		if adm := campaign.GetAdm(); len(adm) > 0 {
-			bid.AdMarkup = campaign.GetAdm()
+			paramsMap := buildTrackParamsMap(req, imp)
+			params := BuildTrackParams(paramsMap)
+			impTrack := BuildImpTrack(params)
+			clkTrack := BuildClkTrack(params)
+			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
 			//bid.CreativeID = strconv.Itoa(len(adm))
 			bid.CreativeID = utils.MD5(adm)
+			bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
 		} else {
+			global.GVA_LOG.Error("暂时只支持adm代码投放")
 			return bid, errors.New("暂时只支持adm代码投放")
 		}
 		_ = creativeUrl
@@ -367,4 +387,102 @@ func hasVideo(tpl *bid_adapter.NativeRequest) bool {
 		}
 	}
 	return false
+}
+func BuildImpTrack(params string) string {
+	return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
+}
+
+func BuildClkTrack(params string) string {
+	return fmt.Sprintf("%s:%d/track%s?%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Click.Uri, params)
+}
+
+func BuildTrackParams(params map[string]string) string {
+	var keys = make([]string, 0, len(params))
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	values := url.Values{}
+	for _, key := range keys {
+		values.Add(key, params[key])
+	}
+
+	return values.Encode()
+}
+
+func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[string]string {
+	fmt.Sprintf("rid={BidRequest.id}&sp={BidRequest.imp[0].id}&ap={BidRequest.app.id}&site={BidRequest.site.id}&puer={BidRequest.app.publisher.id or BidRequest.site.publisher.id}&os={BidRequest.device.os}&ifa5={MD5(BidRequest.device.ifa)}&ip={BidRequest.device.ip}&ua={BidRequest.device.ua}&oid={BidRequest.device.oaid}&cid={BidRequest.device.caid}&cidv={BidRequest.device.caid_version}")
+	params := make(map[string]string)
+	params["rid"] = req.ID
+	params["at"] = strconv.Itoa(req.AuctionType)
+	if req.App != nil {
+		if len(req.App.Bundle) > 0 {
+			params["ap"] = req.App.Bundle
+		}
+		if len(req.App.ID) > 0 {
+			params["apid"] = req.App.ID
+		}
+		if puer := req.App.Publisher; puer != nil {
+			if len(puer.ID) > 0 {
+				params["puerid"] = puer.ID
+			}
+			if len(puer.Domain) > 0 {
+				params["puer"] = puer.Domain
+			}
+		}
+	} else if req.Site != nil {
+		if len(req.Site.ID) > 0 {
+			params["siteid"] = req.Site.ID
+		}
+		if len(req.Site.Domain) > 0 {
+			params["site"] = req.Site.Domain
+		}
+		if puer := req.Site.Publisher; puer != nil {
+			if len(puer.ID) > 0 {
+				params["puerid"] = puer.ID
+			}
+			if len(puer.Domain) > 0 {
+				params["puer"] = puer.Domain
+			}
+		}
+	}
+	if dev := req.Device; dev != nil {
+		params["os"] = dev.OS
+		if len(dev.IFA) > 0 {
+			params["ifa5"] = utils.MD5(dev.IFA)
+		}
+		params["ip"] = dev.IP
+		params["ip6"] = dev.IPv6
+		params["did5"] = dev.IDMD5
+		params["did"] = dev.IFA
+
+		if geo := dev.Geo; geo != nil {
+			params["cny"] = geo.Country
+		}
+	}
+	if user := req.User; user != nil {
+		params["uid"] = user.ID
+		params["gender"] = user.Gender
+		params["birth"] = strconv.Itoa(user.YearOfBirth)
+		if geo := user.Geo; geo != nil {
+			params["cny"] = geo.Country
+		}
+	}
+	params["imid"] = imp.ID
+	switch {
+	case imp.Banner != nil:
+		params["adt"] = "0"
+	case imp.Native != nil:
+		params["adt"] = "1"
+	case imp.Video != nil:
+		params["adt"] = "2"
+	case imp.Audio != nil:
+		params["adt"] = "3"
+	default:
+		params["adt"] = "0"
+	}
+	params["bf"] = decimal.NewFromFloat(imp.BidFloor).String()
+	params["sp"] = imp.TagID
+	return params
 }

@@ -43,14 +43,14 @@ func ToBitInt(arr []int) int {
 }
 
 // toArrFromBitInt converts a binary integer to an array of integers.
-func ToArrFromBitInt(num int) []int {
+func ToArrFromBitInt(num int64) []int {
 	if num == 0 {
 		return []int{0}
 	}
 
 	var arr []int
 	for num > 0 {
-		arr = append([]int{num % 2}, arr...)
+		arr = append([]int{int(num % 2)}, arr...)
 		num = num / 2
 	}
 

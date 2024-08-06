@@ -7,7 +7,7 @@
       <a
         class="text-gray-800 font-bold"
         href="https://github.com/flipped-aurora/gin-vue-admin"
-      >Gin-Vue-Admin</a>
+      >智能广告平台</a>
     </span>
     <slot />
     <span>Copyright</span>

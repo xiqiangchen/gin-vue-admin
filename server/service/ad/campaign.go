@@ -79,6 +79,9 @@ func (campaignService *CampaignService) GetCampaignInfoList(info adReq.CampaignS
 	db := global.GVA_DB.Model(&ad.Campaign{})
 	var campaigns []ad.Campaign
 	// 如果有条件搜索 下方会自动创建搜索语句
+	if info.CreatedBy > 0 {
+		db = db.Where("created_by = ?", info.CreatedBy)
+	}
 	if info.StartCreatedAt != nil && info.EndCreatedAt != nil {
 		db = db.Where("created_at BETWEEN ? AND ?", info.StartCreatedAt, info.EndCreatedAt)
 	}

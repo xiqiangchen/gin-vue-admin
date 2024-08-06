@@ -1,10 +1,12 @@
 package dsp
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp"
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type ImpressionApi struct {
@@ -25,9 +27,12 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 
 	// 格式化
 	imp.Parse()
+	imp.Impression = 1
 
 	// 进入统计
 	for _, im := range imp.Expand() {
-		impressionService.SendMsg(im.Marshal())
+		//impressionService.SendMsg(im.Marshal())
+		global.GVA_LOG.Info("收到曝光：", zap.ByteString("imp", im.Marshal()))
+
 	}
 }

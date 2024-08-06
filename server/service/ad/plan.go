@@ -71,6 +71,9 @@ func (planService *PlanService) GetPlanInfoList(info adReq.PlanSearch) (list []a
 	db := global.GVA_DB.Model(&ad.Plan{})
 	var plans []ad.Plan
 	// 如果有条件搜索 下方会自动创建搜索语句
+	if info.CreatedBy > 0 {
+		db = db.Where("created_by = ?", info.CreatedBy)
+	}
 	if info.StartCreatedAt != nil && info.EndCreatedAt != nil {
 		db = db.Where("created_at BETWEEN ? AND ?", info.StartCreatedAt, info.EndCreatedAt)
 	}

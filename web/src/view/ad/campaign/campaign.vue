@@ -52,7 +52,7 @@
          <el-input v-model="searchInfo.brand" placeholder="搜索条件" />
 
         </el-form-item>
-            <el-form-item label="允许虚拟" prop="allow_virtually">
+         <!-- <el-form-item label="允许虚拟" prop="allow_virtually">
             <el-select v-model="searchInfo.allow_virtually" clearable placeholder="请选择">
                 <el-option
                     key="true"
@@ -65,7 +65,7 @@
                     value="false">
                 </el-option>
             </el-select>
-            </el-form-item>
+        </el-form-item> -->
         <el-form-item label="创意方式" prop="creative_mode">
             
              <el-input v-model.number="searchInfo.creative_mode" placeholder="搜索条件" />
@@ -124,17 +124,17 @@
               <el-switch v-model="scope.row.status" @change="handleSwitchChange(scope.row)"></el-switch>
             </template>
         </el-table-column>
-        <el-table-column align="left" label="虚拟活动" prop="is_virtually" width="120">
+        <!-- <el-table-column align="left" label="虚拟活动" prop="is_virtually" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.is_virtually) }}</template>
         </el-table-column>
         <el-table-column align="left" label="允许混量" prop="allow_virtually" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.allow_virtually) }}</template>
-        </el-table-column>
+        </el-table-column> -->
          <el-table-column align="left" label="开始时间" width="180">
-            <template #default="scope">{{ formatDate(scope.row.start_at) }}</template>
+            <template #default="scope">{{ formatDateTo(scope.row.start_at, 'yyyy-MM-dd') }}</template>
          </el-table-column>
          <el-table-column align="left" label="结束时间" width="180">
-            <template #default="scope">{{ formatDate(scope.row.end_at) }}</template>
+            <template #default="scope">{{ formatDateTo(scope.row.end_at, 'yyyy-MM-dd') }}</template>
          </el-table-column>
         <el-table-column align="left" label="总预算(元)" prop="budget_total" width="120" />
         <el-table-column align="left" label="每日预(元)" prop="budget_daily" width="120" />
@@ -379,6 +379,9 @@
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
             </el-form-item>
+            <el-form-item label="动态对应的url:"  prop="_adm" >
+              <el-input v-model="_adm" type="text"  :clearable="true"  placeholder="请输入动态代码url" />
+            </el-form-item>
             <el-form-item label="动态代码:"  prop="adm" >
               <el-input v-model="formData.adm" type="textarea" :rows="10" :clearable="true"  placeholder="请输入动态代码" />
             </el-form-item>
@@ -563,9 +566,9 @@ import {
 
 import SelectMaterial from '@/components/selectMaterial/selectMaterial.vue'
 // 全量引入格式化工具 请按需保留
-import { getDictFunc, formatDate, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
+import { getDictFunc, formatDate, formatDateTo, formatBoolean, filterDict, ReturnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive } from 'vue'
+import { ref, reactive, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { toBitInt, toArrFromBitInt } from '@/utils/bit'
 
@@ -661,6 +664,28 @@ const creatives = ref({
   videos: [],
   images: [],
 })
+
+const _adm = ref('');
+// 监听 urlInput 的变化并发送请求
+watchEffect(() => {
+      if (_adm.value.startsWith('http')) {
+        console.log(_adm.value)
+        fetch(_adm.value)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.text();
+          })
+          .then(data => {
+            formData.value.adm = data; // 将响应的 HTML 赋值给 htmlInput
+          })
+          .catch(error => {
+            console.error('Error fetching URL:', error);
+            formData.value.adm = 'Error fetching URL'; // 处理错误
+          });
+      }
+    });
 
 // 验证规则
 const rule = reactive({

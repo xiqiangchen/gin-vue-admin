@@ -42,5 +42,6 @@ func (bidApi *BidApi) Rtb(c *gin.Context) {
 		global.GVA_LOG.Error("bidResp转换协议失败", zap.Error(err))
 	} else {
 		response.AutoContent(resp, c)
+		global.GVA_LOG.Info("正常出价", zap.Any("req", req), zap.Any("resp", resp))
 	}
 }

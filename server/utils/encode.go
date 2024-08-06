@@ -1,6 +1,9 @@
 package utils
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+	"strconv"
+)
 
 func HashCode(s string) uint64 {
 	h := fnv.New64()
@@ -17,4 +20,16 @@ func findMax(arr []int) int {
 		}
 	}
 	return max
+}
+
+func GetId(val string) uint64 {
+	var ret uint64
+	if len(val) > 0 {
+		if puer, err := strconv.Atoi(val); err != nil {
+			ret = HashCode(val)
+		} else {
+			ret = uint64(puer)
+		}
+	}
+	return ret
 }
