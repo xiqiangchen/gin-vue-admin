@@ -21,7 +21,8 @@ type Track struct {
 	RequestId   string `json:"-" form:"rid,omitempty"`                    // 请求id
 	ClickId     string `json:"-" form:"ckid,omitempty"`                   // 平台唯一id
 	Device      int    `json:"device,omitempty" form:"dv,omitempty"`      // 设备
-	Os          int    `json:"os,omitempty" form:"os,omitempty"`          // 系统
+	Os          string `json:"-" form:"os,omitempty"`                     // 系统
+	OsId        int    `json:"os,omitempty" form:"-"`                     // 系统
 	App         string `json:"-" form:"ap,omitempty"`                     // 应用
 	AppId       uint64 `json:"app,omitempty" form:"-"`                    // 应用id
 	Publisher   string `json:"-" form:"puer,omitempty"`                   // 发布者
@@ -71,6 +72,14 @@ func (track *Track) Parse() {
 	if len(track.Spot) > 0 {
 		track.SpotId = utils.GetId(track.Spot)
 	}
+	switch strings.ToUpper(track.Os) {
+	case "android", "harmony", "harmonyos":
+		track.OsId = 1
+	case "ios":
+		track.OsId = 2
+	default:
+
+	}
 }
 
 func (track *Track) Clone() *Track {
@@ -85,7 +94,7 @@ func (track *Track) Clone() *Track {
 		CampaignId: track.CampaignId,
 		CreativeId: track.CreativeId,
 		MaterialId: track.MaterialId,
-		Os:         track.Os,
+		OsId:       track.OsId,
 		Device:     track.Device,
 		SpotId:     track.SpotId,
 		TemplateId: track.TemplateId,

@@ -389,11 +389,13 @@ func hasVideo(tpl *bid_adapter.NativeRequest) bool {
 	return false
 }
 func BuildImpTrack(params string) string {
-	return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
+	return fmt.Sprintf("%s/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
+	//return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
 }
 
 func BuildClkTrack(params string) string {
-	return fmt.Sprintf("%s:%d/track%s?%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Click.Uri, params)
+	return fmt.Sprintf("%s/track%s?%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Click.Uri, params)
+	//return fmt.Sprintf("%s:%d/track%s?%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Click.Uri, params)
 }
 
 func BuildTrackParams(params map[string]string) string {
