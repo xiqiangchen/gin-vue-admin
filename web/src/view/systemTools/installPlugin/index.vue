@@ -1,8 +1,8 @@
 <template>
-  <div>
+    <div class="gva-form-box">
     <el-upload
       drag
-      :action="`${path}/autoCode/installPlugin`"
+      :action="`${getBaseUrl()}/autoCode/installPlugin`"
       :show-file-list="false"
       :on-success="handleSuccess"
       :on-error="handleSuccess"
@@ -22,11 +22,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useUserStore } from '@/pinia/modules/user'
 import { ElMessage } from 'element-plus'
-const userStore = useUserStore()
-const path = ref(import.meta.env.VITE_BASE_API)
+import { getBaseUrl } from '@/utils/format'
 
 const handleSuccess = (res) => {
   if (res.code === 0) {

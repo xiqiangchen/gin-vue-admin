@@ -6,8 +6,10 @@
         <el-button
           type="primary"
           icon="plus"
-          @click="openDialog"
-        >新增字典项</el-button>
+          @click="openDrawer"
+        >
+          新增字典项
+        </el-button>
       </div>
       <el-table
         ref="multipleTable"
@@ -25,7 +27,9 @@
           label="日期"
           width="180"
         >
-          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+          <template #default="scope">
+            {{ formatDate(scope.row.CreatedAt) }}
+          </template>
         </el-table-column>
 
         <el-table-column
@@ -52,7 +56,9 @@
           prop="status"
           width="120"
         >
-          <template #default="scope">{{ formatBoolean(scope.row.status) }}</template>
+          <template #default="scope">
+            {{ formatBoolean(scope.row.status) }}
+          </template>
         </el-table-column>
 
         <el-table-column
@@ -73,33 +79,17 @@
               link
               icon="edit"
               @click="updateSysDictionaryDetailFunc(scope.row)"
-            >变更</el-button>
-            <el-popover
-              v-model:visible="scope.row.visible"
-              placement="top"
-              width="160"
             >
-              <p>确定要删除吗？</p>
-              <div style="text-align: right; margin-top: 8px;">
-                <el-button
-                  type="primary"
-                  link
-                  @click="scope.row.visible = false"
-                >取消</el-button>
-                <el-button
-                  type="primary"
-                  @click="deleteSysDictionaryDetailFunc(scope.row)"
-                >确定</el-button>
-              </div>
-              <template #reference>
-                <el-button
-                  type="primary"
-                  link
-                  icon="delete"
-                  @click="scope.row.visible = true"
-                >删除</el-button>
-              </template>
-            </el-popover>
+              变更
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              icon="delete"
+              @click="deleteSysDictionaryDetailFunc(scope.row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -117,13 +107,27 @@
       </div>
     </div>
 
-    <el-dialog
-      v-model="dialogFormVisible"
-      :before-close="closeDialog"
-      :title="type==='create'?'添加字典项':'修改字典项'"
+    <el-drawer
+      v-model="drawerFormVisible"
+      size="30%"
+      :show-close="false"
+      :before-close="closeDrawer"
     >
+      <template #header>
+        <div class="flex justify-between items-center">
+          <span class="text-lg">{{ type==='create' ? '添加字典项' : '修改字典项' }}</span>
+          <div>
+            <el-button @click="closeDrawer">
+              取 消
+            </el-button>
+            <el-button type="primary" @click="enterDrawer">
+              确 定
+            </el-button>
+          </div>
+        </div>
+      </template>
       <el-form
-        ref="dialogForm"
+        ref="drawerForm"
         :model="formData"
         :rules="rules"
         label-width="110px"
@@ -143,15 +147,11 @@
           label="字典值"
           prop="value"
         >
-          <el-input-number
-            v-model.number="formData.value"
-            step-strictly
-            :step="1"
+          <el-input
+            v-model="formData.value"
             placeholder="请输入字典值"
             clearable
             :style="{width: '100%'}"
-            min="-2147483648"
-            max="2147483647"
           />
         </el-form-item>
         <el-form-item
@@ -186,16 +186,7 @@
           />
         </el-form-item>
       </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="closeDialog">取 消</el-button>
-          <el-button
-            type="primary"
-            @click="enterDialog"
-          >确 定</el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </el-drawer>
   </div>
 </template>
 
@@ -208,7 +199,7 @@ import {
   getSysDictionaryDetailList
 } from '@/api/sysDictionaryDetail' // 此处请自行替换地址
 import { ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatBoolean, formatDate } from '@/utils/format'
 
 defineOptions({
@@ -286,18 +277,19 @@ const getTableData = async() => {
 getTableData()
 
 const type = ref('')
-const dialogFormVisible = ref(false)
+const drawerFormVisible = ref(false)
 const updateSysDictionaryDetailFunc = async(row) => {
+  drawerForm.value && drawerForm.value.clearValidate()
   const res = await findSysDictionaryDetail({ ID: row.ID })
   type.value = 'update'
   if (res.code === 0) {
     formData.value = res.data.reSysDictionaryDetail
-    dialogFormVisible.value = true
+    drawerFormVisible.value = true
   }
 }
 
-const closeDialog = () => {
-  dialogFormVisible.value = false
+const closeDrawer = () => {
+  drawerFormVisible.value = false
   formData.value = {
     label: null,
     value: null,
@@ -307,23 +299,28 @@ const closeDialog = () => {
   }
 }
 const deleteSysDictionaryDetailFunc = async(row) => {
-  row.visible = false
-  const res = await deleteSysDictionaryDetail({ ID: row.ID })
-  if (res.code === 0) {
-    ElMessage({
-      type: 'success',
-      message: '删除成功'
-    })
-    if (tableData.value.length === 1 && page.value > 1) {
-      page.value--
+  ElMessageBox.confirm('确定要删除吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async() => {
+    const res = await deleteSysDictionaryDetail({ ID: row.ID })
+    if (res.code === 0) {
+      ElMessage({
+        type: 'success',
+        message: '删除成功'
+      })
+      if (tableData.value.length === 1 && page.value > 1) {
+        page.value--
+      }
+      getTableData()
     }
-    getTableData()
-  }
+  })
 }
 
-const dialogForm = ref(null)
-const enterDialog = async() => {
-  dialogForm.value.validate(async valid => {
+const drawerForm = ref(null)
+const enterDrawer = async() => {
+  drawerForm.value.validate(async valid => {
     formData.value.sysDictionaryID = props.sysDictionaryID
     if (!valid) return
     let res
@@ -343,14 +340,15 @@ const enterDialog = async() => {
         type: 'success',
         message: '创建/更改成功'
       })
-      closeDialog()
+      closeDrawer()
       getTableData()
     }
   })
 }
-const openDialog = () => {
+const openDrawer = () => {
   type.value = 'create'
-  dialogFormVisible.value = true
+  drawerForm.value && drawerForm.value.clearValidate()
+  drawerFormVisible.value = true
 }
 
 watch(() => props.sysDictionaryID, () => {

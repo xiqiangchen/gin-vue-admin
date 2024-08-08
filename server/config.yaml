@@ -16,12 +16,21 @@ zap:
   encode-level: LowercaseColorLevelEncoder
   stacktrace-key: stacktrace
   log-in-console: true
+  retention-day: -1
 
 # redis configuration
 redis:
-  db: 0
+  #是否使用redis集群模式
+  useCluster: false
+  #使用集群模式addr和db默认无效
   addr: 127.0.0.1:6379
   password: ""
+  db: 0
+  clusterAddrs:
+    - "172.21.0.3:7000"
+    - "172.21.0.4:7001"
+    - "172.21.0.2:7002"
+
 
 # mongo configuration
 mongo:
@@ -161,22 +170,11 @@ local:
 
 # autocode configuration
 autocode:
-  transfer-restart: true
-  # root 自动适配项目根目录
-  # 请不要手动配置,他会在项目加载的时候识别出根路径
-  root: ""
-  server: /server
-  server-plug: /plugin/%s
-  server-api: /api/v1/%s
-  server-initialize: /initialize
-  server-model: /model/%s
-  server-request: /model/%s/request/
-  server-router: /router/%s
-  server-service: /service/%s
-  web: /web/src
-  web-api: /api
-  web-form: /view
-  web-table: /view
+  web: web/src
+  root: "" # root 自动适配项目根目录, 请不要手动配置,他会在项目加载的时候识别出根路径
+  server: server
+  module: 'github.com/flipped-aurora/gin-vue-admin/server'
+  ai-path: ""  # AI服务路径
 
 # qiniu configuration (请自行七牛申请对应的 公钥 私钥 bucket 和 域名地址)
 qiniu:
@@ -218,6 +216,15 @@ aws-s3:
   base-url: https://gin.vue.admin
   path-prefix: github.com/flipped-aurora/gin-vue-admin/server
 
+# cloudflare r2 configuration
+cloudflare-r2:
+  bucket: xxxx0bucket
+  base-url: https://gin.vue.admin.com
+  path: uploads
+  account-id: xxx_account_id
+  access-key-id: xxx_key_id
+  secret-access-key: xxx_secret_key
+
 # huawei obs configuration
 hua-wei-obs:
   path: you-path
@@ -229,6 +236,10 @@ hua-wei-obs:
 # excel configuration
 excel:
   dir: ./resource/excel/
+
+# disk usage configuration
+disk-list:
+  - mount-point: "/"
 
 # 跨域配置
 # 需要配合 server/initialize/router.go -> `Router.Use(middleware.CorsByRules())` 使用

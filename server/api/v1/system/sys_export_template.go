@@ -2,6 +2,8 @@ package system
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
@@ -11,7 +13,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type SysExportTemplateApi struct {
@@ -191,11 +192,12 @@ func (sysExportTemplateApi *SysExportTemplateApi) GetSysExportTemplateList(c *gi
 // @Router /sysExportTemplate/exportExcel [get]
 func (sysExportTemplateApi *SysExportTemplateApi) ExportExcel(c *gin.Context) {
 	templateID := c.Query("templateID")
+	queryParams := c.Request.URL.Query()
 	if templateID == "" {
 		response.FailWithMessage("模板ID不能为空", c)
 		return
 	}
-	if file, name, err := sysExportTemplateService.ExportExcel(templateID); err != nil {
+	if file, name, err := sysExportTemplateService.ExportExcel(templateID, queryParams); err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败", c)
 	} else {
@@ -205,7 +207,7 @@ func (sysExportTemplateApi *SysExportTemplateApi) ExportExcel(c *gin.Context) {
 	}
 }
 
-// ExportExcel 导出表格模板
+// ExportTemplate 导出表格模板
 // @Tags SysExportTemplate
 // @Summary 导出表格模板
 // @Security ApiKeyAuth
@@ -228,7 +230,7 @@ func (sysExportTemplateApi *SysExportTemplateApi) ExportTemplate(c *gin.Context)
 	}
 }
 
-// ExportExcel 导入表格
+// ImportExcel 导入表格
 // @Tags SysImportTemplate
 // @Summary 导入表格
 // @Security ApiKeyAuth

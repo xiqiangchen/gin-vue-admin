@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-upload
-      :action="`${path}/fileUploadAndDownload/upload`"
+      :action="`${getBaseUrl()}/fileUploadAndDownload/upload`"
       :before-upload="checkFile"
       :on-error="uploadError"
       :on-success="uploadSuccess"
@@ -17,8 +17,8 @@
 
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/pinia/modules/user'
 import { isVideoMime, isImageMime } from '@/utils/image'
+import { getBaseUrl } from '@/utils/format'
 
 defineOptions({
   name: 'UploadCommon',
@@ -27,7 +27,6 @@ defineOptions({
 const emit = defineEmits(['on-success'])
 const path = ref(import.meta.env.VITE_BASE_API)
 
-const userStore = useUserStore()
 const fullscreenLoading = ref(false)
 
 const checkFile = (file) => {

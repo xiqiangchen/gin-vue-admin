@@ -8,10 +8,6 @@
           icon="plus"
           @click="addAuthority(0)"
         >新增角色</el-button>
-        <el-icon
-          class="cursor-pointer"
-          @click="toDoc('https://www.bilibili.com/video/BV1kv4y1g7nT?p=8&vd_source=f2640257c21e3b547a790461ed94875e')"
-        ><VideoCameraFilled /></el-icon>
       </div>
       <el-table
         :data="tableData"
@@ -41,7 +37,7 @@
 
               type="primary"
               link
-              @click="opdendrawer(scope.row)"
+              @click="openDrawer(scope.row)"
             >设置权限</el-button>
             <el-button
               icon="plus"
@@ -76,10 +72,22 @@
       </el-table>
     </div>
     <!-- 新增角色弹窗 -->
-    <el-dialog
-      v-model="dialogFormVisible"
-      :title="dialogTitle"
+    <el-drawer
+      v-model="authorityFormVisible"
+      :show-close="false"
     >
+      <template #header>
+        <div class="flex justify-between items-center">
+          <span class="text-lg">{{ authorityTitleForm }}</span>
+          <div>
+            <el-button @click="closeAuthorityForm">取 消</el-button>
+            <el-button
+              type="primary"
+              @click="submitAuthorityForm"
+            >确 定</el-button>
+          </div>
+        </div>
+      </template>
       <el-form
         ref="authorityForm"
         :model="form"
@@ -121,21 +129,11 @@
           />
         </el-form-item>
       </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="closeDialog">取 消</el-button>
-          <el-button
-            type="primary"
-            @click="enterDialog"
-          >确 定</el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </el-drawer>
 
     <el-drawer
       v-if="drawer"
       v-model="drawer"
-      custom-class="auth-drawer"
       :with-header="false"
       size="40%"
       title="角色配置"
@@ -187,8 +185,7 @@ import WarningBar from '@/components/warningBar/warningBar.vue'
 
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { toDoc } from '@/utils/doc'
-import { VideoCameraFilled } from '@element-plus/icons-vue'
+
 
 defineOptions({
   name: 'Authority'
@@ -211,8 +208,8 @@ const drawer = ref(false)
 const dialogType = ref('add')
 const activeRow = ref({})
 
-const dialogTitle = ref('新增角色')
-const dialogFormVisible = ref(false)
+const authorityTitleForm = ref('新增角色')
+const authorityFormVisible = ref(false)
 const apiDialogFlag = ref(false)
 const copyForm = ref({})
 
@@ -271,15 +268,15 @@ const autoEnter = (activeName, oldActiveName) => {
 // 拷贝角色
 const copyAuthorityFunc = (row) => {
   setOptions()
-  dialogTitle.value = '拷贝角色'
+  authorityTitleForm.value = '拷贝角色'
   dialogType.value = 'copy'
   for (const k in form.value) {
     form.value[k] = row[k]
   }
   copyForm.value = row
-  dialogFormVisible.value = true
+  authorityFormVisible.value = true
 }
-const opdendrawer = (row) => {
+const openDrawer = (row) => {
   drawer.value = true
   activeRow.value = row
 }
@@ -323,14 +320,14 @@ const initForm = () => {
   }
 }
 // 关闭窗口
-const closeDialog = () => {
+const closeAuthorityForm = () => {
   initForm()
-  dialogFormVisible.value = false
+  authorityFormVisible.value = false
   apiDialogFlag.value = false
 }
 // 确定弹窗
 
-const enterDialog = () => {
+const submitAuthorityForm = () => {
   authorityForm.value.validate(async valid => {
     if (valid) {
       form.value.authorityId = Number(form.value.authorityId)
@@ -344,7 +341,7 @@ const enterDialog = () => {
                 message: '添加成功!'
               })
               getTableData()
-              closeDialog()
+              closeAuthorityForm()
             }
           }
           break
@@ -357,7 +354,7 @@ const enterDialog = () => {
                 message: '添加成功!'
               })
               getTableData()
-              closeDialog()
+              closeAuthorityForm()
             }
           }
           break
@@ -388,7 +385,7 @@ const enterDialog = () => {
       }
 
       initForm()
-      dialogFormVisible.value = false
+      authorityFormVisible.value = false
     }
   })
 }
@@ -402,7 +399,6 @@ const setOptions = () => {
   setAuthorityOptions(tableData.value, AuthorityOption.value, false)
 }
 const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
-  form.value.authorityId = String(form.value.authorityId)
   AuthorityData &&
         AuthorityData.forEach(item => {
           if (item.children && item.children.length) {
@@ -431,22 +427,23 @@ const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
 // 增加角色
 const addAuthority = (parentId) => {
   initForm()
-  dialogTitle.value = '新增角色'
+  authorityTitleForm.value = '新增角色'
   dialogType.value = 'add'
   form.value.parentId = parentId
   setOptions()
-  dialogFormVisible.value = true
+  authorityFormVisible.value = true
 }
 // 编辑角色
 const editAuthority = (row) => {
   setOptions()
-  dialogTitle.value = '编辑角色'
+  authorityTitleForm.value = '编辑角色'
   dialogType.value = 'edit'
   for (const key in form.value) {
     form.value[key] = row[key]
   }
   setOptions()
-  dialogFormVisible.value = true
+  authorityForm.value && authorityForm.value.clearValidate()
+  authorityFormVisible.value = true
 }
 
 </script>

@@ -9,6 +9,8 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 )
 
+var ServiceGroupApp = new(ServiceGroup)
+
 type ServiceGroup struct {
 	SystemServiceGroup   system.ServiceGroup
 	ExampleServiceGroup  example.ServiceGroup
@@ -17,5 +19,3 @@ type ServiceGroup struct {
 	AdServiceGroup       ad.ServiceGroup
 	DspGroup             dsp.ServiceGroup
 }
-
-var ServiceGroupApp = new(ServiceGroup)

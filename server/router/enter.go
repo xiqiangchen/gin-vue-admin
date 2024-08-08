@@ -9,6 +9,8 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/router/system"
 )
 
+var RouterGroupApp = new(RouterGroup)
+
 type RouterGroup struct {
 	System   system.RouterGroup
 	Example  example.RouterGroup
@@ -17,5 +19,3 @@ type RouterGroup struct {
 	Ad       ad.RouterGroup
 	Dsp      dsp.RouterGroup
 }
-
-var RouterGroupApp = new(RouterGroup)
