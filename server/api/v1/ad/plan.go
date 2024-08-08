@@ -33,6 +33,7 @@ func (planApi *PlanApi) CreatePlan(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	plan.Parse()
 	plan.CreatedBy = utils.GetUserID(c)
 	verify := utils.Rules{
 		"Name":     {utils.NotEmpty()},
@@ -119,6 +120,7 @@ func (planApi *PlanApi) UpdatePlan(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	plan.Parse()
 	plan.UpdatedBy = utils.GetUserID(c)
 	verify := utils.Rules{
 		"Name":     {utils.NotEmpty()},

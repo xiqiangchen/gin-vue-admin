@@ -222,7 +222,7 @@
             <el-row>
               <el-col :span="10" class="grid-cell">
                 <el-form-item label="开始时间:"  prop="start_at" >
-                  <el-date-picker v-model="formData.start_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                  <el-date-picker v-model="formData.start_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true" />
                 </el-form-item>
               </el-col>
               <el-col :span="10" class="grid-cell">

@@ -41,6 +41,7 @@ func (campaignApi *CampaignApi) CreateCampaign(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	campaign.Parse()
 	campaign.CreatedBy = utils.GetUserID(c)
 	if err := campaignService.CreateCampaign(&campaign); err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
@@ -117,6 +118,7 @@ func (campaignApi *CampaignApi) UpdateCampaign(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	campaign.Parse()
 	campaign.UpdatedBy = utils.GetUserID(c)
 	if err := campaignService.UpdateCampaign(campaign); err != nil {
 		global.GVA_LOG.Error("更新失败!", zap.Error(err))

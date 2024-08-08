@@ -73,6 +73,11 @@ func (c *Campaign) GetHours() []int {
 	return nil
 }
 
+func (c *Campaign) IsInDays() bool {
+	// "status = ? AND (filter is null or filter = ?) AND (start_at <= ? OR start_at is null) AND (end_at >= ? OR end_at is null)"
+	return c.GetStartAt().Before(time.Now()) && c.GetEndAt().After(time.Now())
+}
+
 func (c *Campaign) IsInHours() bool {
 	if c.Hours == nil || *c.Hours == 0 {
 		return true
@@ -245,6 +250,17 @@ func (c *Campaign) GetCreativeMode() int {
 	}
 	return 0
 }
+func (c *Campaign) Parse() {
+	if c.StartAt != nil {
+		start := utils.SetDateStart(c.GetStartAt())
+		c.StartAt = &start
+	}
+	if c.EndAt != nil {
+		end := utils.SetDateEnd(c.GetEndAt())
+		c.EndAt = &end
+	}
+}
+
 func (c *Campaign) BuildCreatives() {
 	c.Images = make(map[int][]*Creative, len(c.Creatives))
 	c.Videos = make(map[int][]*Creative, len(c.Creatives))

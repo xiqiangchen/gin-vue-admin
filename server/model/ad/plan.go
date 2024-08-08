@@ -3,6 +3,7 @@ package ad
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"time"
 )
 
@@ -72,4 +73,15 @@ func (p Plan) GetClkFrequencyMinute() int {
 		return *p.ClkFrequencyMinute
 	}
 	return 0
+}
+
+func (p *Plan) Parse() {
+	if p.StartAt != nil {
+		start := utils.SetDateStart(*p.StartAt)
+		p.StartAt = &start
+	}
+	if p.EndAt != nil {
+		end := utils.SetDateEnd(*p.EndAt)
+		p.EndAt = &end
+	}
 }

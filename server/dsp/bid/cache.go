@@ -82,7 +82,7 @@ func Load() error {
 func loadPlans() (plans []*bid.Plan) {
 	var ps []*ad.Plan
 	db := global.GVA_DB.Model(&ad.Plan{})
-	db.Where("status = ? AND (filter is null or filter = ?) AND (start_at < ? OR start_at is null) AND (end_at > ? OR end_at is null)", constant.StatusOn, constant.Pass,
+	db.Where("status = ? AND (filter is null or filter = ?) AND (start_at <= ? OR start_at is null) AND (end_at >= ? OR end_at is null)", constant.StatusOn, constant.Pass,
 		time.Now(), time.Now())
 
 	if err := db.Preload("Campaigns").Preload("Campaigns.Creatives").Preload("Campaigns.Creatives.Material").Find(&ps).Error; err != nil {
@@ -99,7 +99,7 @@ func loadPlans() (plans []*bid.Plan) {
 					continue
 				}
 
-				if !c.IsInHours() {
+				if !c.IsInDays() || !c.IsInHours() {
 					continue
 				}
 
