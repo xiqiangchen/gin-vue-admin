@@ -252,11 +252,11 @@ func (c *Campaign) GetCreativeMode() int {
 }
 func (c *Campaign) Parse() {
 	if c.StartAt != nil {
-		start := utils.SetDateStart(c.GetStartAt())
+		start := utils.SetDateStart(c.GetStartAt(), *c.Plan.Timezone)
 		c.StartAt = &start
 	}
 	if c.EndAt != nil {
-		end := utils.SetDateEnd(c.GetEndAt())
+		end := utils.SetDateEnd(c.GetEndAt(), *c.Plan.Timezone)
 		c.EndAt = &end
 	}
 }

@@ -77,11 +77,11 @@ func (p Plan) GetClkFrequencyMinute() int {
 
 func (p *Plan) Parse() {
 	if p.StartAt != nil {
-		start := utils.SetDateStart(*p.StartAt)
+		start := utils.SetDateStart(*p.StartAt, *p.Timezone)
 		p.StartAt = &start
 	}
 	if p.EndAt != nil {
-		end := utils.SetDateEnd(*p.EndAt)
+		end := utils.SetDateEnd(*p.EndAt, *p.Timezone)
 		p.EndAt = &end
 	}
 }

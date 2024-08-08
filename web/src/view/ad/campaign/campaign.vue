@@ -222,12 +222,12 @@
             <el-row>
               <el-col :span="10" class="grid-cell">
                 <el-form-item label="开始时间:"  prop="start_at" >
-                  <el-date-picker v-model="formData.start_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true" />
+                  <el-date-picker v-model="formData.start_at" type="date" format='YYYY-MM-DD' value-format='YYYY-MM-DDTHH:mm:ss.000+08:00' style="width:100%" placeholder="选择日期" :clearable="true"  />
                 </el-form-item>
               </el-col>
               <el-col :span="10" class="grid-cell">
                 <el-form-item label="结束时间:"  prop="end_at" >
-                  <el-date-picker v-model="formData.end_at" type="date" style="width:100%" placeholder="选择日期" :clearable="true"  />
+                  <el-date-picker v-model="formData.end_at" type="date" format='YYYY-MM-DD' value-format='YYYY-MM-DDTHH:mm:ss.000+08:00' style="width:100%" placeholder="选择日期" :clearable="true"  />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -627,7 +627,7 @@ const formData = ref({
         is_virtually: false,
         allow_virtually: false,
         start_at: new Date(),
-        end_at: new Date(),
+        end_at: new Date(2099,12,31),
         budget_total: 0,
         budget_daily: 0,
         imp_total: 0,
@@ -1026,7 +1026,7 @@ const closeDetailShow = () => {
           allow_virtually: false,
           is_virtually: false,
           start_at: new Date(),
-          end_at: new Date(),
+          end_at: new Date(2099,12,31),
           budget_total: 0,
           budget_daily: 0,
           imp_total: 0,
@@ -1095,7 +1095,7 @@ const closeDialog = () => {
         is_virtually: false,
         allow_virtually: false,
         start_at: new Date(),
-        end_at: new Date(),
+        end_at: new Date(2099,12,31),
         budget_total: 0,
         budget_daily: 0,
         imp_total: 0,
