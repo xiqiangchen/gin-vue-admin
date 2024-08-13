@@ -261,6 +261,13 @@ func (c *Campaign) Parse() {
 	}
 }
 
+func (c *Campaign) Init() {
+	c.BuildCreatives()
+	if c.BlackWhiteList != nil {
+		c.BlackWhiteList.Init()
+	}
+}
+
 func (c *Campaign) BuildCreatives() {
 	c.Images = make(map[int][]*Creative, len(c.Creatives))
 	c.Videos = make(map[int][]*Creative, len(c.Creatives))

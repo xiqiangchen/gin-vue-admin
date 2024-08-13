@@ -68,6 +68,10 @@ func IllegalWithMessage(message string, c *gin.Context) {
 	Result(Illegal, map[string]interface{}{}, message, c)
 }
 
+func OkWithNoContent(c *gin.Context) {
+	c.Writer.WriteHeader(http.StatusOK)
+}
+
 func NoContent(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }

@@ -97,34 +97,49 @@ func selectCampaign(campaigns []*ad.Campaign) *ad.Campaign {
 // 筛选符合条件的账户、计划、活动
 // func filters(req *bid_adapter.BidRequest) (campaigns []*ad.Campaign) {
 func filters(req *protocol.BidRequest) (campaigns []*ad.Campaign) {
-	// 基础过滤
-	// 计划状态过滤
-	// 计划投放周期过滤
-	// 计划预算过滤
-	// 计划曝光频控过滤
-	// 计划点击频控过滤
-	// 活动状态过滤
-	// 虚拟活动过滤
-	// 活动投放周期过滤
-	// 活动投放时段过滤
-	// 活动预算过滤
-	// 活动价格初步过滤
-	// 活动报告频控
-	// 活动点击频控
-	// 活动黑白名单过滤
-	// 活动定向包过滤
-	// 模板创意素材过滤
-	// 价格过滤
-	// 计算出价
-	// 填充创意
-	// 填充曝光
-	// 填充点击
-	// 响应
+	for _, campaign := range dbid.ActiveCampaigns {
 
-	// 状态过滤、投放周期过滤、投放时间段、预算过滤都在dbid.ActiveCampaigns
-	// 曝光频次过滤
-	campaigns = filterByFrequencies(req, dbid.ActiveCampaigns)
+		// 基础过滤
+		// 计划状态过滤
+		// 计划投放周期过滤
+		// 计划预算过滤
+		// 计划曝光频控过滤
+		// 计划点击频控过滤
+		// 活动状态过滤
+		// 虚拟活动过滤
+		// 活动投放周期过滤
+		// 活动投放时段过滤
+		// 活动预算过滤
+		// 活动价格初步过滤
+		// 活动报告频控
+		// 活动点击频控
+		// 活动黑白名单过滤
+		// 活动定向包过滤
+		// 模板创意素材过滤
+		// 价格过滤
+		// 计算出价
+		// 填充创意
+		// 填充曝光
+		// 填充点击
+		// 响应
 
+		// 状态过滤、投放周期过滤、投放时间段、预算过滤都在dbid.ActiveCampaigns
+		// 定向过滤
+		if filterByTarget(req, campaign) {
+			continue
+		}
+
+		if filterByWhiteBlackList(req, campaign) {
+			continue
+		}
+
+		// 曝光频次过滤
+		if filterByFrequencies(req, campaign) {
+			continue
+		}
+
+		campaigns = append(campaigns, campaign)
+	}
 	return
 }
 
@@ -139,22 +154,55 @@ func fill() {
 }
 
 // func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
-func filterByFrequencies(req *protocol.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
-	for _, c := range cs {
-		if filterByFrequency(req, c.GetImpFrequencyKey(), c.GetImpFrequencyMinute()) {
-			continue
-		}
-		if filterByFrequency(req, c.GetClkFrequencyKey(), c.GetClkFrequencyMinute()) {
-			continue
-		}
-		campaigns = append(campaigns, c)
+func filterByFrequencies(req *protocol.BidRequest, c *ad.Campaign) bool {
+	if filterByFrequency(req, c.GetImpFrequencyKey(), c.GetImpFrequencyMinute()) {
+		return true
 	}
-	return
+	if filterByFrequency(req, c.GetClkFrequencyKey(), c.GetClkFrequencyMinute()) {
+		return true
+	}
+	return false
+}
+
+// 定向过滤
+func filterByTarget(req *protocol.BidRequest, c *ad.Campaign) bool {
+	return false
+}
+
+// 黑名名单过来
+func filterByWhiteBlackList(req *protocol.BidRequest, c *ad.Campaign) bool {
+	if bl := c.BlackWhiteList; bl != nil && req != nil {
+		if dev := req.Device; bl.HasDeviceWhileBlackList() && dev != nil {
+			if len(dev.IFA) > 0 {
+				if bl.IsDeviceWhileList(constant.DeviceIdGaid, dev.IFA) {
+					return false
+				} else if bl.IsDeviceBlackList(constant.DeviceIdGaid, dev.IFA) {
+					return true
+				} else if bl.IsDeviceWhileList(constant.DeviceIdOaid, dev.IFA) {
+					return false
+				} else if bl.IsDeviceBlackList(constant.DeviceIdOaid, dev.IFA) {
+					return true
+				}
+			}
+			if len(dev.IDMD5) > 0 {
+				if bl.IsDeviceWhileList(constant.DeviceIdMd5Idfa, dev.IDMD5) {
+					return false
+				} else if bl.IsDeviceBlackList(constant.DeviceIdMd5Idfa, dev.IDMD5) {
+					return true
+				} else if bl.IsDeviceWhileList(constant.DeviceIdMd5Imei, dev.IDMD5) {
+					return false
+				} else if bl.IsDeviceBlackList(constant.DeviceIdMd5Imei, dev.IDMD5) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int) bool {
 func filterByFrequency(req *protocol.BidRequest, frequencyKey, frequency int) bool {
-	if v, exists := dbid.AdFrequency[frequencyKey]; !exists {
+	if v, exists := dbid.AdImpFrequency[frequencyKey]; !exists {
 		return false
 	} else if dev := req.Device; dev != nil {
 		switch strings.ToLower(dev.OS) {

@@ -4,4 +4,5 @@ type ServiceGroup struct {
 	BidService
 	ImpressionService
 	ClickService
+	LandingService
 }

@@ -7,6 +7,7 @@ type Metrics struct {
 	Win        int `json:"win,omitempty"`        // 竞得
 	Impression int `json:"impression,omitempty"` // 曝光
 	Click      int `json:"click,omitempty"`      // 点击
+	Landing    int `json:"landing,omitempty"`    // 落地页
 
 	WakeUp   int `json:"wake_up,omitempty"`  // 唤醒
 	Active   int `json:"active,omitempty"`   // 激活

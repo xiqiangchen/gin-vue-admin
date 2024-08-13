@@ -20,6 +20,7 @@ type Track struct {
 	Port       int        `mapstructure:"port" json:"port" yaml:"port"` // 端口值
 	Impression Impression `mapstructure:"impression" json:"impression" yaml:"impression"`
 	Click      Click      `mapstructure:"click" json:"click" yaml:"click"`
+	Landing    Landing    `mapstructure:"landing" json:"landing" yaml:"landing"`
 }
 
 type Impression struct {
@@ -28,6 +29,11 @@ type Impression struct {
 }
 
 type Click struct {
+	Uri   string `mapstructure:"uri" json:"uri" yaml:"uri"`
+	Topic string `json:"topic" yaml:"topic" mapstructure:"topic"`
+}
+
+type Landing struct {
 	Uri   string `mapstructure:"uri" json:"uri" yaml:"uri"`
 	Topic string `json:"topic" yaml:"topic" mapstructure:"topic"`
 }

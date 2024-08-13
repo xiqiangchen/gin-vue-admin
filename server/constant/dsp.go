@@ -24,3 +24,20 @@ const (
 	DefaultProtocol   = 0
 	DefaultPriceMacro = "%%BSW_PRICE%%"
 )
+
+const (
+	DeviceIdOaid      = "oaid"
+	DeviceIdIdfa      = "idfa"
+	DeviceIdGaid      = "gaid"
+	DeviceIdImei      = "imei"
+	DeviceIdAndroidId = "andid"
+	DeviceIdMd5Imei   = "mimei"
+	DeviceIdMd5Idfa   = "midfa"
+	DeviceIdMd5Oaid   = "moaid"
+)
+
+const (
+	DspImpTrack = "${DSP_IMP_TRACK}"
+	DspClkTrack = "${DSP_CLK_TRACK}"
+	DspLdTrack  = "${DSP_LD_TRACK}"
+)

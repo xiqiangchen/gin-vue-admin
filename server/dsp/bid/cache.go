@@ -8,12 +8,15 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/songzhibin97/gkit/cache/local_cache"
+	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
 var ActiveCampaigns []*ad.Campaign
 var Campaigns map[uint]*ad.Campaign
-var AdFrequency = make(map[int]local_cache.Cache) // 曝光、点击控制
+var AdFrequency = sync.Map{} // 计划曝光频控
+var AdCost = sync.Map{}      // 计划消耗
 
 // 定期扫描符合投放条件的活动
 func Load() error {
@@ -22,25 +25,25 @@ func Load() error {
 	for _, plan := range plans {
 		campaigns = append(campaigns, plan.RealCampaigns...)
 		if plan.GetImpFrequency() > 0 && plan.GetImpFrequencyMinute() > 0 {
-			if _, exist := AdFrequency[plan.GetImpFrequencyKey()]; !exist {
+			if _, exist := AdFrequency.Load(plan.GetImpFrequencyKey()); !exist {
 				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *plan.ImpFrequencyMinute)); err != nil {
-					fmt.Println("error:", err)
+					global.GVA_LOG.Error("格式化曝光频控失败:", zap.Error(err))
 				} else {
-					AdFrequency[plan.GetImpFrequencyKey()] = local_cache.NewCache(
+					AdFrequency.Store(plan.GetImpFrequencyKey(), local_cache.NewCache(
 						local_cache.SetDefaultExpire(dr),
-					)
+					))
 				}
 			}
 
 		}
 		if plan.GetClkFrequency() > 0 && plan.GetClkFrequencyMinute() > 0 {
-			if _, exist := AdFrequency[plan.GetClkFrequencyKey()]; !exist {
-				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *plan.ClkFrequencyMinute)); err != nil {
-					fmt.Println("error:", err)
+			if _, exist := AdFrequency.Load(plan.GetClkFrequencyKey()); !exist {
+				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *plan.ImpFrequencyMinute)); err != nil {
+					global.GVA_LOG.Error("格式化点击频控失败:", zap.Error(err))
 				} else {
-					AdFrequency[plan.GetClkFrequencyKey()] = local_cache.NewCache(
+					AdFrequency.Store(plan.GetClkFrequencyKey(), local_cache.NewCache(
 						local_cache.SetDefaultExpire(dr),
-					)
+					))
 				}
 			}
 		}
@@ -49,28 +52,28 @@ func Load() error {
 	cs := make(map[uint]*ad.Campaign, len(campaigns))
 
 	for _, c := range campaigns {
-		c.BuildCreatives()
+		c.Init()
 		cs[c.ID] = c
 		if c.GetImpFrequency() > 0 && c.GetImpFrequencyMinute() > 0 {
-			if _, exist := AdFrequency[c.GetImpFrequencyKey()]; !exist {
+			if _, exist := AdFrequency.Load(c.GetImpFrequencyKey()); !exist {
 				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *c.ImpFrequencyMinute)); err != nil {
-					fmt.Println("error:", err)
+					global.GVA_LOG.Error("格式化曝光频控失败:", zap.Error(err))
 				} else {
-					AdFrequency[c.GetImpFrequencyKey()] = local_cache.NewCache(
+					AdFrequency.Store(c.GetImpFrequencyKey(), local_cache.NewCache(
 						local_cache.SetDefaultExpire(dr),
-					)
+					))
 				}
 			}
 
 		}
 		if c.GetClkFrequency() > 0 && c.GetClkFrequencyMinute() > 0 {
-			if _, exist := AdFrequency[c.GetClkFrequencyKey()]; !exist {
-				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *c.ClkFrequencyMinute)); err != nil {
-					fmt.Println("error:", err)
+			if _, exist := AdFrequency.Load(c.GetClkFrequencyKey()); !exist {
+				if dr, err := utils.ParseDuration(fmt.Sprintf("%vm", *c.ImpFrequencyMinute)); err != nil {
+					global.GVA_LOG.Error("格式化点击频控失败:", zap.Error(err))
 				} else {
-					AdFrequency[c.GetClkFrequencyKey()] = local_cache.NewCache(
+					AdFrequency.Store(c.GetClkFrequencyKey(), local_cache.NewCache(
 						local_cache.SetDefaultExpire(dr),
-					)
+					))
 				}
 			}
 		}

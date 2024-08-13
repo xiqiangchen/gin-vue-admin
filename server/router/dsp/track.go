@@ -21,4 +21,9 @@ func (s *TrackRouter) InitTrackRouter(Router *gin.RouterGroup) {
 	{
 		trackRouter.GET("clk", clickApi.ClickTrack) // 更新广告计划
 	}
+
+	var landingApi = dsp.ApiGroupApp.LandingApi
+	{
+		trackRouter.GET("land", landingApi.LandingTrack) // 更新广告计划
+	}
 }

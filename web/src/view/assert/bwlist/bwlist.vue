@@ -117,6 +117,12 @@
             <el-form-item label="网站域名黑名单:"  prop="siteBlacklist" >
               <el-input v-model="formData.siteBlacklist" :clearable="true"  placeholder="请输入网站域名黑名单" />
             </el-form-item>
+            <el-form-item label="设备白名单:"  prop="deviceWhitelist" >
+              <el-input v-model="formData.deviceWhitelist" :clearable="true"  placeholder="格式:设备id类型,id(如:moaid,fef2a7d769741a1f9bc98e41147e7677)" />
+            </el-form-item>
+            <el-form-item label="设备黑名单:"  prop="deviceBlacklist" >
+              <el-input v-model="formData.deviceBlacklist" :clearable="true"  placeholder="格式:设备id类型,id(如:moaid,fef2a7d769741a1f9bc98e41147e7677)" />
+            </el-form-item>
           </el-form>
       </el-scrollbar>
       <template #footer>
@@ -160,6 +166,12 @@
                 <el-descriptions-item label="网站域名黑名单">
                         {{ formData.siteBlacklist }}
                 </el-descriptions-item>
+                <el-descriptions-item label="网站域名白名单">
+                        {{ formData.deviceWhitelist }}
+                </el-descriptions-item>
+                <el-descriptions-item label="网站域名黑名单">
+                        {{ formData.deviceBlacklist }}
+                </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
     </el-dialog>
@@ -197,6 +209,8 @@ const formData = ref({
         bundleBlacklist: '',
         siteWhitelist: '',
         siteBlacklist: '',
+        deviceWhitelist: '',
+        deviceBlacklist: '',
         })
 
 
@@ -410,6 +424,8 @@ const closeDetailShow = () => {
           bundleBlacklist: '',
           siteWhitelist: '',
           siteBlacklist: '',
+          deviceWhitelist: '',
+          deviceBlacklist: '',
           }
 }
 
@@ -434,6 +450,8 @@ const closeDialog = () => {
         bundleBlacklist: '',
         siteWhitelist: '',
         siteBlacklist: '',
+        deviceWhitelist: '',
+        deviceBlacklist: '',
         }
 }
 // 弹窗确定

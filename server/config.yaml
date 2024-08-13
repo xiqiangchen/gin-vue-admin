@@ -289,3 +289,6 @@ dsp:
     click:
       uri: /clk
       topic: test
+    landing:
+      uri: /land
+      topic: test

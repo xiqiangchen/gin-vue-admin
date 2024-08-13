@@ -7,6 +7,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 type ImpressionApi struct {
@@ -33,6 +34,11 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 	for _, im := range imp.Expand() {
 		//impressionService.SendMsg(im.Marshal())
 		global.GVA_LOG.Info("收到曝光：", zap.ByteString("imp", im.Marshal()))
+	}
 
+	if len(imp.RedirectUrl) > 0 {
+		c.Redirect(http.StatusFound, imp.RedirectUrl)
+	} else {
+		response.OkWithNoContent(c)
 	}
 }

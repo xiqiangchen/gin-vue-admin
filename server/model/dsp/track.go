@@ -44,6 +44,7 @@ type Track struct {
 	ClickTs     int64  `json:"-" form:"ts,omitempty"`                     // 点击ts
 	Sign        string `json:"-" form:"sign,omitempty"`                   // 验参
 	MultiTrack  string `json:"-" form:"mul,omitempty"`                    // 多活动、创意、素材
+	RedirectUrl string `json:"-" form:"reurl,omitempty"`                  // 重定向地址
 	Metrics
 }
 
@@ -87,18 +88,22 @@ func (track *Track) Clone() *Track {
 		Metrics: Metrics{
 			Impression: track.Impression,
 			Click:      track.Click,
+			Landing:    track.Landing,
+			Price:      track.Price,
 		},
-		AdxId:      track.AdxId,
-		UserId:     track.UserId,
-		PlanId:     track.PlanId,
-		CampaignId: track.CampaignId,
-		CreativeId: track.CreativeId,
-		MaterialId: track.MaterialId,
-		OsId:       track.OsId,
-		Device:     track.Device,
-		SpotId:     track.SpotId,
-		TemplateId: track.TemplateId,
-		AppId:      track.AppId,
+		AdxId:       track.AdxId,
+		UserId:      track.UserId,
+		PlanId:      track.PlanId,
+		CampaignId:  track.CampaignId,
+		CreativeId:  track.CreativeId,
+		MaterialId:  track.MaterialId,
+		OsId:        track.OsId,
+		Device:      track.Device,
+		SpotId:      track.SpotId,
+		TemplateId:  track.TemplateId,
+		AppId:       track.AppId,
+		PublisherId: track.PublisherId,
+		SiteId:      track.SiteId,
 	}
 }
 
