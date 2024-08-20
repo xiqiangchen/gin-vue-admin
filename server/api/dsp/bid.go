@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"io"
+	"math/rand"
 	"strconv"
 )
 
@@ -37,11 +38,16 @@ func (bidApi *BidApi) Rtb(c *gin.Context) {
 		global.GVA_LOG.Error("协议转换失败", zap.Error(err))
 		response.NoContent(c)
 	} else if bresp, offer := bidService.Bid(req, c); !offer {
+		if rand.Intn(1000) == 1 {
+			global.GVA_LOG.Info("放弃出价", zap.Any("req", req))
+		}
 		response.NoContent(c)
 	} else if resp, err = adxAdapter.To(bresp); err != nil {
 		global.GVA_LOG.Error("bidResp转换协议失败", zap.Error(err))
 	} else {
 		response.AutoContent(resp, c)
-		global.GVA_LOG.Info("正常出价", zap.Any("req", req), zap.Any("resp", resp))
+		if rand.Intn(200) == 1 {
+			global.GVA_LOG.Info("正常出价", zap.Any("req", req), zap.Any("resp", resp))
+		}
 	}
 }

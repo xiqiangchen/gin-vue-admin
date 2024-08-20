@@ -1,6 +1,7 @@
 package dsp
 
 import (
+	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp"
@@ -34,6 +35,7 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 	for _, im := range imp.Expand() {
 		//impressionService.SendMsg(im.Marshal())
 		global.GVA_LOG.Info("收到曝光：", zap.ByteString("imp", im.Marshal()))
+		dbid.BudgetControl.Update(im.GetCampaignBudgetKey(), im.RequestId, im.Price/1000, im.Impression)
 	}
 
 	if len(imp.RedirectUrl) > 0 {

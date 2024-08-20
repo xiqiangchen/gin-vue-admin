@@ -8,6 +8,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -94,15 +95,14 @@ func (c *Campaign) IsInHours() bool {
 }
 
 func (c *Campaign) GetBidPrice() float64 {
-	if c.BidMode == nil {
-		return *c.BidPrice
+	if c.BidPrice == nil {
+		return 0
 	}
-	switch *c.BidMode {
-	case 0, 2:
-		return ((rand.Float64()-0.5)*0.2 + 1) * (*c.BidPrice)
-	default:
-		return *c.BidPrice
-	}
+	return *c.BidPrice
+}
+
+func (c *Campaign) GetBudgetKey() string {
+	return "budget_" + strconv.Itoa(c.GetImpFrequencyKey())
 }
 
 func (c *Campaign) GetImpFrequencyKey() int {
@@ -266,6 +266,15 @@ func (c *Campaign) Init() {
 	if c.BlackWhiteList != nil {
 		c.BlackWhiteList.Init()
 	}
+	if c.Target != nil {
+		c.Target.Init()
+	}
+}
+func (c *Campaign) InRegion(region string) bool {
+	if c.Target != nil {
+		return c.Target.InRegion(region)
+	}
+	return true
 }
 
 func (c *Campaign) BuildCreatives() {
@@ -367,4 +376,10 @@ func (c *Campaign) BuildAdmForIframe(imp, clk string) string {
 
 func (c *Campaign) BuildAdmForCode(imp, clk string) string {
 	return c.buildAdmFor(imp, clk) + c.Adm
+}
+
+func (c *Campaign) FillTrackParams(params map[string]string) {
+	params["u"] = strconv.Itoa(int(c.CreatedBy))
+	params["p"] = strconv.Itoa(int(c.PlanId))
+	params["c"] = strconv.Itoa(int(c.ID))
 }

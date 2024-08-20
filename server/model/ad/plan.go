@@ -4,6 +4,7 @@ package ad
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"strconv"
 	"time"
 )
 
@@ -37,6 +38,10 @@ type Plan struct {
 // TableName 广告计划 Plan自定义表名 plans
 func (Plan) TableName() string {
 	return "plans"
+}
+
+func (p *Plan) GetBudgetKey() string {
+	return "budget_" + strconv.Itoa(p.GetImpFrequencyKey())
 }
 
 func (p Plan) GetImpFrequencyKey() int {

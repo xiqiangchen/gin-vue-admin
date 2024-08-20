@@ -22,8 +22,8 @@ type BlackWhiteList struct {
 	DeviceWhitelist   string `json:"deviceWhitelist form:deviceWhitelist" gorm:"column:device_whitelist;comment:设备白名单;type:text;"`  // 设备白名单
 	DeviceBlacklist   string `json:"deviceBlacklist form:deviceBlacklist" gorm:"column:device_blacklist;comment:设备黑名单;type:text;"`  // 设备黑名单
 
-	deivceWLMap map[string]map[string]struct{} // 设备白名单
-	deivceBLMap map[string]map[string]struct{} // 设备黑名单
+	deivceWLMap map[string]map[string]struct{} `json:"-" form:"-" gorm:"-"` // 设备白名单
+	deivceBLMap map[string]map[string]struct{} `json:"-" form:"-" gorm:"-"` // 设备黑名单
 	CreatedBy   uint                           `gorm:"column:created_by;comment:创建者"`
 	UpdatedBy   uint                           `gorm:"column:updated_by;comment:更新者"`
 	DeletedBy   uint                           `gorm:"column:deleted_by;comment:删除者"`

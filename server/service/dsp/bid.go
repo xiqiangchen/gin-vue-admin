@@ -13,12 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
 	"github.com/shopspring/decimal"
+	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
 	"math/rand"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type BidService struct {
@@ -35,8 +37,8 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 	if campaigns = filters(req); len(campaigns) == 0 {
 		return nil, false
 	}
-	if winCampaign := selectCampaign(campaigns); winCampaign != nil {
-		if resp, offer, err := offerByCampaign(req, winCampaign); err != nil {
+	if winCampaign, weight := selectCampaign(campaigns); winCampaign != nil {
+		if resp, offer, err := offerByCampaign(req, winCampaign, weight); err != nil {
 			global.GVA_LOG.Error("出价活动转换bidResp协议失败", zap.Error(err))
 		} else if offer {
 			return resp, true
@@ -50,12 +52,12 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 
 // 根据活动填充出价响应
 // func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *bid_adapter.BidResponse, err error) {
-func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *protocol.BidResponse, offer bool, err error) {
+func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign, weight float64) (resp *protocol.BidResponse, offer bool, err error) {
 
 	bids := make([]protocol.Bid, 0, len(req.Impressions))
 	// 暂时只支持对第一个曝光进行处理
 	for _, imp := range req.Impressions {
-		if imp.BidFloor > campaign.GetBidPrice() || (rand.Float64() > campaign.GetBidRate()/100) {
+		if imp.BidFloor > campaign.GetBidPrice() || (rand.Float64() > (campaign.GetBidRate() / weight / 100)) {
 			continue
 		}
 		_bid, err := getRespBid(req.ID, req, imp, campaign)
@@ -90,8 +92,15 @@ func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign) (resp *pro
 }
 
 // 选择其中一个活动作为出价
-func selectCampaign(campaigns []*ad.Campaign) *ad.Campaign {
-	return campaigns[rand.Intn(len(campaigns))]
+func selectCampaign(campaigns []*ad.Campaign) (*ad.Campaign, float64) {
+	var totalRate float64
+	weights := make([]float64, 0, len(campaigns))
+	for _, c := range campaigns {
+		totalRate = totalRate + c.GetBidRate()
+		weights = append(weights, c.GetBidRate())
+	}
+	i, rate := utils.WeightedRandomIndex(weights)
+	return campaigns[i], rate
 }
 
 // 筛选符合条件的账户、计划、活动
@@ -124,6 +133,12 @@ func filters(req *protocol.BidRequest) (campaigns []*ad.Campaign) {
 		// 响应
 
 		// 状态过滤、投放周期过滤、投放时间段、预算过滤都在dbid.ActiveCampaigns
+
+		// 预算过滤、曝光数过滤
+		if filterByBudget(campaign) {
+			continue
+		}
+
 		// 定向过滤
 		if filterByTarget(req, campaign) {
 			continue
@@ -153,6 +168,11 @@ func fill() {
 
 }
 
+func filterByBudget(c *ad.Campaign) bool {
+	key := strconv.Itoa(c.GetImpFrequencyKey())
+	return dbid.BudgetControl.CheckOver(key)
+}
+
 // func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {
 func filterByFrequencies(req *protocol.BidRequest, c *ad.Campaign) bool {
 	if filterByFrequency(req, c.GetImpFrequencyKey(), c.GetImpFrequencyMinute()) {
@@ -166,6 +186,16 @@ func filterByFrequencies(req *protocol.BidRequest, c *ad.Campaign) bool {
 
 // 定向过滤
 func filterByTarget(req *protocol.BidRequest, c *ad.Campaign) bool {
+	// 先增加地区定向
+	var geo *protocol.Geo
+	if req.Device != nil && req.Device.Geo != nil {
+		geo = req.Device.Geo
+	} else if req.User != nil && req.User.Geo != nil {
+		geo = req.User.Geo
+	}
+	if !c.InRegion(geo.Country) {
+		return true
+	}
 	return false
 }
 
@@ -202,27 +232,32 @@ func filterByWhiteBlackList(req *protocol.BidRequest, c *ad.Campaign) bool {
 
 // func filterByFrequency(req *bid_adapter.BidRequest, frequencyKey, frequency int) bool {
 func filterByFrequency(req *protocol.BidRequest, frequencyKey, frequency int) bool {
-	if v, exists := dbid.AdImpFrequency[frequencyKey]; !exists {
+	if v, exists := dbid.AdFrequency.Load(frequencyKey); !exists {
 		return false
-	} else if dev := req.Device; dev != nil {
-		switch strings.ToLower(dev.OS) {
-		case "ios":
-			if len(dev.IDMD5) > 0 {
-				if times, e := v.Get(dev.IDMD5); e {
-					if times.(int) >= frequency {
-						return true
+	} else {
+		if _cache, ok := v.(local_cache.Cache); ok {
+			if dev := req.Device; dev != nil {
+				switch strings.ToLower(dev.OS) {
+				case "ios":
+					if len(dev.IDMD5) > 0 {
+						if times, e := _cache.Get(dev.IDMD5); e {
+							if times.(int) >= frequency {
+								return true
+							}
+						}
 					}
-				}
-			}
-		case "android":
-			if len(dev.IDMD5) > 0 {
-				if times, e := v.Get(dev.IDMD5); e {
-					if times.(int) >= frequency {
-						return true
+				case "android":
+					if len(dev.IDMD5) > 0 {
+						if times, e := _cache.Get(dev.IDMD5); e {
+							if times.(int) >= frequency {
+								return true
+							}
+						}
 					}
 				}
 			}
 		}
+
 	}
 	return false
 }
@@ -262,7 +297,8 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 		case constant.BidModeFixed:
 			bid.Price = campaign.GetBidPrice()
 		case constant.BidModeAvg:
-			bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
+			// 	bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
+			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.3+imp.BidFloor)+0.35*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
 		default:
 			return bid, errors.New("不支持的出价模式")
 		}
@@ -277,10 +313,32 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 
 		if adm := campaign.GetAdm(); len(adm) > 0 {
 			paramsMap := buildTrackParamsMap(req, imp)
+			campaign.FillTrackParams(paramsMap)
 			params := BuildTrackParams(paramsMap)
 			impTrack := BuildImpTrack(params)
 			clkTrack := BuildClkTrack(params)
 			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
+			// 替换dsp宏
+			if req.App != nil {
+				if len(req.App.Bundle) > 0 {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspBundle, req.App.Bundle)
+				} else if len(req.App.ID) > 0 {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspBundle, req.App.ID)
+				}
+				if req.App.Publisher != nil {
+					if len(req.App.Publisher.ID) > 0 {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspPublisher, req.App.Publisher.ID)
+					} else if len(req.App.Publisher.Domain) > 0 {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspPublisher, req.App.Publisher.Domain)
+					} else if len(req.App.Publisher.Name) > 0 {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspPublisher, req.App.Publisher.Name)
+					}
+				}
+			}
+			// ${DSP_OFFER_DAY_HOUR}
+			now := time.Now()
+			dayHour := strconv.Itoa(now.Day()*100 + now.Hour())
+			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspOfferDayHour, dayHour)
 			//bid.CreativeID = strconv.Itoa(len(adm))
 			bid.CreativeID = utils.MD5(adm)
 			bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
@@ -479,6 +537,8 @@ func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[
 			}
 			if len(puer.Domain) > 0 {
 				params["puer"] = puer.Domain
+			} else if len(puer.Name) > 0 {
+				params["puer"] = puer.Name
 			}
 		}
 	} else if req.Site != nil {

@@ -52,6 +52,7 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
+        <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="日期" width="180">
             <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
@@ -247,7 +248,7 @@ const formData = ref({
         device_type: 0,
         os: 0,
         target_type: 0,
-        region: '',
+        region: [],
         gender: 0,
         })
 
@@ -403,16 +404,17 @@ const handleMultiSelectChange = (val, key) => {
 }
 
 const handleChangeMultiStr = (val) => {
+  console.log(val)
   if (val !== undefined && val.length > 0) {
     if (val[val.length-1] === 0) {
       keys.value['region'] = [0]
       formData.value.region = keys.value['region'].join(',');
-      console.log(formData.value.region);  
+      console.log(formData.value.region);
     } else {
       keys.value['region'] = keys.value['region'].filter(item => item !== 0);
       console.log(keys.value['region']);
       formData.value.region = keys.value['region'].join(',');
-      console.log(formData.value.region);  
+      console.log(formData.value.region);
     }
   }
 }
@@ -515,10 +517,8 @@ const getDetails = async (row) => {
         if (typeof formData.value[key] === 'number') {
           keys.value[key] = toArrFromBitInt(formData.value[key])
           console.log(keys.value[key])
-        } else if (typeof formData.value[key] === 'string') {
-          const kk = formData.value[key].split(',')
-          keys.value[key] = keys.map(key => parseInt(key));
-          console.log("region",formData.value[key], formData.value[key].split(','))
+        } else if (typeof formData.value[key] === 'string' && str.indexOf(',') !== -1 ) {
+          keys.value[key] = keys.map(key => formData.value[key].split(','));
         }
     }
     openDetailShow()
@@ -536,7 +536,7 @@ const closeDetailShow = () => {
           device_type: 0,
           os: 0,
           target_type: 0,
-          region: '',
+          region: [],
           gender: 0,
           }
 }
@@ -558,7 +558,7 @@ const closeDialog = () => {
         device_type: 0,
         os: 0,
         target_type: 0,
-        region: '',
+        region: [],
         gender: 0,
         }
 }

@@ -19,11 +19,23 @@ export const useDictionaryStore = defineStore('dictionary', () => {
         const dictionaryRes = {}
         const dict = []
         res.data.resysDictionary.sysDictionaryDetails && res.data.resysDictionary.sysDictionaryDetails.forEach(item => {
-          dict.push({
-            label: item.label,
-            value: parseInt(item.value),
-            extend: item.extend
-          })
+           // 尝试将值解析为浮点数
+          const parsedValue = parseFloat(item.value);
+          // 检查解析后的值是否为数字并且原始值是否是一个数字字符串
+          if (!isNaN(parsedValue) && isFinite(parsedValue) && typeof value !== 'boolean') {
+              dict.push({
+                label: item.label,
+                value: parsedValue,
+                extend: item.extend
+              })
+              return { value: parsedValue, type: 'number' };
+          } else {
+              dict.push({
+                label: item.label,
+                value: item.value,
+                extend: item.extend
+              });
+          }
         })
         dictionaryRes[res.data.resysDictionary.type] = dict
         setDictionaryMap(dictionaryRes)

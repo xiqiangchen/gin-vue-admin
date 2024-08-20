@@ -83,6 +83,14 @@ func (track *Track) Parse() {
 	}
 }
 
+func (track *Track) GetCampaignBudgetKey() string {
+	return "budget_" + strconv.Itoa(int(track.UserId*10000000+track.PlanId*10000+track.CampaignId*10)+1)
+}
+
+func (track *Track) GetPlanBudgetKey() string {
+	return "budget_" + strconv.Itoa(int(track.UserId*10000+track.PlanId*10)+1)
+}
+
 func (track *Track) Clone() *Track {
 	return &Track{
 		Metrics: Metrics{

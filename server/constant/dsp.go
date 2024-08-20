@@ -37,7 +37,10 @@ const (
 )
 
 const (
-	DspImpTrack = "${DSP_IMP_TRACK}"
-	DspClkTrack = "${DSP_CLK_TRACK}"
-	DspLdTrack  = "${DSP_LD_TRACK}"
+	DspImpTrack     = "${DSP_IMP_TRACK}"
+	DspClkTrack     = "${DSP_CLK_TRACK}"
+	DspLdTrack      = "${DSP_LD_TRACK}"
+	DspBundle       = "${DSP_BUNDLE}"
+	DspPublisher    = "${DSP_PUBLISHER}"
+	DspOfferDayHour = "${DSP_OFFER_DAY_HOUR}"
 )
