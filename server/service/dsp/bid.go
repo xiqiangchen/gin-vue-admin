@@ -169,8 +169,7 @@ func fill() {
 }
 
 func filterByBudget(c *ad.Campaign) bool {
-	key := strconv.Itoa(c.GetImpFrequencyKey())
-	return dbid.BudgetControl.CheckOver(key)
+	return dbid.BudgetControl.CheckOver(c.GetBudgetKey())
 }
 
 // func filterByFrequencies(req *bid_adapter.BidRequest, cs []*ad.Campaign) (campaigns []*ad.Campaign) {

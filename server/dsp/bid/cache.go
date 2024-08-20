@@ -10,7 +10,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -93,7 +92,7 @@ func Load() error {
 
 		// 预算、曝光限制
 		if c.GetBudgetDaily() > 0 || c.GetBudgetTotal() > 0 || c.GetImpTotal() > 0 || c.GetImpDaily() > 0 {
-			key := strconv.Itoa(c.GetImpFrequencyKey())
+			key := c.GetBudgetKey()
 			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Print(key)))
 			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal())
 		}
