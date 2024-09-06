@@ -60,6 +60,8 @@ type Campaign struct {
 	Creatives          []*Creative            `json:"creatives" gorm:"foreignKey:campaign_id"`
 	Images             map[int][]*Creative    `json:"images" gorm:"-"`
 	Videos             map[int][]*Creative    `json:"Videos" gorm:"-"`
+	TodayCost          float64                `json:"today_cost" form:"-" gorm:"-"`       // 当天消耗
+	TodayImpression    int                    `json:"today_impression" form:"-" gorm:"-"` // 当天曝光
 }
 
 // TableName 活动 Campaign自定义表名 campaigns

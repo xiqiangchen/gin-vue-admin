@@ -297,7 +297,7 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			bid.Price = campaign.GetBidPrice()
 		case constant.BidModeAvg:
 			// 	bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
-			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.3+imp.BidFloor)+0.35*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
+			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.37+imp.BidFloor)+0.45*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
 		default:
 			return bid, errors.New("不支持的出价模式")
 		}

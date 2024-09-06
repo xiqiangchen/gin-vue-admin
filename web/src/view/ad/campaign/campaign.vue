@@ -136,9 +136,11 @@
          <el-table-column align="left" label="结束时间" width="180">
             <template #default="scope">{{ formatDateTo(scope.row.end_at, 'yyyy-MM-dd') }}</template>
          </el-table-column>
-        <el-table-column align="left" label="总预算(元)" prop="budget_total" width="120" />
-        <el-table-column align="left" label="每日预(元)" prop="budget_daily" width="120" />
+        <el-table-column align="left" label="总预算" prop="budget_total" width="120" />
+        <el-table-column align="left" label="每日预" prop="budget_daily" width="120" />
         <el-table-column align="left" label="总曝光数" prop="imp_total" width="120" />
+        <el-table-column align="left" label="当天消耗" prop="today_cost" width="120" />
+        <el-table-column align="left" label="当天曝光数" prop="today_impression" width="120" />
         <el-table-column align="left" label="每日曝光数" prop="imp_daily" width="120" />
         <el-table-column align="left" label="曝光频制" prop="imp_frequency" width="120" />
         <el-table-column align="left" label="曝光频控周期" prop="imp_frequency_minute" width="120" />

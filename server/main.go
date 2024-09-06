@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 
@@ -29,6 +30,7 @@ func main() {
 	global.GVA_DB = initialize.Gorm() // gorm连接数据库
 	initialize.Timer()
 	initialize.DBList()
+	bid.Init()
 	if global.GVA_DB != nil {
 		initialize.RegisterTables() // 初始化表
 		// 程序结束前关闭数据库链接

@@ -20,11 +20,12 @@ var Campaigns map[uint]*ad.Campaign
 var AdFrequency = sync.Map{}           // 计划曝光频控
 var BudgetControl budget.BudgetControl // 计划消耗
 
-func init() {
-	// redis模式还是本地模式
-	if global.GVA_CONFIG.System.UseRedis {
-	} else {
-		if BudgetControl == nil {
+func Init() {
+	if BudgetControl == nil {
+		// redis模式还是本地模式
+		if global.GVA_CONFIG.Dsp.UseRedis {
+			BudgetControl = budget.NewRedisBudgetControl(2 * time.Hour)
+		} else {
 			BudgetControl = budget.NewLocalBudgetControl(2 * time.Hour)
 		}
 	}
@@ -93,7 +94,7 @@ func Load() error {
 		// 预算、曝光限制
 		if c.GetBudgetDaily() > 0 || c.GetBudgetTotal() > 0 || c.GetImpTotal() > 0 || c.GetImpDaily() > 0 {
 			key := c.GetBudgetKey()
-			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Print(key)))
+			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Get(key)))
 			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal())
 		}
 	}
