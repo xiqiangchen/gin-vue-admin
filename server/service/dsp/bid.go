@@ -297,7 +297,7 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			bid.Price = campaign.GetBidPrice()
 		case constant.BidModeAvg:
 			// 	bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
-			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.37+imp.BidFloor)+0.45*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
+			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.3+imp.BidFloor)+0.45*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
 		default:
 			return bid, errors.New("不支持的出价模式")
 		}
@@ -519,7 +519,7 @@ func BuildTrackParams(params map[string]string) string {
 }
 
 func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[string]string {
-	fmt.Sprintf("rid={BidRequest.id}&sp={BidRequest.imp[0].id}&ap={BidRequest.app.id}&site={BidRequest.site.id}&puer={BidRequest.app.publisher.id or BidRequest.site.publisher.id}&os={BidRequest.device.os}&ifa5={MD5(BidRequest.device.ifa)}&ip={BidRequest.device.ip}&ua={BidRequest.device.ua}&oid={BidRequest.device.oaid}&cid={BidRequest.device.caid}&cidv={BidRequest.device.caid_version}")
+	//fmt.Sprintf("rid={BidRequest.id}&sp={BidRequest.imp[0].id}&ap={BidRequest.app.id}&site={BidRequest.site.id}&puer={BidRequest.app.publisher.id or BidRequest.site.publisher.id}&os={BidRequest.device.os}&ifa5={MD5(BidRequest.device.ifa)}&ip={BidRequest.device.ip}&ua={BidRequest.device.ua}&oid={BidRequest.device.oaid}&cid={BidRequest.device.caid}&cidv={BidRequest.device.caid_version}")
 	params := make(map[string]string)
 	params["rid"] = req.ID
 	params["at"] = strconv.Itoa(req.AuctionType)
@@ -578,6 +578,13 @@ func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[
 			params["cny"] = geo.Country
 		}
 	}
+	if req.Source != nil && req.Source.SupplyChain != nil && len(req.Source.SupplyChain.Nodes) > 0 {
+		nodes := make([]string, 0, len(req.Source.SupplyChain.Nodes))
+		for _, node := range req.Source.SupplyChain.Nodes {
+			nodes = append(nodes, node.Domain)
+		}
+		params["schain"] = strings.Join(nodes, ",")
+	}
 	params["imid"] = imp.ID
 	switch {
 	case imp.Banner != nil:
@@ -593,5 +600,6 @@ func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[
 	}
 	params["bf"] = decimal.NewFromFloat(imp.BidFloor).String()
 	params["sp"] = imp.TagID
+	params["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
 	return params
 }

@@ -22,7 +22,8 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	if err := imp.Check(); err != nil {
+	if err := imp.Validate(); err != nil {
+		global.GVA_LOG.Warn("非法曝光：", zap.Any("query", c.Request.URL.RawQuery))
 		response.IllegalWithMessage("非法请求", c)
 		return
 	}

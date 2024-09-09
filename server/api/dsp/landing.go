@@ -21,7 +21,7 @@ func (landingApi *LandingApi) LandingTrack(c *gin.Context) {
 		return
 	}
 
-	if err := clk.Check(); err != nil {
+	if err := clk.Validate(); err != nil {
 		response.IllegalWithMessage("非法请求", c)
 		return
 	}

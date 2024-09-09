@@ -2,9 +2,11 @@ package dsp
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Track struct {
@@ -41,7 +43,7 @@ type Track struct {
 	IP          string `json:"-" form:"ip,omitempty"`                     // IP地址
 	Country     string `json:"-" form:"cny,omitempty"`                    // 国家
 	UserAgent   string `json:"-" form:"ua,omitempty"`                     // user-agent
-	ClickTs     int64  `json:"-" form:"ts,omitempty"`                     // 点击ts
+	BidTs       int64  `json:"-" form:"ts,omitempty"`                     // 竞价ts
 	Sign        string `json:"-" form:"sign,omitempty"`                   // 验参
 	MultiTrack  string `json:"-" form:"mul,omitempty"`                    // 多活动、创意、素材
 	RedirectUrl string `json:"-" form:"reurl,omitempty"`                  // 重定向地址
@@ -56,7 +58,7 @@ type Click struct {
 	Track
 }
 
-func (track *Track) Check() error {
+func (track *Track) Validate() error {
 	return nil
 }
 
@@ -146,10 +148,14 @@ func (track *Track) Marshal() []byte {
 	return byt
 }
 
-func (imp *Impression) Check() error {
+func (imp *Impression) Validate() error {
+	// 曝光超过24小时算作弊
+	if imp.BidTs <= 0 || imp.BidTs > 0 && time.Now().Unix()-imp.BidTs > 24*60*60 {
+		return errors.New("曝光时间超过24小时")
+	}
 	return nil
 }
 
-func (clk *Click) Check() error {
+func (clk *Click) Validate() error {
 	return nil
 }
