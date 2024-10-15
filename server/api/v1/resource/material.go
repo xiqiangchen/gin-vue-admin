@@ -44,14 +44,15 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 	var material resource.Material
 	err := c.ShouldBindJSON(&material)
 	if err != nil {
+		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
 	var typ int
-	if slices.Contains(imageTypeList, material.Format) {
+	if slices.Contains(imageTypeList, strings.ToLower(material.Format)) {
 		typ = 1
-	} else if slices.Contains(videoTyteList, material.Format) {
+	} else if slices.Contains(videoTyteList, strings.ToLower(material.Format)) {
 		typ = 2
 	}
 
@@ -59,6 +60,7 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 	if strings.HasPrefix(material.Url, "http") {
 		resp, err := http.Get(material.Url)
 		if err != nil {
+			global.GVA_LOG.Error("创建失败!", zap.Error(err))
 			response.FailWithMessage(err.Error(), c)
 			return
 		}
@@ -67,6 +69,7 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 	} else {
 		f, err := os.Open(material.Url)
 		if err != nil {
+			global.GVA_LOG.Error("创建失败!", zap.Error(err))
 			response.FailWithMessage(err.Error(), c)
 			return
 		}
@@ -78,6 +81,7 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 	case 1:
 		img, _, err := image.DecodeConfig(read)
 		if err != nil {
+			global.GVA_LOG.Error("创建失败!", zap.Error(err))
 			response.FailWithMessage(err.Error(), c)
 			return
 		}

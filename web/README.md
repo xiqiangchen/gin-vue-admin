@@ -99,3 +99,9 @@ web
  └── yarn.lock
 
 ```
+
+## centos 安装 npm
+```
+nvm install 16
+nvm use 16
+```

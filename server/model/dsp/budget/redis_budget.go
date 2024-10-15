@@ -11,7 +11,8 @@ import (
 // global.GVA_REDIS
 
 var _ BudgetControl = (*RedisBudgetControl)(nil)
-var CostExpireTime = 14 * 24 * time.Hour
+
+const CostExpireTime = 14 * 24 * time.Hour
 
 type RedisBudgetControl struct {
 	pvExpireTime time.Duration

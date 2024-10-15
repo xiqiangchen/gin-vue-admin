@@ -7,6 +7,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/budget"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/strategy"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
@@ -19,6 +20,7 @@ var Campaigns map[uint]*ad.Campaign
 
 var AdFrequency = sync.Map{}           // 计划曝光频控
 var BudgetControl budget.BudgetControl // 计划消耗
+var ClickLimit *strategy.ClickLimit
 
 func Init() {
 	if BudgetControl == nil {
@@ -27,6 +29,14 @@ func Init() {
 			BudgetControl = budget.NewRedisBudgetControl(2 * time.Hour)
 		} else {
 			BudgetControl = budget.NewLocalBudgetControl(2 * time.Hour)
+		}
+	}
+	if ClickLimit == nil {
+		// redis模式还是本地模式
+		if global.GVA_CONFIG.Dsp.UseRedis {
+			ClickLimit = strategy.NewClickLimit(7 * 24 * time.Hour)
+		} else {
+			// TODO
 		}
 	}
 }

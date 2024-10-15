@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -50,9 +51,9 @@ type Campaign struct {
 	CreativeMode       *int                   `json:"creative_mode" form:"creative_mode" gorm:"column:creative_mode;comment:创意方式;size:10;"`                        //创意方式
 	ImpTrackUrl        string                 `json:"imp_track_url" form:"imp_track_url" gorm:"column:imp_track_url;comment:曝光监测;size:2048;"`                      //曝光监测
 	ClickTrackUrl      string                 `json:"click_track_url" form:"click_track_url" gorm:"column:click_track_url;comment:点击监测;size:2048;"`                //点击监测
-	H5                 string                 `json:"h5" form:"h5" gorm:"column:h5;comment:落地页;size:2048;"`                                                        //落地页
-	Deeplink           string                 `json:"deeplink" form:"deeplink" gorm:"column:deeplink;comment:;size:2048;"`                                         //deeplink字段
-	UniversalLink      string                 `json:"universal_link" form:"universal_link" gorm:"column:universal_link;comment:;size:2048;"`                       //universalLink字段
+	H5                 string                 `json:"h5" form:"h5" gorm:"column:h5;comment:落地页;size:4096;"`                                                        //落地页
+	Deeplink           string                 `json:"deeplink" form:"deeplink" gorm:"column:deeplink;comment:;size:4096;"`                                         //deeplink字段
+	UniversalLink      string                 `json:"universal_link" form:"universal_link" gorm:"column:universal_link;comment:;size:4096;"`                       //universalLink字段
 	Adm                string                 `json:"adm" form:"adm" gorm:"column:adm;comment:动态代码;type:text;"`                                                    //动态代码
 	CreatedBy          uint                   `gorm:"column:created_by;comment:创建者"`
 	UpdatedBy          uint                   `gorm:"column:updated_by;comment:更新者"`
@@ -62,6 +63,10 @@ type Campaign struct {
 	Videos             map[int][]*Creative    `json:"Videos" gorm:"-"`
 	TodayCost          float64                `json:"today_cost" form:"-" gorm:"-"`       // 当天消耗
 	TodayImpression    int                    `json:"today_impression" form:"-" gorm:"-"` // 当天曝光
+	// 扩展功能
+	Deeplinks string   `json:"deeplinks" form:"deeplink" gorm:"column:deeplink;comment:;type:text;"` //deeplink字段
+	currentDP int      `json:"-" form:"-" gorm:"-"`
+	dps       []string `json:"-" form:"-" gorm:"-"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns
@@ -271,12 +276,33 @@ func (c *Campaign) Init() {
 	if c.Target != nil {
 		c.Target.Init()
 	}
+	c.buildDeeplinks()
 }
 func (c *Campaign) InRegion(region string) bool {
 	if c.Target != nil {
 		return c.Target.InRegion(region)
 	}
 	return true
+}
+
+func (c *Campaign) buildDeeplinks() {
+	if len(c.Deeplinks) > 0 {
+		c.dps = strings.Split(c.Deeplinks, "\n")
+	}
+}
+
+func (c *Campaign) DPIncr() {
+	if len(c.dps) > 0 {
+		c.currentDP++
+		c.currentDP = c.currentDP % len(c.dps)
+	}
+}
+
+func (c *Campaign) VoteDeeplink() string {
+	if len(c.dps) > 0 {
+		return c.dps[c.currentDP]
+	}
+	return ""
 }
 
 func (c *Campaign) BuildCreatives() {
@@ -384,4 +410,8 @@ func (c *Campaign) FillTrackParams(params map[string]string) {
 	params["u"] = strconv.Itoa(int(c.CreatedBy))
 	params["p"] = strconv.Itoa(int(c.PlanId))
 	params["c"] = strconv.Itoa(int(c.ID))
+	if len(c.dps) > 0 {
+		params["dp2"] = strconv.Itoa(c.currentDP)
+		params["dp"] = strconv.Itoa(int(utils.HashCode(c.VoteDeeplink())))
+	}
 }

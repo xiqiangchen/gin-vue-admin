@@ -1,6 +1,7 @@
 package dsp
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
@@ -310,13 +311,38 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 		bid.Height = imp.Banner.Height
 		//bid.CreativeUrl = proto.String(getImg(imp.Banner.GetW(), imp.Banner.GetH()))
 
+		paramsMap := buildTrackParamsMap(req, imp)
+		dp := campaign.VoteDeeplink()
+		campaign.FillTrackParams(paramsMap)
+		params := BuildTrackParams(paramsMap)
+		impTrack := BuildImpTrack(params)
+		clkTrack := BuildClkTrack(params)
+		bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
+		tracks := protocol.ExtTracks{
+			ImpressionTracks: []string{impTrack},
+			ClickTracks:      []string{clkTrack},
+			Deeplink:         dp,
+			LandingUrl:       campaign.H5,
+		}
+
+		if len(campaign.ImpTrackUrl) > 0 {
+			tracks.ImpressionTracks = append(tracks.ImpressionTracks, campaign.ImpTrackUrl)
+		}
+
+		if len(campaign.ClickTrackUrl) > 0 {
+			tracks.ClickTracks = append(tracks.ClickTracks, campaign.ClickTrackUrl)
+		}
+
+		if ext, e := json.Marshal(tracks); e == nil {
+			bid.Ext = ext
+		}
+
 		if adm := campaign.GetAdm(); len(adm) > 0 {
-			paramsMap := buildTrackParamsMap(req, imp)
-			campaign.FillTrackParams(paramsMap)
-			params := BuildTrackParams(paramsMap)
-			impTrack := BuildImpTrack(params)
-			clkTrack := BuildClkTrack(params)
 			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
+			if len(dp) > 0 {
+				bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
+				campaign.DPIncr()
+			}
 			// 替换dsp宏
 			if req.App != nil {
 				if len(req.App.Bundle) > 0 {
@@ -340,11 +366,25 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspOfferDayHour, dayHour)
 			//bid.CreativeID = strconv.Itoa(len(adm))
 			bid.CreativeID = utils.MD5(adm)
-			bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
+		} else if len(campaign.Images) > 0 {
+			if imgs, exists := campaign.Images[imp.Banner.Width*10000+imp.Banner.Height]; exists {
+				if len(imgs) > 0 {
+					if m := imgs[rand.Intn(len(imgs))].Material; m != nil && len(m.Url) > 0 {
+						bid.ImageURL = m.GetAbsoluteUrl()
+						bid.Width = imp.Banner.Width
+						bid.Height = imp.Banner.Height
+						bid.CreativeID = utils.MD5(m.GetAbsoluteUrl())
+					}
+				}
+			} else {
+				global.GVA_LOG.Error("暂时精确匹配素材")
+				return bid, errors.New("暂时精确匹配素材")
+			}
 		} else {
 			global.GVA_LOG.Error("暂时只支持adm代码投放")
 			return bid, errors.New("暂时只支持adm代码投放")
 		}
+
 		_ = creativeUrl
 	}
 	if imp.Native != nil {
