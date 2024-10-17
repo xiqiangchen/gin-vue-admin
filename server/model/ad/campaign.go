@@ -412,7 +412,7 @@ func (c *Campaign) FillTrackParams(params map[string]string) {
 	params["u"] = strconv.Itoa(int(c.CreatedBy))
 	params["p"] = strconv.Itoa(int(c.PlanId))
 	params["c"] = strconv.Itoa(int(c.ID))
-	if len(c.dps) > 0 {
+	if dp := c.VoteDeeplink(); len(dp) > 0 {
 		params["dp2"] = strconv.Itoa(c.currentDP)
 		params["dp"] = strconv.Itoa(int(utils.HashCode(c.VoteDeeplink())))
 	}
