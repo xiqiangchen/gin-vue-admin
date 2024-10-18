@@ -49,6 +49,10 @@ func (materialApi *MaterialApi) CreateMaterial(c *gin.Context) {
 		return
 	}
 
+	if len(material.Format) == 0 && strings.Contains(material.Url, ".") {
+		material.Format = strings.Split(material.Url, ".")[1]
+	}
+
 	var typ int
 	if slices.Contains(imageTypeList, strings.ToLower(material.Format)) {
 		typ = 1

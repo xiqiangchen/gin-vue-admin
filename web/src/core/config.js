@@ -4,7 +4,7 @@
 import chalk from "chalk";
 
 const config = {
-  appName: 'Gin-Vue-Admin',
+  appName: '智能投放系统',
   appLogo: 'logo.png',
   showViteLogo: true,
   logs: [],

@@ -28,7 +28,7 @@ func Redis() {
 	}
 	pong, err := client.Ping(context.Background()).Result()
 	if err != nil {
-		global.GVA_LOG.Error("redis connect ping failed, err:", zap.Error(err))
+		global.GVA_LOG.Error("redis connect ping failed, addr:%s, err:", zap.Bool("UseCluster", redisCfg.UseCluster), zap.String("addr", redisCfg.Addr), zap.Error(err))
 		panic(err)
 	} else {
 		global.GVA_LOG.Info("redis connect ping response:", zap.String("pong", pong))

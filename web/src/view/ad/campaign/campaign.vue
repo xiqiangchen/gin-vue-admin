@@ -210,7 +210,7 @@
                 </el-form-item>
               </el-col>
 
-              <el-col :span="6" class="grid-cell">
+              <!-- <el-col :span="6" class="grid-cell">
                 <el-form-item label="虚拟活动:"  prop="is_virtually" >
                   <el-switch v-model="formData.is_virtually" active-text="是" inactive-text="否" clearable ></el-switch>
                 </el-form-item>
@@ -219,7 +219,7 @@
                 <el-form-item label="混量:"  prop="allow_virtually" >
                   <el-switch v-model="formData.allow_virtually"  active-text="是" inactive-text="否" clearable ></el-switch>
                 </el-form-item>
-              </el-col>
+              </el-col> -->
             </el-row>
             <el-row>
               <el-col :span="10" class="grid-cell">
@@ -375,8 +375,11 @@
             <el-form-item label="落地页h5:"  prop="h5" >
               <el-input v-model="formData.h5" :clearable="true"  placeholder="请输入落地页" />
             </el-form-item>
-            <el-form-item label="deeplink:"  prop="deeplink" >
+            <el-form-item label="单个deeplink:"  prop="deeplink" >
               <el-input v-model="formData.deeplink" :clearable="true"  placeholder="请输入deeplink字段" />
+            </el-form-item>
+            <el-form-item label="多deeplink:"  prop="deeplinks" >
+              <el-input v-model="formData.deeplinks" :clearable="true"  placeholder="请输入多个deeplink并以回车分割" />
             </el-form-item>
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
@@ -413,12 +416,12 @@
                 <el-descriptions-item label="状态">
                     {{ formatBoolean(formData.status) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="是否虚拟活动">
+                <!-- <el-descriptions-item label="是否虚拟活动">
                     {{ formatBoolean(formData.is_virtually) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="允许虚拟混量">
-                    {{ formatBoolean(formData.allow_virtually) }}
-                </el-descriptions-item>
+                    {{ formatBoolean(formData.allow_virtually) }} 
+                </el-descriptions-item>-->
                 <el-descriptions-item label="开始时间">
                       {{ formatDate(formData.start_at) }}
                 </el-descriptions-item>
@@ -493,6 +496,9 @@
                 </el-descriptions-item>
                 <el-descriptions-item label="deeplink">
                         {{ formData.deeplink }}
+                </el-descriptions-item>
+                <el-descriptions-item label="deeplinks">
+                        {{ formData.deeplinks }}
                 </el-descriptions-item>
                 <el-descriptions-item label="universal_link">
                         {{ formData.universal_link }}
@@ -653,6 +659,7 @@ const formData = ref({
         click_track_url: '',
         h5: '',
         deeplink: '',
+        deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
         })
@@ -1052,6 +1059,7 @@ const closeDetailShow = () => {
           click_track_url: '',
           h5: '',
           deeplink: '',
+          deeplinks: '',
           universal_link: '',
           creatives: [initCreative],
           }
@@ -1121,6 +1129,7 @@ const closeDialog = () => {
         click_track_url: '',
         h5: '',
         deeplink: '',
+        deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
         }
