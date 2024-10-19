@@ -1,6 +1,7 @@
 package dsp
 
 import (
+	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp"
@@ -34,6 +35,8 @@ func (clickApi *ClickApi) ClickTrack(c *gin.Context) {
 	// 进入统计
 	for _, cl := range clk.Expand() {
 		global.GVA_LOG.Info("收到点击：", zap.ByteString("clk", cl.Marshal()))
+		dbid.BudgetControl.Update(cl.GetCampaignBudgetKey(), cl.RequestId, 0, 0, cl.Click)
+
 		//clickService.SendMsg(cl.Marshal())
 	}
 

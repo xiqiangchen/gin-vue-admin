@@ -50,3 +50,23 @@ func (t *Target) InRegion(region string) bool {
 	// 默认是
 	return true
 }
+
+func (t *Target) InOs(os string) bool {
+	if t.Os != nil && *t.Os > 0 {
+		if *t.Os == 1 && strings.ToLower(os) == "ios" {
+			return true
+		} else if *t.Os == 2 && strings.ToLower(os) == "android" {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Target) InPlatform(mobile int) bool {
+	if t.DeviceType != nil && *t.DeviceType > 0 {
+		if *t.DeviceType == 1 && mobile == 1 {
+			return true
+		}
+	}
+	return false
+}

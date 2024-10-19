@@ -36,7 +36,7 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 	for _, im := range imp.Expand() {
 		//impressionService.SendMsg(im.Marshal())
 		global.GVA_LOG.Info("收到曝光：", zap.ByteString("imp", im.Marshal()))
-		dbid.BudgetControl.Update(im.GetCampaignBudgetKey(), im.RequestId, im.Price/1000, im.Impression)
+		dbid.BudgetControl.Update(im.GetCampaignBudgetKey(), im.RequestId, im.Price/1000, im.Impression, 0)
 	}
 
 	if len(imp.RedirectUrl) > 0 {

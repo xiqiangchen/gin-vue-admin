@@ -379,7 +379,7 @@
               <el-input v-model="formData.deeplink" :clearable="true"  placeholder="请输入deeplink字段" />
             </el-form-item>
             <el-form-item label="多deeplink:"  prop="deeplinks" >
-              <el-input v-model="formData.deeplinks" :clearable="true"  placeholder="请输入多个deeplink并以回车分割" />
+              <el-input v-model="formData.deeplinks" type="textarea" :rows="10"  :clearable="true"  placeholder="请输入多个deeplink并以回车分割" />
             </el-form-item>
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />

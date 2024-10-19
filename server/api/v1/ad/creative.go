@@ -34,6 +34,7 @@ func (creativeApi *CreativeApi) CreateCreative(c *gin.Context) {
 		return
 	}
 	creative.CreatedBy = utils.GetUserID(c)
+	*creative.Status = true
 	if creative.PlanId == 0 || creative.CampaignId == 0 || creative.MaterialId == 0 {
 		response.FailWithMessage("必填参数缺失", c)
 		return

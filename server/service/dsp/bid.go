@@ -16,6 +16,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
+	"math"
 	"math/rand"
 	"net/url"
 	"sort"
@@ -193,9 +194,19 @@ func filterByTarget(req *protocol.BidRequest, c *ad.Campaign) bool {
 	} else if req.User != nil && req.User.Geo != nil {
 		geo = req.User.Geo
 	}
-	if !c.InRegion(geo.Country) {
+	if geo != nil && !c.InRegion(geo.Country) {
 		return true
 	}
+
+	// 设备过滤
+	var os string
+	if req.Device != nil && len(req.Device.OS) > 0 {
+		os = req.Device.OS
+	}
+	if !c.InOs(os) {
+		return true
+	}
+
 	return false
 }
 
@@ -318,11 +329,15 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 		impTrack := BuildImpTrack(params)
 		clkTrack := BuildClkTrack(params)
 		bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
+		if len(campaign.Brand) > 0 {
+			bid.AdvDomains = []string{campaign.Brand}
+		}
 		tracks := protocol.ExtTracks{
 			ImpressionTracks: []string{impTrack},
 			ClickTracks:      []string{clkTrack},
 			Deeplink:         dp,
 			LandingUrl:       campaign.H5,
+			UniversalLink:    campaign.UniversalLink,
 		}
 
 		if len(campaign.ImpTrackUrl) > 0 {
@@ -337,12 +352,37 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			bid.Ext = ext
 		}
 
+		if len(campaign.Images) > 0 {
+			if imgs, exists := campaign.Images[imp.Banner.Width*10000+imp.Banner.Height]; exists {
+				if len(imgs) > 0 {
+					if m := imgs[rand.Intn(len(imgs))].Material; m != nil && len(m.Url) > 0 {
+						bid.ImageURL = m.GetAbsoluteUrl()
+						bid.Width = imp.Banner.Width
+						bid.Height = imp.Banner.Height
+						bid.CreativeID = utils.MD5(m.GetAbsoluteUrl())
+					}
+				}
+			} else if c := getNearlyCreative(campaign.Images, imp.Banner.Width, imp.Banner.Height); c != nil {
+				if m := c.Material; m != nil && len(m.Url) > 0 {
+					bid.ImageURL = m.GetAbsoluteUrl()
+					bid.Width = imp.Banner.Width
+					bid.Height = imp.Banner.Height
+					bid.CreativeID = utils.MD5(m.GetAbsoluteUrl())
+				}
+			}
+		}
+
 		if adm := campaign.GetAdm(); len(adm) > 0 {
 			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
-			if len(dp) > 0 {
-				bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
-				campaign.DPIncr()
+			if req.Device != nil && len(req.Device.OS) > 0 {
+				if len(dp) > 0 && strings.ToLower(req.Device.OS) == "android" {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
+					campaign.DPIncr()
+				} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.UniversalLink)
+				}
 			}
+
 			// 替换dsp宏
 			if req.App != nil {
 				if len(req.App.Bundle) > 0 {
@@ -364,22 +404,13 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			now := time.Now()
 			dayHour := strconv.Itoa(now.Day()*100 + now.Hour())
 			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspOfferDayHour, dayHour)
-			//bid.CreativeID = strconv.Itoa(len(adm))
-			bid.CreativeID = utils.MD5(adm)
-		} else if len(campaign.Images) > 0 {
-			if imgs, exists := campaign.Images[imp.Banner.Width*10000+imp.Banner.Height]; exists {
-				if len(imgs) > 0 {
-					if m := imgs[rand.Intn(len(imgs))].Material; m != nil && len(m.Url) > 0 {
-						bid.ImageURL = m.GetAbsoluteUrl()
-						bid.Width = imp.Banner.Width
-						bid.Height = imp.Banner.Height
-						bid.CreativeID = utils.MD5(m.GetAbsoluteUrl())
-					}
-				}
+			if len(bid.ImageURL) > 0 {
+				bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspCreativeUrl, bid.ImageURL)
+				bid.CreativeID = utils.MD5(bid.ImageURL)
 			} else {
-				global.GVA_LOG.Error("暂时精确匹配素材")
-				return bid, errors.New("暂时精确匹配素材")
+				bid.CreativeID = utils.MD5(adm)
 			}
+			//bid.CreativeID = strconv.Itoa(len(adm))
 		} else {
 			global.GVA_LOG.Error("暂时只支持adm代码投放")
 			return bid, errors.New("暂时只支持adm代码投放")
@@ -642,4 +673,21 @@ func buildTrackParamsMap(req *protocol.BidRequest, imp protocol.Impression) map[
 	params["sp"] = imp.TagID
 	params["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
 	return params
+}
+
+func getNearlyCreative(cmap map[int][]*ad.Creative, w, h int) *ad.Creative {
+	var min *ad.Creative
+	var minRate = math.MaxFloat64
+	rate := float64(w) / float64(h)
+	for k, v := range cmap {
+		if len(v) > 0 {
+			r := math.Abs(rate - float64(k/10000)/float64(k%10000))
+			if r < minRate {
+				minRate = r
+				min = v[rand.Intn(len(v))]
+			}
+		}
+
+	}
+	return min
 }

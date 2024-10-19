@@ -35,7 +35,7 @@ func (bc *LocalBudgetControl) GetBudgetRecord(key string) (*BudgetRecord, bool) 
 	return nil, false
 }
 
-func (bc *LocalBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit int) {
+func (bc *LocalBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
 	if record, ok := bc.GetBudgetRecord(key); ok {
 		now := time.Now()
 		record.Date = now
@@ -43,6 +43,8 @@ func (bc *LocalBudgetControl) SetLimits(key string, dailyLimit, totalLimit float
 		record.TotalLimit = totalLimit
 		record.DailyImpressionLimit = dailyImpressionLimit
 		record.TotalImpressionLimit = totalImpressionLimit
+		record.DailyClickLimit = dailyClickLimit
+		record.TotalClickLimit = totalClickLimit
 	} else {
 		bc.data.Store(key, &BudgetRecord{
 			Date:                 time.Now(),
@@ -50,6 +52,8 @@ func (bc *LocalBudgetControl) SetLimits(key string, dailyLimit, totalLimit float
 			TotalLimit:           totalLimit,
 			DailyImpressionLimit: dailyImpressionLimit,
 			TotalImpressionLimit: totalImpressionLimit,
+			DailyClickLimit:      dailyClickLimit,
+			TotalClickLimit:      totalClickLimit,
 		})
 	}
 }
@@ -69,7 +73,7 @@ func (bc *LocalBudgetControl) Get(key string) string {
 	return ""
 }
 
-func (bc *LocalBudgetControl) Update(key string, impressionId string, amount float64, impressions int) error {
+func (bc *LocalBudgetControl) Update(key string, impressionId string, amount float64, impressions, clicks int) error {
 	uid := key + "_" + impressionId
 
 	// 检查缓存中是否存在该操作的唯一标识
@@ -90,6 +94,7 @@ func (bc *LocalBudgetControl) Update(key string, impressionId string, amount flo
 		record.Date = now
 		record.DailyUsage = 0
 		record.DailyImpressions = 0
+		record.DailyClicks = 0
 	}
 
 	// 更新每日消耗和曝光数
@@ -99,6 +104,10 @@ func (bc *LocalBudgetControl) Update(key string, impressionId string, amount flo
 	// 更新总消耗和曝光数
 	record.TotalUsage += amount
 	record.TotalImpressions += impressions
+
+	// 更新点击
+	record.DailyClicks += clicks
+	record.TotalClicks += clicks
 
 	// 存储更新后的记录
 	bc.data.Store(key, record)

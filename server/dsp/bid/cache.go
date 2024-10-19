@@ -105,7 +105,7 @@ func Load() error {
 		if c.GetBudgetDaily() > 0 || c.GetBudgetTotal() > 0 || c.GetImpTotal() > 0 || c.GetImpDaily() > 0 {
 			key := c.GetBudgetKey()
 			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Get(key)))
-			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal())
+			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal(), c.GetClkDaily(), c.GetClkTotal())
 		}
 	}
 	Campaigns = cs

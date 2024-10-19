@@ -28,6 +28,8 @@ type Campaign struct {
 	BudgetDaily        *int                   `json:"budget_daily" form:"budget_daily" gorm:"column:budget_daily;comment:每日预算,元;size:20;"`                         //每日预算,元
 	ImpTotal           *int                   `json:"imp_total" form:"imp_total" gorm:"column:imp_total;comment:总曝光数;size:20;"`                                    //总曝光数
 	ImpDaily           *int                   `json:"imp_daily" form:"imp_daily" gorm:"column:imp_daily;comment:每日曝光数;size:20;"`                                   //每日曝光数
+	ClkTotal           *int                   `json:"clk_total" form:"clk_total" gorm:"column:clk_total;comment:总点击数;size:20;"`                                    //总曝光数
+	ClkDaily           *int                   `json:"clk_daily" form:"clk_daily" gorm:"column:clk_daily;comment:每日点击数;size:20;"`                                   //每日曝光数
 	ImpFrequency       *int                   `json:"imp_frequency" form:"imp_frequency" gorm:"column:imp_frequency;comment:曝光频制;size:10;"`                        //曝光频制
 	ImpFrequencyMinute *int                   `json:"imp_frequency_minute" form:"imp_frequency_minute" gorm:"column:imp_frequency_minute;comment:曝光频控周期;size:10;"` //曝光频控周期
 	ClkFrequency       *int                   `json:"clk_frequency" form:"clk_frequency" gorm:"column:clk_frequency;comment:点击频控;size:10;"`                        //点击频控
@@ -197,6 +199,19 @@ func (c *Campaign) GetImpDaily() int {
 	}
 	return math.MaxInt
 }
+
+func (c *Campaign) GetClkTotal() int {
+	if c.ClkTotal != nil {
+		return *c.ClkTotal
+	}
+	return math.MaxInt
+}
+func (c *Campaign) GetClkDaily() int {
+	if c.ClkDaily != nil {
+		return *c.ClkDaily
+	}
+	return math.MaxInt
+}
 func (c *Campaign) GetCtrMax() float64 {
 	if c.CtrMax != nil {
 		return *c.CtrMax
@@ -281,6 +296,13 @@ func (c *Campaign) Init() {
 func (c *Campaign) InRegion(region string) bool {
 	if c.Target != nil {
 		return c.Target.InRegion(region)
+	}
+	return true
+}
+
+func (c *Campaign) InOs(os string) bool {
+	if c.Target != nil {
+		return c.Target.InOs(os)
 	}
 	return true
 }

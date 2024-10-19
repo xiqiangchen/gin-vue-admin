@@ -45,7 +45,7 @@ func (r RedisBudgetControl) CheckOver(key string) bool {
 	return record.CheckBudgetOver()
 }
 
-func (r RedisBudgetControl) Update(key string, impressionId string, amount float64, impressions int) error {
+func (r RedisBudgetControl) Update(key string, impressionId string, amount float64, impressions, clicks int) error {
 	uid := key + "_" + impressionId
 
 	// 检查缓存中是否存在该操作的唯一标识
@@ -76,6 +76,10 @@ func (r RedisBudgetControl) Update(key string, impressionId string, amount float
 	record.TotalUsage += amount
 	record.TotalImpressions += impressions
 
+	// 更新点击
+	record.DailyClicks += clicks
+	record.TotalClicks += clicks
+
 	// 存储更新后的记录
 	if byt, err := json.Marshal(record); err == nil {
 		global.GVA_REDIS.Set(context.Background(), key, string(byt), CostExpireTime)
@@ -84,7 +88,7 @@ func (r RedisBudgetControl) Update(key string, impressionId string, amount float
 	return nil
 }
 
-func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit int) {
+func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
 	record, ok := r.GetBudgetRecord(key)
 	if ok {
 		now := time.Now()
@@ -93,6 +97,8 @@ func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64
 		record.TotalLimit = totalLimit
 		record.DailyImpressionLimit = dailyImpressionLimit
 		record.TotalImpressionLimit = totalImpressionLimit
+		record.DailyClickLimit = dailyClickLimit
+		record.TotalClickLimit = totalClickLimit
 	} else {
 		record = &BudgetRecord{
 			Date:                 time.Now(),
@@ -100,6 +106,8 @@ func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64
 			TotalLimit:           totalLimit,
 			DailyImpressionLimit: dailyImpressionLimit,
 			TotalImpressionLimit: totalImpressionLimit,
+			DailyClickLimit:      dailyClickLimit,
+			TotalClickLimit:      totalClickLimit,
 		}
 	}
 	if byt, err := json.Marshal(record); err == nil {
