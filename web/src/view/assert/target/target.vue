@@ -58,6 +58,7 @@
         </el-table-column>
         <el-table-column align="left" label="名称" prop="name" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
+        <el-table-column align="left" label="渠道媒体" prop="adx" width="120" />
         <el-table-column align="left" label="广告形式" prop="ad_format" width="120">
             <template #default="scope">
             {{ filterDict(scope.row.ad_format,adFormatOptions) }}
@@ -116,6 +117,12 @@
             <el-form-item label="描述:"  prop="desc" >
               <el-input v-model="formData.desc" :clearable="true"  placeholder="请输入描述" />
             </el-form-item>
+            <el-form-item label="渠道媒体:"  prop="adx" >
+              <el-checkbox-group v-model="keys.adx" @change="handleChangeMultiStrAdx" placeholder="请选择渠道媒体" style="width:100%" :clearable="true" >
+                <el-checkbox-button :key="adx" :label="0" :value="0">不限</el-checkbox-button>
+                <el-checkbox-button v-for="(item,key) in adxOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+              </el-checkbox-group>
+            </el-form-item>
             <el-form-item label="广告形式:"  prop="ad_format" >
               <el-checkbox-group  v-model="keys.ad_format" placeholder="请选择广告形式"  @change="handleChangeMultiAdFormat" style="width:100%" :clearable="true" >
                 <el-checkbox-button :key="ad_format" :label="0" :value="0">不限</el-checkbox-button>
@@ -170,6 +177,13 @@
                 </el-descriptions-item>
                 <el-descriptions-item label="描述">
                         {{ formData.desc }}
+                </el-descriptions-item>
+
+                <el-descriptions-item label="渠道媒体">
+                  <el-checkbox-group v-model="keys.adx" @change="handleChangeMultiStrAdx" placeholder="请选择渠道媒体" style="width:100%" :clearable="true" >
+                    <el-checkbox-button :key="adx" :label="0" :value="0">不限</el-checkbox-button>
+                    <el-checkbox-button v-for="(item,key) in adxOptions" :key="key" :label="item.value" :value="item.value">{{ item.label }}</el-checkbox-button>
+                  </el-checkbox-group>
                 </el-descriptions-item>
                 <el-descriptions-item label="广告形式">
                   <el-checkbox-group  v-model="keys.ad_format" placeholder="请选择广告形式"  @change="handleChangeMultiAdFormat" style="width:100%" :clearable="true" >
@@ -240,6 +254,7 @@ const genderOptions = ref([])
 const adFormatOptions = ref([])
 const deviceTypeOptions = ref([])
 const regionOptions = ref([])
+const adxOptions = ref([])
 const osOptions = ref([])
 const formData = ref({
         name: '',
@@ -249,6 +264,7 @@ const formData = ref({
         os: 0,
         target_type: 0,
         region: [],
+        adx: [],
         gender: 0,
         })
 
@@ -259,6 +275,7 @@ const keys = ref({
   target_type: [],
   gender: [],
   region: [],
+  adx: [],
 })
 
 // 验证规则
@@ -352,6 +369,7 @@ const setOptions = async () =>{
     adFormatOptions.value = await getDictFunc('adFormat')
     deviceTypeOptions.value = await getDictFunc('deviceType')
     osOptions.value = await getDictFunc('os')
+    adxOptions.value = await getDictFunc('adx')
     regionOptions.value = await getDictFunc('region')
 }
 
@@ -390,6 +408,10 @@ const handleChangeMultiDeviceType = (val) => {
   handleMultiSelectChange(val, 'device_type');
 }
 
+const handleChangeMultiAdx = (val) => {
+  handleMultiSelectChange(val, 'adx');
+}
+
 const handleMultiSelectChange = (val, key) => {
   if (val !== undefined && val.length > 0) {
     console.log(val, key);
@@ -415,6 +437,22 @@ const handleChangeMultiStr = (val) => {
       console.log(keys.value['region']);
       formData.value.region = keys.value['region'].join(',');
       console.log(formData.value.region);
+    }
+  }
+}
+
+const handleChangeMultiStrAdx = (val) => {
+  console.log(val)
+  if (val !== undefined && val.length > 0) {
+    if (val[val.length-1] === 0) {
+      keys.value['adx'] = [0]
+      formData.value.adx = keys.value['adx'].join(',');
+      console.log(formData.value.adx);
+    } else {
+      keys.value['adx'] = keys.value['adx'].filter(item => item !== 0);
+      console.log(keys.value['adx']);
+      formData.value.adx = keys.value['adx'].join(',');
+      console.log(formData.value.adx);
     }
   }
 }
@@ -536,6 +574,7 @@ const closeDetailShow = () => {
           device_type: 0,
           os: 0,
           target_type: 0,
+          adx: [],
           region: [],
           gender: 0,
           }
@@ -559,6 +598,7 @@ const closeDialog = () => {
         os: 0,
         target_type: 0,
         region: [],
+        adx: [],
         gender: 0,
         }
 }
