@@ -3,6 +3,7 @@ package assert
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"strconv"
 	"strings"
 )
 
@@ -17,6 +18,8 @@ type Target struct {
 	TargetType *int                `json:"target_type" form:"target_type" gorm:"column:target_type;comment:定向类型;"` // 定向类型
 	Region     string              `json:"region" form:"region" gorm:"column:region;comment:行政区域;size:255;"`       // 行政区域
 	Regions    map[string]struct{} `json:"-" form:"-" gorm:"-"`
+	Adx        string              `json:"adx" form:"adx" gorm:"column:adx;comment:行政区域;size:255;"` // 行政区域
+	Adxs       map[int]struct{}    `json:"-" form:"-" gorm:"-"`
 	Gender     *int                `json:"gender" form:"gender" gorm:"column:gender;comment:性别;"` // 性别
 	CreatedBy  uint                `gorm:"column:created_by;comment:创建者"`
 	UpdatedBy  uint                `gorm:"column:updated_by;comment:更新者"`
@@ -36,6 +39,15 @@ func (t *Target) Init() {
 			ts[r] = struct{}{}
 		}
 		t.Regions = ts
+	}
+	if len(t.Adx) > 0 && t.Adxs == nil {
+		rs := strings.Split(t.Adx, ",")
+		ts := make(map[int]struct{}, len(rs))
+		for _, r := range rs {
+			a, _ := strconv.Atoi(r)
+			ts[a] = struct{}{}
+		}
+		t.Adxs = ts
 	}
 }
 
@@ -69,4 +81,16 @@ func (t *Target) InPlatform(mobile int) bool {
 		}
 	}
 	return false
+}
+
+func (t *Target) InAdx(adx int) bool {
+	if t.Adxs != nil && len(t.Adxs) > 0 {
+		if _, ok := t.Adxs[adx]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+	// 默认是
+	return true
 }

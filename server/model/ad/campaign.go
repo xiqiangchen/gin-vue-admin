@@ -293,6 +293,13 @@ func (c *Campaign) Init() {
 	}
 	c.buildDeeplinks()
 }
+
+func (c *Campaign) InAdx(adx int) bool {
+	if c.Target != nil {
+		return c.Target.InAdx(adx)
+	}
+	return true
+}
 func (c *Campaign) InRegion(region string) bool {
 	if c.Target != nil {
 		return c.Target.InRegion(region)

@@ -35,8 +35,10 @@ func (bidService *BidService) SendMsg(msg []byte) {
 // func (bidService *BidService) Bid(req *bid_adapter.BidRequest, c *gin.Context) (*bid_adapter.BidResponse, bool) {
 func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*protocol.BidResponse, bool) {
 
+	adxStr, _ := c.GetQuery("adx")
+	adx, _ := strconv.Atoi(adxStr)
 	var campaigns []*ad.Campaign
-	if campaigns = filters(req); len(campaigns) == 0 {
+	if campaigns = filters(req, adx); len(campaigns) == 0 {
 		return nil, false
 	}
 	if winCampaign, weight := selectCampaign(campaigns); winCampaign != nil {
@@ -107,7 +109,7 @@ func selectCampaign(campaigns []*ad.Campaign) (*ad.Campaign, float64) {
 
 // 筛选符合条件的账户、计划、活动
 // func filters(req *bid_adapter.BidRequest) (campaigns []*ad.Campaign) {
-func filters(req *protocol.BidRequest) (campaigns []*ad.Campaign) {
+func filters(req *protocol.BidRequest, adx int) (campaigns []*ad.Campaign) {
 	for _, campaign := range dbid.ActiveCampaigns {
 
 		// 基础过滤
@@ -142,7 +144,7 @@ func filters(req *protocol.BidRequest) (campaigns []*ad.Campaign) {
 		}
 
 		// 定向过滤
-		if filterByTarget(req, campaign) {
+		if filterByTarget(req, campaign, adx) {
 			continue
 		}
 
@@ -186,7 +188,10 @@ func filterByFrequencies(req *protocol.BidRequest, c *ad.Campaign) bool {
 }
 
 // 定向过滤
-func filterByTarget(req *protocol.BidRequest, c *ad.Campaign) bool {
+func filterByTarget(req *protocol.BidRequest, c *ad.Campaign, adx int) bool {
+	if !c.InAdx(adx) {
+		return true
+	}
 	// 先增加地区定向
 	var geo *protocol.Geo
 	if req.Device != nil && req.Device.Geo != nil {
@@ -331,6 +336,7 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 		bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
 		if len(campaign.Brand) > 0 {
 			bid.AdvDomains = []string{campaign.Brand}
+			bid.AdID = campaign.Brand
 		}
 		tracks := protocol.ExtTracks{
 			ImpressionTracks: []string{impTrack},
@@ -338,6 +344,7 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			Deeplink:         dp,
 			LandingUrl:       campaign.H5,
 			UniversalLink:    campaign.UniversalLink,
+			BillingId:        162000188148,
 		}
 
 		if len(campaign.ImpTrackUrl) > 0 {
@@ -380,6 +387,8 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 					campaign.DPIncr()
 				} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
 					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.UniversalLink)
+				} else if len(campaign.H5) > 0 {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.H5)
 				}
 			}
 
