@@ -198,6 +198,7 @@ func (campaignApi *CampaignApi) GetCampaignList(c *gin.Context) {
 			if v, ok := bid.BudgetControl.GetBudgetRecord(list[i].GetBudgetKey()); ok {
 				list[i].TodayCost = math.Round(v.TotalUsage*100) / 100
 				list[i].TodayImpression = v.TotalImpressions
+				list[i].TodayClick = v.TotalClicks
 			}
 		}
 		response.OkWithDetailed(response.PageResult{

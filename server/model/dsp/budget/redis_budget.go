@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"sync"
 	"time"
 )
 
@@ -16,12 +17,21 @@ const CostExpireTime = 14 * 24 * time.Hour
 
 type RedisBudgetControl struct {
 	pvExpireTime time.Duration
+	keys         sync.Map
 }
 
 func NewRedisBudgetControl(expire time.Duration) *RedisBudgetControl {
 	return &RedisBudgetControl{
 		pvExpireTime: expire,
+		keys:         sync.Map{},
 	}
+}
+
+func (r RedisBudgetControl) CleanToday() {
+	r.keys.Range(func(key, value any) bool {
+		_ = r.Update("", "", 0, 0, 0)
+		return true
+	})
 }
 
 func (r RedisBudgetControl) Exist(key string) bool {
@@ -66,6 +76,7 @@ func (r RedisBudgetControl) Update(key string, impressionId string, amount float
 		record.Date = now
 		record.DailyUsage = 0
 		record.DailyImpressions = 0
+		record.DailyClicks = 0
 	}
 
 	// 更新每日消耗和曝光数
@@ -89,6 +100,7 @@ func (r RedisBudgetControl) Update(key string, impressionId string, amount float
 }
 
 func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
+	r.keys.Store(key, struct{}{})
 	record, ok := r.GetBudgetRecord(key)
 	if ok {
 		now := time.Now()

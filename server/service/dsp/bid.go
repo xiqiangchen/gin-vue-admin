@@ -42,7 +42,7 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 		return nil, false
 	}
 	if winCampaign, weight := selectCampaign(campaigns); winCampaign != nil {
-		if resp, offer, err := offerByCampaign(req, winCampaign, weight); err != nil {
+		if resp, offer, err := offerByCampaign(adx, req, winCampaign, weight); err != nil {
 			global.GVA_LOG.Error("出价活动转换bidResp协议失败", zap.Error(err))
 		} else if offer {
 			return resp, true
@@ -56,7 +56,7 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 
 // 根据活动填充出价响应
 // func offerByCampaign(req *bid_adapter.BidRequest, campaign *ad.Campaign) (resp *bid_adapter.BidResponse, err error) {
-func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign, weight float64) (resp *protocol.BidResponse, offer bool, err error) {
+func offerByCampaign(adx int, req *protocol.BidRequest, campaign *ad.Campaign, weight float64) (resp *protocol.BidResponse, offer bool, err error) {
 
 	bids := make([]protocol.Bid, 0, len(req.Impressions))
 	// 暂时只支持对第一个曝光进行处理
@@ -64,7 +64,7 @@ func offerByCampaign(req *protocol.BidRequest, campaign *ad.Campaign, weight flo
 		if imp.BidFloor > campaign.GetBidPrice() || (rand.Float64() > (campaign.GetBidRate() / weight / 100)) {
 			continue
 		}
-		_bid, err := getRespBid(req.ID, req, imp, campaign)
+		_bid, err := getRespBid(adx, req.ID, req, imp, campaign)
 		if err != nil {
 			continue
 		}
@@ -279,7 +279,7 @@ func filterByFrequency(req *protocol.BidRequest, frequencyKey, frequency int) bo
 }
 
 // func getRespBid(adxId int32, id string, imp *bid_adapter.BidRequest_Imp, campaign *ad.Campaign) (bid *bid_adapter.BidResponse_SeatBid_Bid, err error) {
-func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, campaign *ad.Campaign) (bid protocol.Bid, err error) {
+func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impression, campaign *ad.Campaign) (bid protocol.Bid, err error) {
 
 	var v *ad.Creative
 	var exist bool
@@ -331,7 +331,7 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 		dp := campaign.VoteDeeplink()
 		campaign.FillTrackParams(paramsMap)
 		params := BuildTrackParams(paramsMap)
-		impTrack := BuildImpTrack(params)
+		impTrack := BuildImpTrack(params, bid.Price)
 		clkTrack := BuildClkTrack(params)
 		bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
 		if len(campaign.Brand) > 0 {
@@ -339,24 +339,38 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 			bid.AdID = campaign.Brand
 		}
 		tracks := protocol.ExtTracks{
-			ImpressionTracks: []string{impTrack},
-			ClickTracks:      []string{clkTrack},
-			Deeplink:         dp,
-			LandingUrl:       campaign.H5,
-			UniversalLink:    campaign.UniversalLink,
-			BillingId:        162000188148,
+			//ImpressionTracks: []string{impTrack},
+			//ClickTracks:      []string{clkTrack},
+			Deeplink:      dp,
+			LandingUrl:    campaign.H5,
+			UniversalLink: campaign.UniversalLink,
+			BillingId:     162000188148,
 		}
 
-		if len(campaign.ImpTrackUrl) > 0 {
+		/*if len(campaign.ImpTrackUrl) > 0 {
 			tracks.ImpressionTracks = append(tracks.ImpressionTracks, campaign.ImpTrackUrl)
-		}
+		}*/
 
-		if len(campaign.ClickTrackUrl) > 0 {
+		/*if len(campaign.ClickTrackUrl) > 0 {
 			tracks.ClickTracks = append(tracks.ClickTracks, campaign.ClickTrackUrl)
-		}
+		}*/
 
 		if ext, e := json.Marshal(tracks); e == nil {
 			bid.Ext = ext
+		}
+
+		// 处理扩展功能
+		var (
+			finalLink string
+			os        = "android"
+		)
+		if req.Device != nil && len(req.Device.OS) > 0 {
+			os = strings.ToLower(req.Device.OS)
+		}
+		if campaign.IsLinkSystem() && dbid.LinkSystemClient != nil {
+			if r, err := dbid.LinkSystemClient.GetClickLog(strconv.Itoa(adx), os, "0"); err == nil && r.Success && len(r.Data) > 0 {
+				finalLink = r.Data
+			}
 		}
 
 		if len(campaign.Images) > 0 {
@@ -381,15 +395,22 @@ func getRespBid(id string, req *protocol.BidRequest, imp protocol.Impression, ca
 
 		if adm := campaign.GetAdm(); len(adm) > 0 {
 			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
+			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
 			if req.Device != nil && len(req.Device.OS) > 0 {
-				if len(dp) > 0 && strings.ToLower(req.Device.OS) == "android" {
-					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
-					campaign.DPIncr()
-				} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
-					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.UniversalLink)
-				} else if len(campaign.H5) > 0 {
-					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.H5)
+				if !campaign.IsLinkSystem() || len(finalLink) == 0 {
+					if len(dp) > 0 && strings.ToLower(req.Device.OS) == "android" {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
+						campaign.DPIncr()
+					} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.UniversalLink)
+					} else if len(campaign.H5) > 0 {
+						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.H5)
+					}
+				} else {
+					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, finalLink)
 				}
+
+				bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspOs, strings.ToLower(req.Device.OS))
 			}
 
 			// 替换dsp宏
@@ -573,8 +594,8 @@ func hasVideo(tpl *bid_adapter.NativeRequest) bool {
 	}
 	return false
 }
-func BuildImpTrack(params string) string {
-	return fmt.Sprintf("%s/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
+func BuildImpTrack(params string, price float64) string {
+	return fmt.Sprintf("%s/track%s?pr=%v&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Impression.Uri, price, params)
 	//return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
 }
 

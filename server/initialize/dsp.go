@@ -23,6 +23,13 @@ func BidTimer() {
 		if err != nil {
 			fmt.Println("add bid timer error:", err)
 		}
+		_, err = global.GVA_Timer.AddTaskByFunc("RefreshCampaigns", "5 0 0 * * *", func() {
+			fmt.Println("执行时间", time.Now().Minute())
+			bid.ResetCampaignData()
+		}, "定时更新活动投放数据", option...)
+		if err != nil {
+			fmt.Println("add bid timer error:", err)
+		}
 
 	}()
 }

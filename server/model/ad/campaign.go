@@ -65,10 +65,12 @@ type Campaign struct {
 	Videos             map[int][]*Creative    `json:"Videos" gorm:"-"`
 	TodayCost          float64                `json:"today_cost" form:"-" gorm:"-"`       // 当天消耗
 	TodayImpression    int                    `json:"today_impression" form:"-" gorm:"-"` // 当天曝光
+	TodayClick         int                    `json:"today_click" form:"-" gorm:"-"`      // 当天点击
 	// 扩展功能
-	Deeplinks string   `json:"deeplinks" form:"deeplinks" gorm:"column:deeplinks;comment:;type:text;"` //deeplink字段
-	currentDP int      `json:"-" form:"-" gorm:"-"`
-	dps       []string `json:"-" form:"-" gorm:"-"`
+	Deeplinks  string   `json:"deeplinks" form:"deeplinks" gorm:"column:deeplinks;comment:;type:text;"` //deeplink字段
+	LinkSystem *bool    `json:"link_system" form:"link_system" gorm:"column:link_system,comment:动态链接"`  // 动态链接
+	currentDP  int      `json:"-" form:"-" gorm:"-"`
+	dps        []string `json:"-" form:"-" gorm:"-"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns
@@ -247,6 +249,12 @@ func (c Campaign) GetBidMethod() int {
 		return *c.BidMethod
 	}
 	return 0
+}
+func (c *Campaign) IsLinkSystem() bool {
+	if c.LinkSystem != nil {
+		return *c.LinkSystem
+	}
+	return false
 }
 func (c *Campaign) GetBidMode() int {
 	if c.BidMode != nil {

@@ -15,6 +15,7 @@ type BudgetControl interface {
 	SetLimits(key string, dailyBudgetLimit, totalBudgetLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int)
 	Get(key string) string
 	GetBudgetRecord(key string) (*BudgetRecord, bool)
+	CleanToday()
 }
 
 type BudgetRecord struct {

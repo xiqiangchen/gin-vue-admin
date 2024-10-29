@@ -45,4 +45,7 @@ const (
 	DspBundle       = "${DSP_BUNDLE}"
 	DspPublisher    = "${DSP_PUBLISHER}"
 	DspOfferDayHour = "${DSP_OFFER_DAY_HOUR}"
+
+	DspCampaignId = "${DSP_CAMPAIGN_ID}"
+	DspOs         = "${DSP_OS}"
 )

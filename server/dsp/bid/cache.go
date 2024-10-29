@@ -3,6 +3,7 @@ package bid
 import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/link"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
@@ -21,14 +22,15 @@ var Campaigns map[uint]*ad.Campaign
 var AdFrequency = sync.Map{}           // 计划曝光频控
 var BudgetControl budget.BudgetControl // 计划消耗
 var ClickLimit *strategy.ClickLimit
+var LinkSystemClient *link.Client
 
 func Init() {
 	if BudgetControl == nil {
 		// redis模式还是本地模式
 		if global.GVA_CONFIG.Dsp.UseRedis {
-			BudgetControl = budget.NewRedisBudgetControl(2 * time.Hour)
+			BudgetControl = budget.NewRedisBudgetControl(1 * time.Minute)
 		} else {
-			BudgetControl = budget.NewLocalBudgetControl(2 * time.Hour)
+			BudgetControl = budget.NewLocalBudgetControl(1 * time.Minute)
 		}
 	}
 	if ClickLimit == nil {
@@ -39,6 +41,13 @@ func Init() {
 			// TODO
 		}
 	}
+	if LinkSystemClient == nil {
+		LinkSystemClient = link.NewClient(link.DefaultConfig())
+	}
+}
+
+func ResetCampaignData() {
+	BudgetControl.CleanToday()
 }
 
 // 定期扫描符合投放条件的活动

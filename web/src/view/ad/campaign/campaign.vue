@@ -137,11 +137,12 @@
             <template #default="scope">{{ formatDateTo(scope.row.end_at, 'yyyy-MM-dd') }}</template>
          </el-table-column>
         <el-table-column align="left" label="总预算" prop="budget_total" width="120" />
-        <el-table-column align="left" label="每日预" prop="budget_daily" width="120" />
-        <el-table-column align="left" label="总曝光数" prop="imp_total" width="120" />
+        <el-table-column align="left" label="每日预算" prop="budget_daily" width="120" />
+        <el-table-column align="left" label="总曝光数限制" prop="imp_total" width="120" />
+        <el-table-column align="left" label="每日曝光数限制" prop="imp_daily" width="120" />
         <el-table-column align="left" label="当天消耗" prop="today_cost" width="120" />
         <el-table-column align="left" label="当天曝光数" prop="today_impression" width="120" />
-        <el-table-column align="left" label="每日曝光数" prop="imp_daily" width="120" />
+        <el-table-column align="left" label="当天点击数" prop="today_click" width="120" />
         <el-table-column align="left" label="曝光频制" prop="imp_frequency" width="120" />
         <el-table-column align="left" label="曝光频控周期" prop="imp_frequency_minute" width="120" />
         <el-table-column align="left" label="点击频控" prop="clk_frequency" width="120" />
@@ -390,6 +391,9 @@
             <el-form-item label="动态代码:"  prop="adm" >
               <el-input v-model="formData.adm" type="textarea" :rows="10" :clearable="true"  placeholder="请输入动态代码" />
             </el-form-item>
+            <el-form-item label="动态链接:"  prop="status" >
+              <el-switch v-model="formData.link_system" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
+            </el-form-item>
           </el-form>
       </el-scrollbar>
       <template #footer>
@@ -502,6 +506,9 @@
                 </el-descriptions-item>
                 <el-descriptions-item label="universal_link">
                         {{ formData.universal_link }}
+                </el-descriptions-item>
+                <el-descriptions-item label="动态链接">
+                    {{ formatBoolean(formData.link_system) }}
                 </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -662,6 +669,7 @@ const formData = ref({
         deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
+        link_system: false,
         })
 
 const creatives = ref({
@@ -1062,6 +1070,7 @@ const closeDetailShow = () => {
           deeplinks: '',
           universal_link: '',
           creatives: [initCreative],
+          link_system: false,
           }
 }
 
@@ -1132,6 +1141,7 @@ const closeDialog = () => {
         deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
+        link_system: false,
         }
 }
 

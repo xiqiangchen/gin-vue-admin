@@ -15,6 +15,13 @@ type LocalBudgetControl struct {
 	cache local_cache.Cache // 用于曝光去重
 }
 
+func (bc *LocalBudgetControl) CleanToday() {
+	bc.data.Range(func(key, value any) bool {
+		_ = bc.Update("", "", 0, 0, 0)
+		return true
+	})
+}
+
 func NewLocalBudgetControl(d time.Duration) *LocalBudgetControl {
 	// 创建一个新的缓存，默认过期时间为2小时，清理间隔为10分钟
 	c := local_cache.NewCache(
@@ -36,6 +43,7 @@ func (bc *LocalBudgetControl) GetBudgetRecord(key string) (*BudgetRecord, bool) 
 }
 
 func (bc *LocalBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
+
 	if record, ok := bc.GetBudgetRecord(key); ok {
 		now := time.Now()
 		record.Date = now
