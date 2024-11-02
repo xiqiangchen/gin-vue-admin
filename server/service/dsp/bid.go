@@ -347,6 +347,15 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 			BillingId:     162000188148,
 		}
 
+		if adx == 10 && imp.Ext != nil {
+			var billingId struct {
+				BillingId []string `json:"billing_id,omitempty"`
+			}
+			if err1 := json.Unmarshal(imp.Ext, &billingId); err1 == nil && len(billingId.BillingId) > 0 {
+				tracks.BillingId, _ = strconv.ParseInt(billingId.BillingId[0], 10, 64)
+			}
+		}
+
 		/*if len(campaign.ImpTrackUrl) > 0 {
 			tracks.ImpressionTracks = append(tracks.ImpressionTracks, campaign.ImpTrackUrl)
 		}*/
