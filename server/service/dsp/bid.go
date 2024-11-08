@@ -2,17 +2,19 @@ package dsp
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
-	bid_adapter "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid/protocol/bsw"
 	protocol "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6/native/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6/native/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/vast"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/golang/protobuf/proto"
 	"github.com/shopspring/decimal"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
@@ -200,6 +202,14 @@ func filterByTarget(req *protocol.BidRequest, c *ad.Campaign, adx int) bool {
 		geo = req.User.Geo
 	}
 	if geo != nil && !c.InRegion(geo.Country) {
+		switch len(geo.Country) {
+		case 2:
+			if country, ok := constant.CountryMap[geo.Country]; ok && c.InRegion(country) {
+				return false
+			}
+		case 3:
+			return !c.InRegion(geo.Country)
+		}
 		return true
 	}
 
@@ -298,63 +308,111 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 	}
 	//v = campaign.Creatives[0]
 
+	// 公共部分
+	switch campaign.GetBidMode() {
+	case constant.BidModeFixed:
+		bid.Price = campaign.GetBidPrice()
+	case constant.BidModeAvg:
+		// 	bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
+		bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.3+imp.BidFloor)+0.45*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
+	default:
+		return bid, errors.New("不支持的出价模式")
+	}
+	switch campaign.GetBidMethod() {
+	case constant.BidMethodCpm:
+	default:
+		return bid, errors.New("不支持的出价方法")
+	}
+	paramsMap := buildTrackParamsMap(req, imp)
+	dp := campaign.VoteDeeplink()
+	campaign.FillTrackParams(paramsMap)
+	params := BuildTrackParams(paramsMap)
+	impTrack := BuildImpTrack(params, bid.Price)
+	clkTrack := BuildClkTrack(params)
+	var imps, clks []string
+
+	impTrack = strings.ReplaceAll(impTrack, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
+	clkTrack = strings.ReplaceAll(clkTrack, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
+	if req.Device != nil && len(req.Device.OS) > 0 {
+		impTrack = strings.ReplaceAll(impTrack, constant.DspOs, strings.ToLower(req.Device.OS))
+		clkTrack = strings.ReplaceAll(clkTrack, constant.DspOs, strings.ToLower(req.Device.OS))
+	}
+
+	if len(campaign.ImpTrackUrl) > 0 {
+		var impTemp = strings.ReplaceAll(campaign.ImpTrackUrl, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
+		impTemp = strings.ReplaceAll(impTemp, constant.DspOs, strings.ToLower(req.Device.OS))
+		imps = append(imps, impTrack, impTemp)
+	}
+	if len(campaign.ClickTrackUrl) > 0 {
+		var clkTemp = strings.ReplaceAll(campaign.ClickTrackUrl, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
+		clkTemp = strings.ReplaceAll(clkTemp, constant.DspOs, strings.ToLower(req.Device.OS))
+		clks = append(clks, clkTrack, clkTemp)
+	}
+
+	bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
+	if len(campaign.Brand) > 0 {
+		bid.AdvDomains = []string{campaign.Brand}
+		bid.AdID = campaign.Brand
+	}
+	tracks := protocol.ExtTracks{
+		//ImpressionTracks: []string{impTrack},
+		//ClickTracks:      []string{clkTrack},
+		Deeplink:      dp,
+		LandingUrl:    campaign.H5,
+		UniversalLink: campaign.UniversalLink,
+		BillingId:     162000188148,
+	}
+	if adx == 10 && imp.Ext != nil {
+		var billingId struct {
+			BillingId []string `json:"billing_id,omitempty"`
+		}
+		if err1 := json.Unmarshal(imp.Ext, &billingId); err1 == nil && len(billingId.BillingId) > 0 {
+			tracks.BillingId, _ = strconv.ParseInt(billingId.BillingId[0], 10, 64)
+		}
+	}
+
+	if ext, e := json.Marshal(tracks); e == nil {
+		bid.Ext = ext
+	}
+
+	// 处理扩展功能
+	var (
+		finalLink string
+		os        = "android"
+	)
+	if req.Device != nil && len(req.Device.OS) > 0 {
+		os = strings.ToLower(req.Device.OS)
+	}
+	if campaign.IsLinkSystem() && dbid.LinkSystemClient != nil {
+		if r, err := dbid.LinkSystemClient.GetClickLog(strconv.Itoa(adx), os, "0"); err == nil && r.Success && len(r.Data) > 0 {
+			finalLink = r.Data
+		}
+	}
+
+	if !campaign.IsLinkSystem() || len(finalLink) == 0 {
+		if req.Device != nil {
+			if len(dp) > 0 && strings.ToLower(req.Device.OS) == "android" {
+				finalLink = dp
+				campaign.DPIncr()
+			} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
+				finalLink = campaign.UniversalLink
+			} else if len(campaign.H5) > 0 {
+				finalLink = campaign.H5
+			}
+		}
+	}
+
 	//spotId, randC := kehudsp.GetYorkUCreative()
 	if imp.Banner != nil {
 		var creativeUrl string
-		//v, creativeUrl, exist = GetNearlyCreative(imp.Banner.GetW(), imp.Banner.GetH())
-		if !exist {
-			//return nil, fmt.Errorf("创意尺寸不存在，广告位: %d, 尺寸:%dx%d", spotId, imp.Banner.GetW(), imp.Banner.GetH())
-		}
 
 		if v, exist = campaign.SelectCreative(1, imp.Banner.Width, imp.Banner.Height); v != nil && exist && v.Material != nil {
 			creativeUrl = v.Material.GetAbsoluteUrl()
 		}
-		switch campaign.GetBidMode() {
-		case constant.BidModeFixed:
-			bid.Price = campaign.GetBidPrice()
-		case constant.BidModeAvg:
-			// 	bid.Price = utils.Ceil((campaign.GetBidPrice()-imp.BidFloor)*rand.Float64()+imp.BidFloor, 2)
-			bid.Price = utils.Ceil(((campaign.GetBidPrice()-imp.BidFloor)*0.3+imp.BidFloor)+0.45*rand.Float64()*(campaign.GetBidPrice()-imp.BidFloor), 2)
-		default:
-			return bid, errors.New("不支持的出价模式")
-		}
-		switch campaign.GetBidMethod() {
-		case constant.BidMethodCpm:
-		default:
-			return bid, errors.New("不支持的出价方法")
-		}
+
 		bid.Width = imp.Banner.Width
 		bid.Height = imp.Banner.Height
 		//bid.CreativeUrl = proto.String(getImg(imp.Banner.GetW(), imp.Banner.GetH()))
-
-		paramsMap := buildTrackParamsMap(req, imp)
-		dp := campaign.VoteDeeplink()
-		campaign.FillTrackParams(paramsMap)
-		params := BuildTrackParams(paramsMap)
-		impTrack := BuildImpTrack(params, bid.Price)
-		clkTrack := BuildClkTrack(params)
-		bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
-		if len(campaign.Brand) > 0 {
-			bid.AdvDomains = []string{campaign.Brand}
-			bid.AdID = campaign.Brand
-		}
-		tracks := protocol.ExtTracks{
-			//ImpressionTracks: []string{impTrack},
-			//ClickTracks:      []string{clkTrack},
-			Deeplink:      dp,
-			LandingUrl:    campaign.H5,
-			UniversalLink: campaign.UniversalLink,
-			BillingId:     162000188148,
-		}
-
-		if adx == 10 && imp.Ext != nil {
-			var billingId struct {
-				BillingId []string `json:"billing_id,omitempty"`
-			}
-			if err1 := json.Unmarshal(imp.Ext, &billingId); err1 == nil && len(billingId.BillingId) > 0 {
-				tracks.BillingId, _ = strconv.ParseInt(billingId.BillingId[0], 10, 64)
-			}
-		}
 
 		/*if len(campaign.ImpTrackUrl) > 0 {
 			tracks.ImpressionTracks = append(tracks.ImpressionTracks, campaign.ImpTrackUrl)
@@ -363,24 +421,6 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 		/*if len(campaign.ClickTrackUrl) > 0 {
 			tracks.ClickTracks = append(tracks.ClickTracks, campaign.ClickTrackUrl)
 		}*/
-
-		if ext, e := json.Marshal(tracks); e == nil {
-			bid.Ext = ext
-		}
-
-		// 处理扩展功能
-		var (
-			finalLink string
-			os        = "android"
-		)
-		if req.Device != nil && len(req.Device.OS) > 0 {
-			os = strings.ToLower(req.Device.OS)
-		}
-		if campaign.IsLinkSystem() && dbid.LinkSystemClient != nil {
-			if r, err := dbid.LinkSystemClient.GetClickLog(strconv.Itoa(adx), os, "0"); err == nil && r.Success && len(r.Data) > 0 {
-				finalLink = r.Data
-			}
-		}
 
 		if len(campaign.Images) > 0 {
 			if imgs, exists := campaign.Images[imp.Banner.Width*10000+imp.Banner.Height]; exists {
@@ -404,21 +444,9 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 
 		if adm := campaign.GetAdm(); len(adm) > 0 {
 			bid.AdMarkup = campaign.BuildAdmForCode(impTrack, clkTrack)
+			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, finalLink)
 			bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
 			if req.Device != nil && len(req.Device.OS) > 0 {
-				if !campaign.IsLinkSystem() || len(finalLink) == 0 {
-					if len(dp) > 0 && strings.ToLower(req.Device.OS) == "android" {
-						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, dp)
-						campaign.DPIncr()
-					} else if len(campaign.UniversalLink) > 0 && strings.ToLower(req.Device.OS) == "ios" {
-						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.UniversalLink)
-					} else if len(campaign.H5) > 0 {
-						bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, campaign.H5)
-					}
-				} else {
-					bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspLandingPage, finalLink)
-				}
-
 				bid.AdMarkup = strings.ReplaceAll(bid.AdMarkup, constant.DspOs, strings.ToLower(req.Device.OS))
 			}
 
@@ -456,153 +484,173 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 		}
 
 		_ = creativeUrl
-	}
-	if imp.Native != nil {
-		// TODO
-	}
-	if video := imp.Video; video != nil {
+	} else if imp.Native != nil {
+		var natResp *response.Response
+		var err2 error
+		switch imp.Native.Version {
+		case "1.0":
+			var tmpNative struct {
+				Req *request.Request `json:"request"`
+			}
+
+			var raw string
+			if err1 := json.Unmarshal([]byte(imp.Native.Request), &raw); err1 != nil {
+				return bid, err1
+			}
+
+			if err1 := json.Unmarshal([]byte(raw), &tmpNative); err1 == nil {
+				natResp, err2 = processNativeRequest(tmpNative.Req, campaign, imps, clks, finalLink)
+			}
+		default:
+			var raw string
+			if err1 := json.Unmarshal([]byte(imp.Native.Request), &raw); err1 != nil {
+				return bid, err1
+			}
+
+			var native request.Request
+			if err1 := json.Unmarshal([]byte(raw), &native); err1 == nil {
+				natResp, err2 = processNativeRequest(&native, campaign, imps, clks, finalLink)
+			} else {
+				return bid, err1
+			}
+		}
+		if err2 == nil && natResp != nil {
+			if req, err3 := json.Marshal(natResp); err3 == nil {
+				bid.AdMarkup = string(req)
+				bid.CreativeID = utils.MD5(bid.AdMarkup)
+			}
+		}
+	} else if video := imp.Video; video != nil {
 		// TODO
 	}
 	return
 }
 
-func getNative(adxId int32, tpl *bid_adapter.NativeRequest, campaign *ad.Campaign) (*ad.Creative, *bid_adapter.NativeResponse) {
-	var imageCnt int
-	var assets []*bid_adapter.NativeResponse_Asset
-	//var v *ad.Creative
-	// TODO
-	/*
-		for _, asset := range tpl.Assets {
-			if img := asset.GetImg(); img != nil {
-				if v == nil && img.GetType() != bid_adapter.NativeRequest_Asset_Image_MAIN {
-					//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
-				} else if img.GetType() == bid_adapter.NativeRequest_Asset_Image_MAIN {
-					//	v, _, _ = kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
-				}
-			}
-		}*/
+// 根据Data Type生成相应的内容
+func generateDataValue(dataType request.DataTypeID, campaign *ad.Campaign) string {
+	switch dataType {
+	case request.DataTypeSponsored:
+		return "Sponsored by Example Brand"
+	case request.DataTypeDesc:
+		return "This is a detailed description of the product or service being advertised."
+	case request.DataTypeRating:
+		return "4.5"
+	case request.DataTypeLikes:
+		return "10.5K"
+	case request.DataTypeDownloads:
+		return "1M+"
+	case request.DataTypePrice:
+		return "$99.99"
+	case request.DataTypeSalePrice:
+		return "$79.99"
+	case request.DataTypePhone:
+		return "+1-800-555-0123"
+	case request.DataTypeAddress:
+		return "123 Example Street, City, Country"
+	case request.DataTypeDescAdditional:
+		return "Additional details about the product or service"
+	case request.DataTypeDisplayURL:
+		return "www.example.com/product"
+	case request.DataTypeCTADesc:
+		return "Shop Now"
+	default:
+		return "Unknown data type"
+	}
+}
 
-	var titleAd *ad.Creative
-	for _, asset := range tpl.Assets {
-		if img := asset.GetImg(); img != nil {
-			switch adxId {
-			case 30190:
-				if imageCnt > 0 && (tpl.GetTemplateId() == "201900005" || tpl.GetTemplateId() == "201900006") {
-					continue
-				}
-			}
-			if v, exist := campaign.SelectCreative(1, int(img.GetW()), int(img.GetH())); exist && v.Material != nil {
-				titleAd = v
-				assets = append(assets, &bid_adapter.NativeResponse_Asset{
-					Id:       asset.Id,
-					Required: asset.Required,
-					AssetOneof: &bid_adapter.NativeResponse_Asset_Img{Img: &bid_adapter.NativeResponse_Asset_Image{
-						Url:  proto.String(v.Material.GetAbsoluteUrl()),
-						W:    img.W,
-						H:    img.H,
-						Type: bid_adapter.NativeResponse_Asset_Image_ImageAssetType(img.GetType()).Enum(),
-					}},
-				})
-				imageCnt++
-			}
-			//_, creativeUrl, _ := kehudsp.GetNearlyCreative(dspSpotId, img.GetW(), img.GetH())
+// 处理native请求并生成响应的主要函数
+func processNativeRequest(nativeReq *request.Request, campaign *ad.Campaign, impTracks, clkTracks []string, landing string) (*response.Response, error) {
+	nativeResp := &response.Response{
+		Version:     "1.2",
+		Assets:      make([]response.Asset, 0, len(nativeReq.Assets)),
+		ImpTrackers: impTracks,
+		Link:        response.Link{URL: landing, ClickTrackers: clkTracks},
+	}
 
+	var title, desc string
+	if len(campaign.Creatives) > 0 {
+		title = campaign.Creatives[0].Title
+		desc = campaign.Creatives[0].Desc
+	}
+
+	// 遍历处理每个资产
+	for _, asset := range nativeReq.Assets {
+		assetResp := response.Asset{
+			ID: asset.ID,
 		}
 
-		if video := asset.GetVideo(); video != nil {
-			if v, exist := campaign.SelectCreative(2, int(video.GetW()), int(video.GetH())); exist && v.Material != nil {
-				assets = append(assets, &bid_adapter.NativeResponse_Asset{
-					Id:       asset.Id,
-					Required: asset.Required,
-					AssetOneof: &bid_adapter.NativeResponse_Asset_Video_{Video: &bid_adapter.NativeResponse_Asset_Video{
-						Url:      proto.String(v.Material.GetAbsoluteUrl()),
-						W:        proto.Int32(video.GetW()),
-						H:        proto.Int32(video.GetH()),
-						Duration: proto.Int32(15),
-					}},
-				})
+		// 处理标题类型
+		if asset.Title != nil {
+			assetResp.Title = &response.Title{
+				Text: title,
 			}
 		}
 
-		if title := asset.GetTitle(); title != nil {
-			//var val kehudsp.CommonTitle
-			var val []rune
-			if titleAd != nil && len(titleAd.Title) > 0 {
-				val = []rune(titleAd.Title)
-				switch adxId {
-				case 30120:
-				case 30190:
+		// 处理图片类型
+		if asset.Image != nil {
+			assetResp.Image = &response.Image{
+				//URL:    "https://example.com/ad-image.jpg",
+				Width:  asset.Image.Width,
+				Height: asset.Image.Height,
+			}
 
-				default:
-					switch {
-					case title.GetLen() == 0:
-						if len(val) > 8 {
-							val = val[:8]
+			if len(campaign.Images) > 0 {
+				var w, h = asset.Image.Width, asset.Image.Height
+				if w == 0 {
+					w = asset.Image.WidthMin
+				}
+				if h == 0 {
+					h = asset.Image.Height
+				}
+
+				if imgs, exists := campaign.Images[w*10000+h]; exists {
+					if len(imgs) > 0 {
+						if m := imgs[rand.Intn(len(imgs))].Material; m != nil && len(m.Url) > 0 {
+							assetResp.Image.URL = m.GetAbsoluteUrl()
 						}
-					default:
-						if len(val) > int(title.GetLen()) {
-							val = val[:int(title.GetLen())]
-						}
+					}
+				} else if c := getNearlyCreative(campaign.Images, w, h); c != nil {
+					if m := c.Material; m != nil && len(m.Url) > 0 {
+						assetResp.Image.URL = m.GetAbsoluteUrl()
 					}
 				}
 			}
 
-			assets = append(assets, &bid_adapter.NativeResponse_Asset{
-				Id:       asset.Id,
-				Required: asset.Required,
-				AssetOneof: &bid_adapter.NativeResponse_Asset_Title_{
-					Title: &bid_adapter.NativeResponse_Asset_Title{
-						Text: proto.String(string(val)),
-					},
-				},
-			})
 		}
 
-		if data := asset.GetData(); data != nil {
-			var val = "查看详情"
-			switch {
-			case data.GetLen() < 3:
-				val = "详情"
-			case data.GetLen() < 5:
-				val = "查看详情"
-			default:
-				var desc []rune
-				//desc := kehudsp.CommonTitle
-				if titleAd != nil && len(titleAd.Desc) > 0 {
-					desc = []rune(titleAd.Desc)
+		// 处理视频类型
+		if asset.Video != nil {
+			var videoUrl string
+
+			if len(campaign.Videos) > 0 {
+				if m, e := campaign.SelectCreative(2, 1024, 1024); e && m.Material != nil && len(m.Material.Url) > 0 {
+					videoUrl = m.Material.Url
+
 				}
-				//if len(kehudsp.CommonTitle) >= int(data.GetLen()) {
-				//	desc = desc[:int(data.GetLen())]
-				//}
-				val = string(desc)
 			}
-			assets = append(assets, &bid_adapter.NativeResponse_Asset{
-				Id:       asset.Id,
-				Required: asset.Required,
-				AssetOneof: &bid_adapter.NativeResponse_Asset_Data_{
-					Data: &bid_adapter.NativeResponse_Asset_Data{
-						Type:  bid_adapter.NativeResponse_Asset_Data_DataAssetType(data.GetType()).Enum(),
-						Value: proto.String(val),
-					},
-				},
-			})
+
+			if vas, err1 := GenerateVAST(videoUrl, landing, title, desc, campaign.Brand, impTracks, clkTracks, 1024, 1024); err1 == nil {
+				if byt, err2 := xml.Marshal(vas); err2 == nil {
+					assetResp.Video = &response.Video{
+						VASTTag: string(byt),
+					}
+				}
+			}
 		}
 
+		// 处理数据类型
+		if asset.Data != nil {
+			assetResp.Data = &response.Data{
+				Value: desc, //generateDataValue(asset.Data.TypeID, campaign),
+			}
+		}
+
+		nativeResp.Assets = append(nativeResp.Assets, assetResp)
 	}
-	return titleAd, &bid_adapter.NativeResponse{
-		Assets:     assets,
-		TemplateId: proto.String(tpl.GetTemplateId()),
-	}
+
+	return nativeResp, nil
 }
 
-func hasVideo(tpl *bid_adapter.NativeRequest) bool {
-	for _, asset := range tpl.Assets {
-		if video := asset.GetVideo(); video != nil {
-			return true
-		}
-	}
-	return false
-}
 func BuildImpTrack(params string, price float64) string {
 	return fmt.Sprintf("%s/track%s?pr=%v&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Impression.Uri, price, params)
 	//return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
@@ -720,8 +768,11 @@ func getNearlyCreative(cmap map[int][]*ad.Creative, w, h int) *ad.Creative {
 	rate := float64(w) / float64(h)
 	for k, v := range cmap {
 		if len(v) > 0 {
+			if w == 0 || h == 0 {
+				return v[rand.Intn(len(v))]
+			}
 			r := math.Abs(rate - float64(k/10000)/float64(k%10000))
-			if r < minRate {
+			if r < minRate || r == math.NaN() {
 				minRate = r
 				min = v[rand.Intn(len(v))]
 			}
@@ -729,4 +780,81 @@ func getNearlyCreative(cmap map[int][]*ad.Creative, w, h int) *ad.Creative {
 
 	}
 	return min
+}
+
+// 生成VAST XML的函数
+func GenerateVAST(videoURL, clickThrough, title, desc, adv string, imps, clks []string, width, height int) (*vast.VAST, error) {
+	id := utils.MD5(videoURL)
+
+	var impss []vast.Impression
+	for i, im := range imps {
+		impss = append(impss, vast.Impression{URI: im, ID: fmt.Sprintf("imp-%d", i)})
+	}
+	var clkss []vast.VideoClick
+	for i, clk := range clks {
+		clkss = append(clkss, vast.VideoClick{URI: clk, ID: fmt.Sprintf("clk-%d", i)})
+	}
+	vast := &vast.VAST{
+		Version: "4.0",
+		Ads: []vast.Ad{
+			{
+				ID: "ad-" + time.Now().Format("20060102150405"),
+				InLine: &vast.InLine{
+					AdSystem: &vast.AdSystem{
+						Version: "1.0",
+						Name:    "Ad Server",
+					},
+					AdTitle:     title,
+					Impressions: impss,
+					Description: desc,
+					Advertiser:  adv,
+					//Pricing:     "25.00",
+					Creatives: []vast.Creative{
+						{
+							ID:       id,
+							Sequence: 1,
+							AdID:     id,
+							Linear: &vast.Linear{
+								Duration: vast.Duration(30),
+								MediaFiles: []vast.MediaFile{
+									{
+										ID:                  id,
+										Delivery:            "progressive",
+										Type:                "video/mp4",
+										Width:               width,
+										Height:              height,
+										Codec:               "H.264",
+										Bitrate:             2000,
+										MinBitrate:          1500,
+										MaxBitrate:          2500,
+										Scalable:            true,
+										MaintainAspectRatio: true,
+										URI:                 videoURL,
+									},
+								},
+								VideoClicks: &vast.VideoClicks{
+									ClickThroughs: []vast.VideoClick{
+										{
+											ID:  "ct-1",
+											URI: clickThrough,
+										},
+									},
+									ClickTrackings: clkss,
+								},
+								/*TrackingEvents: []vast.Tracking{
+									{Event: "start", URI: impURL},
+									//{Event: "firstQuartile", URI: "https://example.com/track/firstQuartile"},
+									//{Event: "midpoint", URI: "https://example.com/track/midpoint"},
+									//{Event: "thirdQuartile", URI: "https://example.com/track/thirdQuartile"},
+									//{Event: "complete", URI: "https://example.com/track/complete"},
+								},*/
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return vast, nil
 }

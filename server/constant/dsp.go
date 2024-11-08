@@ -49,3 +49,7 @@ const (
 	DspCampaignId = "${DSP_CAMPAIGN_ID}"
 	DspOs         = "${DSP_OS}"
 )
+
+var DspMacros = []string{
+	DspCampaignId, DspOs,
+}

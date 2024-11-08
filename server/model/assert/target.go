@@ -34,25 +34,29 @@ func (Target) TableName() string {
 func (t *Target) Init() {
 	if len(t.Region) > 0 && t.Regions == nil {
 		rs := strings.Split(t.Region, ",")
-		ts := make(map[string]struct{}, len(rs))
+		ts := make(map[string]struct{})
 		for _, r := range rs {
-			ts[r] = struct{}{}
+			if r != "0" {
+				ts[r] = struct{}{}
+			}
 		}
 		t.Regions = ts
 	}
 	if len(t.Adx) > 0 && t.Adxs == nil {
 		rs := strings.Split(t.Adx, ",")
-		ts := make(map[int]struct{}, len(rs))
+		ts := make(map[int]struct{})
 		for _, r := range rs {
 			a, _ := strconv.Atoi(r)
-			ts[a] = struct{}{}
+			if a != 0 {
+				ts[a] = struct{}{}
+			}
 		}
 		t.Adxs = ts
 	}
 }
 
 func (t *Target) InRegion(region string) bool {
-	if t.Regions != nil && len(region) > 0 {
+	if t.Regions != nil && len(t.Regions) > 0 && len(region) > 0 {
 		if _, ok := t.Regions[region]; ok {
 			return true
 		} else {
@@ -70,8 +74,9 @@ func (t *Target) InOs(os string) bool {
 		} else if *t.Os == 2 && strings.ToLower(os) == "android" {
 			return true
 		}
+		return false
 	}
-	return false
+	return true
 }
 
 func (t *Target) InPlatform(mobile int) bool {
