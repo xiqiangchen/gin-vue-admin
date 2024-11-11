@@ -336,17 +336,20 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 	if req.Device != nil && len(req.Device.OS) > 0 {
 		impTrack = strings.ReplaceAll(impTrack, constant.DspOs, strings.ToLower(req.Device.OS))
 		clkTrack = strings.ReplaceAll(clkTrack, constant.DspOs, strings.ToLower(req.Device.OS))
+		imps = append(imps, impTrack)
+		clks = append(clks, clkTrack)
+
 	}
 
 	if len(campaign.ImpTrackUrl) > 0 {
 		var impTemp = strings.ReplaceAll(campaign.ImpTrackUrl, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
 		impTemp = strings.ReplaceAll(impTemp, constant.DspOs, strings.ToLower(req.Device.OS))
-		imps = append(imps, impTrack, impTemp)
+		imps = append(imps, impTemp)
 	}
 	if len(campaign.ClickTrackUrl) > 0 {
 		var clkTemp = strings.ReplaceAll(campaign.ClickTrackUrl, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
 		clkTemp = strings.ReplaceAll(clkTemp, constant.DspOs, strings.ToLower(req.Device.OS))
-		clks = append(clks, clkTrack, clkTemp)
+		clks = append(clks, clkTemp)
 	}
 
 	bid.CampaignID = protocol.StringOrNumber(strconv.Itoa(int(campaign.ID)))
@@ -479,7 +482,7 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 			}
 			//bid.CreativeID = strconv.Itoa(len(adm))
 		} else {
-			global.GVA_LOG.Error("暂时只支持adm代码投放")
+			//global.GVA_LOG.Error("暂时只支持adm代码投放")
 			return bid, errors.New("暂时只支持adm代码投放")
 		}
 
