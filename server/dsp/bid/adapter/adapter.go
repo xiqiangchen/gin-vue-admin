@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
 	protocol "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6"
 	"net/http"
 )
@@ -11,6 +12,7 @@ type Adapter interface {
 	GetAdxId() int
 	GetProtocol() int
 	GetAdxPriceMacro() string
+	GetPricer() *pricer.Decrypter
 }
 
 func GetAdapter(adxId int) Adapter {

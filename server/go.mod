@@ -32,6 +32,7 @@ require (
 	github.com/qiniu/qmgo v1.1.8
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rogpeppe/fastuuid v1.2.0
 	github.com/shirou/gopsutil/v3 v3.23.6
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.11

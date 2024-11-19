@@ -15,6 +15,7 @@ type Metrics struct {
 	Purchase int `json:"purchase,omitempty"` // 购买
 
 	// 价格相关
-	Price    float64 `json:"price,omitempty" form:"pr,omitempty"`     // 结算结果
+	PriceSrc string  `form:"pr,omitempty"` // 结算结果
+	Price    float64 `json:"price,omitempty"`
 	BidFloor float64 `json:"bid_floor,omitempty" form:"bf,omitempty"` // 底价
 }

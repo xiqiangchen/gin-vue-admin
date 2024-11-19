@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	protocol "github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6"
@@ -27,8 +28,7 @@ import (
 	"time"
 )
 
-type BidService struct {
-}
+type BidService struct{}
 
 func (bidService *BidService) SendMsg(msg []byte) {
 	utils.SendMsg(global.GVA_KAFKA_PRODUCER, global.GVA_CONFIG.Dsp.Bid.Topic, msg)
@@ -327,7 +327,8 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 	dp := campaign.VoteDeeplink()
 	campaign.FillTrackParams(paramsMap)
 	params := BuildTrackParams(paramsMap)
-	impTrack := BuildImpTrack(params, bid.Price)
+	pr, _ := pricer.DefaultPricer.Encode(bid.Price)
+	impTrack := BuildImpTrack(params, pr)
 	clkTrack := BuildClkTrack(params)
 	var imps, clks []string
 
@@ -336,10 +337,9 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 	if req.Device != nil && len(req.Device.OS) > 0 {
 		impTrack = strings.ReplaceAll(impTrack, constant.DspOs, strings.ToLower(req.Device.OS))
 		clkTrack = strings.ReplaceAll(clkTrack, constant.DspOs, strings.ToLower(req.Device.OS))
-		imps = append(imps, impTrack)
-		clks = append(clks, clkTrack)
-
 	}
+	imps = append(imps, impTrack)
+	clks = append(clks, clkTrack)
 
 	if len(campaign.ImpTrackUrl) > 0 {
 		var impTemp = strings.ReplaceAll(campaign.ImpTrackUrl, constant.DspCampaignId, strconv.Itoa(int(campaign.ID)))
@@ -603,16 +603,22 @@ func processNativeRequest(nativeReq *request.Request, campaign *ad.Campaign, imp
 					w = asset.Image.WidthMin
 				}
 				if h == 0 {
-					h = asset.Image.Height
+					h = asset.Image.HeightMin
 				}
 
 				if imgs, exists := campaign.Images[w*10000+h]; exists {
 					if len(imgs) > 0 {
-						if m := imgs[rand.Intn(len(imgs))].Material; m != nil && len(m.Url) > 0 {
-							assetResp.Image.URL = m.GetAbsoluteUrl()
+						if cr := imgs[rand.Intn(len(imgs))]; cr != nil {
+							title = cr.Title
+							desc = cr.Desc
+							if m := cr.Material; m != nil && len(m.Url) > 0 {
+								assetResp.Image.URL = m.GetAbsoluteUrl()
+							}
 						}
 					}
 				} else if c := getNearlyCreative(campaign.Images, w, h); c != nil {
+					title = c.Title
+					desc = c.Desc
 					if m := c.Material; m != nil && len(m.Url) > 0 {
 						assetResp.Image.URL = m.GetAbsoluteUrl()
 					}
@@ -651,10 +657,18 @@ func processNativeRequest(nativeReq *request.Request, campaign *ad.Campaign, imp
 		nativeResp.Assets = append(nativeResp.Assets, assetResp)
 	}
 
+	for i := range nativeResp.Assets {
+		if nativeResp.Assets[i].Data != nil {
+			nativeResp.Assets[i].Data.Value = desc
+		} else if nativeResp.Assets[i].Title != nil {
+			nativeResp.Assets[i].Title.Text = title
+		}
+	}
+
 	return nativeResp, nil
 }
 
-func BuildImpTrack(params string, price float64) string {
+func BuildImpTrack(params string, price string) string {
 	return fmt.Sprintf("%s/track%s?pr=%v&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Impression.Uri, price, params)
 	//return fmt.Sprintf("%s:%d/track%s?pr=${AUCTION_PRICE}&%s", global.GVA_CONFIG.Dsp.Domain, global.GVA_CONFIG.Dsp.Track.Port, global.GVA_CONFIG.Dsp.Track.Impression.Uri, params)
 }
