@@ -15,6 +15,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/openrtb2/openrtb_v2.6/native/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/iab/vast"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/ip2geo"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/songzhibin97/gkit/cache/local_cache"
@@ -54,6 +55,34 @@ func (bidService *BidService) Bid(req *protocol.BidRequest, c *gin.Context) (*pr
 	}
 	return nil, false
 
+}
+
+func (bidService *BidService) FillParams(adx string, req *protocol.BidRequest, c *gin.Context) error {
+	if req.Device != nil && req.Device.Geo != nil && len(req.Device.Geo.Country) == 0 {
+
+		var ip string
+		switch {
+		case len(req.Device.IP) > 0:
+			ip = req.Device.IP
+		case len(req.Device.IPv6) > 0:
+			ip = req.Device.IPv6
+		}
+		if len(ip) > 0 {
+			if trans, err := ip2geo.Parse(ip); err == nil && len(trans.Country) > 0 {
+				if cnt, ok := constant.CountryMap[trans.CountryCode]; ok {
+					req.Device.Geo.Country = cnt
+					if len(req.Device.Geo.City) == 0 {
+						req.Device.Geo.City = trans.CountryEn
+					}
+					if len(req.Device.Geo.Region) == 0 {
+						req.Device.Geo.Region = trans.ProvinceEn
+					}
+				}
+			}
+
+		}
+	}
+	return nil
 }
 
 // 根据活动填充出价响应

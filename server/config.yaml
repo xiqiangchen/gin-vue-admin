@@ -277,6 +277,8 @@ dsp:
   use-mongo: false
   use-redis: false
   domain: http://47.236.174.69
+  ipv4-path: /Users/chenxiqiang/Downloads/工作/技术对接/ipdatacloud_city/ipdatacloud_city_v4_en.dat
+  ipv6-path: /Users/chenxiqiang/Downloads/工作/技术对接/ipdatacloud_city/ipdatacloud_city_v6_en.dat
   bid:
     port: 18888
     uri: /bid

@@ -9,6 +9,8 @@ type Dsp struct {
 	Domain       string `mapstructure:"domain" json:"domain" yaml:"domain"`
 	Bid          Bid    `mapstructure:"bid" json:"bid" yaml:"bid"`
 	Track        Track  `mapstructure:"track" json:"track" yaml:"track"`
+	Ipv4Path     string `mapstructure:"ipv4-path" json:"ipv4-path" yaml:"ipv4-path"`
+	Ipv6Path     string `mapstructure:"ipv6-path" json:"ipv6-path" yaml:"ipv6-path"`
 }
 
 type Bid struct {

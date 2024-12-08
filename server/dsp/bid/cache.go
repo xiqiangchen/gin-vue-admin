@@ -10,6 +10,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/budget"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/strategy"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/ip2geo"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
 	"sync"
@@ -44,6 +45,10 @@ func Init() {
 	if LinkSystemClient == nil {
 		LinkSystemClient = link.NewClient(link.DefaultConfig())
 	}
+	if len(global.GVA_CONFIG.Dsp.Ipv4Path) > 0 && len(global.GVA_CONFIG.Dsp.Ipv6Path) > 0 {
+		ip2geo.LoadIp2Geo(global.GVA_CONFIG.Dsp.Ipv4Path, global.GVA_CONFIG.Dsp.Ipv6Path)
+	}
+
 }
 
 func ResetCampaignData() {

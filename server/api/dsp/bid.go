@@ -37,6 +37,8 @@ func (bidApi *BidApi) Rtb(c *gin.Context) {
 	} else if req, err = adxAdapter.From(c.Request.Header, bodyBytes); err != nil {
 		global.GVA_LOG.Error("协议转换失败", zap.Error(err))
 		response.NoContent(c)
+	} else if err = bidService.FillParams(adx, req, c); err != nil {
+		global.GVA_LOG.Error("补充参数失败", zap.Error(err))
 	} else if bresp, offer := bidService.Bid(req, c); !offer {
 		if rand.Intn(1000) == 1 {
 			global.GVA_LOG.Info("放弃出价", zap.Any("req", req))
