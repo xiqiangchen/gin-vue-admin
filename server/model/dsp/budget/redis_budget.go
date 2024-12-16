@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"sync"
 	"time"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 )
 
 // global.GVA_REDIS
@@ -27,22 +28,29 @@ func NewRedisBudgetControl(expire time.Duration) *RedisBudgetControl {
 	}
 }
 
-func (r RedisBudgetControl) CleanToday() {
+func (r *RedisBudgetControl) CleanToday() {
 	r.keys.Range(func(key, value any) bool {
-		_ = r.Update("", "", 0, 0, 0)
+		if record, ok := value.(*BudgetRecord); ok {
+			now := time.Now()
+			if now.Year() != record.Date.Year() || now.YearDay() != record.Date.YearDay() {
+				record.Date = now
+				record.DailyUsage = 0
+				record.DailyImpressions = 0
+				record.DailyClicks = 0
+			}
+		}
 		return true
 	})
 }
 
-func (r RedisBudgetControl) Exist(key string) bool {
+func (r *RedisBudgetControl) Exist(key string) bool {
 	if count, err := global.GVA_REDIS.Exists(context.Background(), key).Result(); err != nil || count == 0 {
 		return false
 	}
 	return true
 }
 
-func (r RedisBudgetControl) CheckOver(key string) bool {
-
+func (r *RedisBudgetControl) CheckOver(key string) bool {
 	val, err := global.GVA_REDIS.Get(context.Background(), key).Result()
 	if err != nil || len(val) == 0 {
 		return false
@@ -55,7 +63,7 @@ func (r RedisBudgetControl) CheckOver(key string) bool {
 	return record.CheckBudgetOver()
 }
 
-func (r RedisBudgetControl) Update(key string, impressionId string, amount float64, impressions, clicks int) error {
+func (r *RedisBudgetControl) Update(key string, impressionId string, amount float64, impressions, clicks int) error {
 	uid := key + "_" + impressionId
 
 	// 检查缓存中是否存在该操作的唯一标识
@@ -99,7 +107,7 @@ func (r RedisBudgetControl) Update(key string, impressionId string, amount float
 	return nil
 }
 
-func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
+func (r *RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64, dailyImpressionLimit, totalImpressionLimit, dailyClickLimit, totalClickLimit int) {
 	r.keys.Store(key, struct{}{})
 	record, ok := r.GetBudgetRecord(key)
 	if ok {
@@ -127,7 +135,7 @@ func (r RedisBudgetControl) SetLimits(key string, dailyLimit, totalLimit float64
 	}
 }
 
-func (r RedisBudgetControl) Get(key string) string {
+func (r *RedisBudgetControl) Get(key string) string {
 	val, err := global.GVA_REDIS.Get(context.Background(), key).Result()
 	if err != nil || len(val) == 0 {
 		return ""
@@ -135,7 +143,7 @@ func (r RedisBudgetControl) Get(key string) string {
 	return val
 }
 
-func (r RedisBudgetControl) GetBudgetRecord(key string) (*BudgetRecord, bool) {
+func (r *RedisBudgetControl) GetBudgetRecord(key string) (*BudgetRecord, bool) {
 	val, err := global.GVA_REDIS.Get(context.Background(), key).Result()
 	if err != nil || len(val) == 0 {
 		return nil, false

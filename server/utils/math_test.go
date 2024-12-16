@@ -15,7 +15,7 @@ func TestCeil2(t *testing.T) {
 func TestWeightedRandomIndex(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		weights := []float64{0.1, 0.2, 0.3, 0.4}
-		index := WeightedRandomIndex(weights)
+		index, _ := WeightedRandomIndex(weights)
 		t.Logf("Selected index: %d\n", index)
 	}
 }
