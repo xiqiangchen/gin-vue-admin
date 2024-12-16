@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 )
 
 type Track struct {
