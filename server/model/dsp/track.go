@@ -161,7 +161,7 @@ func (track *Track) Marshal() []byte {
 func (imp *Impression) Validate() error {
 	var err error
 	if imp.Price, err = pricer.DefaultPricer.Decode(imp.PriceSrc); err != nil {
-		errors.New("价格解析失败: " + imp.PriceSrc)
+		return errors.New("价格解析失败: " + imp.PriceSrc)
 	}
 	// 曝光超过24小时算作弊
 	if imp.BidTs <= 0 || imp.BidTs > 0 && time.Now().Unix()-imp.BidTs > 24*60*60 {
