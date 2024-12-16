@@ -1,6 +1,8 @@
 package ad
 
 import (
+	"math"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
@@ -11,7 +13,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"math"
 )
 
 type CampaignApi struct {
@@ -166,8 +167,8 @@ func (campaignApi *CampaignApi) FindCampaign(c *gin.Context) {
 		response.FailWithMessage("查询失败", c)
 	} else {
 		if v, ok := bid.BudgetControl.GetBudgetRecord(recampaign.GetBudgetKey()); ok {
-			recampaign.TodayCost = math.Round(v.TotalUsage*100) / 100
-			recampaign.TodayImpression = v.TotalImpressions
+			recampaign.TodayCost = math.Round(v.DailyUsage*100) / 100
+			recampaign.TodayImpression = v.DailyImpressions
 		}
 		response.OkWithData(gin.H{"recampaign": recampaign}, c)
 	}
@@ -196,9 +197,9 @@ func (campaignApi *CampaignApi) GetCampaignList(c *gin.Context) {
 	} else {
 		for i := range list {
 			if v, ok := bid.BudgetControl.GetBudgetRecord(list[i].GetBudgetKey()); ok {
-				list[i].TodayCost = math.Round(v.TotalUsage*100) / 100
-				list[i].TodayImpression = v.TotalImpressions
-				list[i].TodayClick = v.TotalClicks
+				list[i].TodayCost = math.Round(v.DailyUsage*100) / 100
+				list[i].TodayImpression = v.DailyImpressions
+				list[i].TodayClick = v.DailyClicks
 			}
 		}
 		response.OkWithDetailed(response.PageResult{
