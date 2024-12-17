@@ -29,22 +29,16 @@ func NewRedisBudgetControl(expire time.Duration) *RedisBudgetControl {
 }
 
 func (r *RedisBudgetControl) CleanToday() {
-	r.keys.Range(func(key, value any) bool {
-		if record, ok := r.GetBudgetRecord(key.(string)); ok {
-			now := time.Now()
-			if now.Year() != record.Date.Year() || now.YearDay() != record.Date.YearDay() {
-				record.Date = now
-				record.DailyUsage = 0
-				record.DailyImpressions = 0
-				record.DailyClicks = 0
-			}
-			// 存储更新后的记录
-			if byt, err := json.Marshal(record); err == nil {
-				global.GVA_REDIS.Set(context.Background(), key.(string), string(byt), CostExpireTime)
-			}
-		}
-		return true
-	})
+	// Get all keys with prefix "budget_*" from Redis
+	keys, err := global.GVA_REDIS.Keys(context.Background(), "budget_*").Result()
+	if err != nil {
+		return
+	}
+	// Store keys in sync.Map
+	for _, key := range keys {
+		r.keys.Store(key, struct{}{})
+		r.Update("", "", 0, 0, 0)
+	}
 }
 
 func (r *RedisBudgetControl) Exist(key string) bool {

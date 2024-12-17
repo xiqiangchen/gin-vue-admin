@@ -5,6 +5,14 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"math"
+	"math/rand"
+	"net/url"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
@@ -20,13 +28,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
-	"math"
-	"math/rand"
-	"net/url"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type BidService struct{}
