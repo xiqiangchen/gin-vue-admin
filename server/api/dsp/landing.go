@@ -33,7 +33,9 @@ func (landingApi *LandingApi) LandingTrack(c *gin.Context) {
 	// 进入统计
 	for _, cl := range clk.Expand() {
 		global.GVA_LOG.Info("收到点击：", zap.ByteString("clk", cl.Marshal()))
-		//landingService.SendMsg(cl.Marshal())
+		if global.GVA_CONFIG.Dsp.UseKafka {
+			landingService.SendMsg(cl.Marshal())
+		}
 	}
 	response.OkWithNoContent(c)
 

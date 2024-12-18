@@ -1,6 +1,8 @@
 package dsp
 
 import (
+	"net/http"
+
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
@@ -8,7 +10,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type ClickApi struct {
@@ -36,8 +37,9 @@ func (clickApi *ClickApi) ClickTrack(c *gin.Context) {
 	for _, cl := range clk.Expand() {
 		global.GVA_LOG.Info("收到点击：", zap.ByteString("clk", cl.Marshal()))
 		dbid.BudgetControl.Update(cl.GetCampaignBudgetKey(), cl.RequestId, 0, 0, cl.Click)
-
-		//clickService.SendMsg(cl.Marshal())
+		if global.GVA_CONFIG.Dsp.UseKafka {
+			clickService.SendMsg(cl.Marshal())
+		}
 	}
 
 	if len(clk.RedirectUrl) > 0 {

@@ -1,6 +1,8 @@
 package dsp
 
 import (
+	"net/http"
+
 	dbid "github.com/flipped-aurora/gin-vue-admin/server/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
@@ -8,7 +10,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type ImpressionApi struct {
@@ -34,7 +35,9 @@ func (impressionApi *ImpressionApi) ImpressionTrack(c *gin.Context) {
 
 	// 进入统计
 	for _, im := range imp.Expand() {
-		//impressionService.SendMsg(im.Marshal())
+		if global.GVA_CONFIG.Dsp.UseKafka {
+			impressionService.SendMsg(im.Marshal())
+		}
 		global.GVA_LOG.Info("收到曝光：", zap.ByteString("imp", im.Marshal()))
 		dbid.BudgetControl.Update(im.GetCampaignBudgetKey(), im.RequestId, im.Price/1000, im.Impression, 0)
 	}

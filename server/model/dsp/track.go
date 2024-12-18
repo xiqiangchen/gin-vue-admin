@@ -13,6 +13,7 @@ import (
 )
 
 type Track struct {
+	EventTs     int64  `json:"event_ts,omitempty" form:"-"`                 // 时间时间戳
 	AdxId       int    `json:"adx_id,omitempty" form:"ch,omitempty"`        // 渠道id
 	Spot        string `json:"spot,omitempty" form:"sp,omitempty"`          // 广告位id
 	SpotId      uint64 `json:"spot_id,omitempty" form:"-"`                  // 广告位id
@@ -30,7 +31,7 @@ type Track struct {
 	Device      int    `json:"device,omitempty" form:"dv,omitempty"`        // 设备
 	Os          string `json:"-" form:"os,omitempty"`                       // 系统
 	OsId        int    `json:"os,omitempty" form:"-"`                       // 系统
-	App         string `json:"-" form:"ap,omitempty"`                       // 应用
+	App         string `json:"bundle,omitempty" form:"ap,omitempty"`        // 应用
 	AppId       uint64 `json:"app,omitempty" form:"-"`                      // 应用id
 	Publisher   string `json:"-" form:"puer,omitempty"`                     // 发布者
 	PublisherId uint64 `json:"puer,omitempty" form:"-"`                     // 发布者id
@@ -88,6 +89,7 @@ func (track *Track) Parse() {
 	default:
 
 	}
+	track.EventTs = time.Now().Unix()
 }
 
 func (track *Track) GetCampaignBudgetKey() string {
@@ -110,7 +112,15 @@ func (track *Track) Clone() *Track {
 			Click:      track.Click,
 			Landing:    track.Landing,
 			Price:      track.Price,
+			BidFloor:   track.BidFloor,
+			WakeUp:     track.WakeUp,
+			Active:     track.Active,
+			Register:   track.Register,
+			Purchase:   track.Purchase,
+			Offer:      track.Offer,
+			Win:        track.Win,
 		},
+		EventTs:     track.EventTs,
 		AdxId:       track.AdxId,
 		UserId:      track.UserId,
 		PlanId:      track.PlanId,
@@ -124,6 +134,14 @@ func (track *Track) Clone() *Track {
 		AppId:       track.AppId,
 		PublisherId: track.PublisherId,
 		SiteId:      track.SiteId,
+		RequestId:   track.RequestId,
+		BidTs:       track.BidTs,
+		DeeplinkId:  track.DeeplinkId,
+		DeeplinkId2: track.DeeplinkId2,
+		MultiTrack:  track.MultiTrack,
+		RedirectUrl: track.RedirectUrl,
+		Spot:        track.Spot,
+		Os:          track.Os,
 	}
 }
 
