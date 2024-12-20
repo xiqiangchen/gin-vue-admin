@@ -354,6 +354,7 @@ func getRespBid(adx int, id string, req *protocol.BidRequest, imp protocol.Impre
 		return bid, errors.New("不支持的出价方法")
 	}
 	paramsMap := buildTrackParamsMap(req, imp)
+	paramsMap["ch"] = strconv.Itoa(adx)
 	dp := campaign.VoteDeeplink()
 	campaign.FillTrackParams(paramsMap)
 	params := BuildTrackParams(paramsMap)
