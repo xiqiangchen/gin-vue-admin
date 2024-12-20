@@ -2,9 +2,10 @@ package dsp
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
-	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/initialize"
@@ -16,6 +17,7 @@ type server interface {
 }
 
 func RunServer() {
+	global.GVA_LOG.Info("kafka状态", zap.Bool("kafka", global.GVA_CONFIG.Dsp.UseKafka))
 	if global.GVA_CONFIG.Dsp.UseKafka {
 		// 初始化redis服务
 		if err := initialize.KafkaProducer.Initialization(); err != nil {
