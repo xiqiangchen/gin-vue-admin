@@ -1,7 +1,7 @@
 FROM golang:alpine as builder
 
 WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
-COPY . .
+COPY .. .
 
 RUN go env -w GO111MODULE=on \
     && go env -w GOPROXY=https://goproxy.cn,direct \
@@ -12,7 +12,7 @@ RUN go env -w GO111MODULE=on \
 
 FROM alpine:latest
 
-LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
+LABEL MAINTAINER="xiqiang_chen@163.com"
 # 设置时区
 ENV TZ=Asia/Shanghai
 RUN apk update && apk add --no-cache tzdata openntpd \

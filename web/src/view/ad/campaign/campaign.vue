@@ -322,13 +322,67 @@
               </el-col>
             </el-row>
             <el-form-item label="定向包id:"  prop="target_id" >
-              <el-input v-model.number="formData.target_id" :clearable="true" placeholder="请输入定向包id" />
+              <el-select 
+                v-model="formData.target_id" 
+                placeholder="请选择定向包"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchTargets"
+                :loading="targetLoading"
+                @change="handleTargetChange"
+                @visible-change="handleTargetVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in targets" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item label="黑白名单id:"  prop="bwlist_id" >
-              <el-input v-model.number="formData.bwlist_id" :clearable="true" placeholder="请输入黑白名单id" />
+              <el-select 
+                v-model="formData.bwlist_id" 
+                placeholder="请选择黑白名单"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchBwlists"
+                :loading="bwlistLoading"
+                @change="handleBwlistChange"
+                @visible-change="handleBwlistVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in bwlists" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item label="出价策略id:"  prop="policy_id" >
-              <el-input v-model.number="formData.policy_id" :clearable="true" placeholder="请输入出价策略id" />
+              <el-select 
+                v-model="formData.policy_id" 
+                placeholder="请选择出价策略"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchPolicies"
+                :loading="policyLoading"
+                @change="handlePolicyChange"
+                @visible-change="handlePolicyVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in policies" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
 
             <el-row>
@@ -571,6 +625,10 @@ import {
 } from '@/api/campaign'
 
 import {
+  getTargetList
+} from '@/api/target'
+
+import {
   createCreatives
 } from '@/api/creative'
 
@@ -578,6 +636,14 @@ import {
   findPlan,
   getPlanList,
 } from '@/api/plan'
+
+import {
+  getBlackWhiteListList
+} from '@/api/bwlist'
+
+import {
+  getPolicyList
+} from '@/api/policy'
 
 import SelectMaterial from '@/components/selectMaterial/selectMaterial.vue'
 // 全量引入格式化工具 请按需保留
@@ -1215,6 +1281,152 @@ const enterDialogCreative = async () => {
                 //getTableData()
               }
       })
+}
+
+// 添加targets数组到data中
+const targets = ref([])
+const targetLoading = ref(false)
+
+// 处理下拉框展开/收起
+const handleTargetVisibleChange = async (visible) => {
+  if (visible) {
+    targetLoading.value = true
+    try {
+      const res = await getTargetList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        targets.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取定向包列表失败:', error)
+    } finally {
+      targetLoading.value = false
+    }
+  }
+}
+
+// 远程搜索方法
+const remoteSearchTargets = async(query) => {
+  if (query !== '') {
+    targetLoading.value = true
+    try {
+      const res = await getTargetList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        targets.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索定向包失败:', error)
+    } finally {
+      targetLoading.value = false
+    }
+  }
+}
+
+const handleTargetChange = (val) => {
+  formData.value.target_id = val
+}
+
+// 添加相关数据和方法
+const bwlists = ref([])
+const policies = ref([])
+const bwlistLoading = ref(false)
+const policyLoading = ref(false)
+
+// 黑白名单相关方法
+const handleBwlistVisibleChange = async (visible) => {
+  if (visible) {
+    bwlistLoading.value = true
+    try {
+      const res = await getBlackWhiteListList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        bwlists.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取黑白名单列表失败:', error)
+    } finally {
+      bwlistLoading.value = false
+    }
+  }
+}
+
+const remoteSearchBwlists = async(query) => {
+  if (query !== '') {
+    bwlistLoading.value = true
+    try {
+      const res = await getBlackWhiteListList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        bwlists.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索黑白名单失败:', error)
+    } finally {
+      bwlistLoading.value = false
+    }
+  }
+}
+
+const handleBwlistChange = (val) => {
+  formData.value.bwlist_id = val
+}
+
+// 出价策略相关方法
+const handlePolicyVisibleChange = async (visible) => {
+  if (visible) {
+    policyLoading.value = true
+    try {
+      const res = await getPolicyList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        policies.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取出价策略列表失败:', error)
+    } finally {
+      policyLoading.value = false
+    }
+  }
+}
+
+const remoteSearchPolicies = async(query) => {
+  if (query !== '') {
+    policyLoading.value = true
+    try {
+      const res = await getPolicyList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        policies.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索出价策略失败:', error)
+    } finally {
+      policyLoading.value = false
+    }
+  }
+}
+
+const handlePolicyChange = (val) => {
+  formData.value.policy_id = val
 }
 
 </script>
