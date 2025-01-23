@@ -111,14 +111,14 @@
       <upload-common
         v-model:imageCommon="imageCommon"
         class="upload-btn-media-library"
-        @on-success="getMaterials"
+        @on-success="createAndList"
       />
       <upload-image
         v-model:imageUrl="imageUrl"
         :file-size="512"
         :max-w-h="1080"
         class="upload-btn-media-library"
-        @on-success="getMaterials"
+        @on-success="createAndList"
       />
       <el-form
         ref="searchForm"
@@ -205,6 +205,7 @@ import UploadCommon from '@/components/upload/common.vue'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, FolderAdd, Plus, Picture as IconPicture } from '@element-plus/icons-vue'
+import service from '@/utils/request'
 
 const imageUrl = ref('')
 const imageCommon = ref('')
@@ -230,13 +231,29 @@ const props = defineProps({
   maxUpdateCount: {
     type: Number,
     default: 0
+  },
+  planId: {
+    type: Number,
+    default: 0
+  },
+  campaignId: {
+    type: Number,
+    default: 0
   }
 })
 const multipleValue = ref([])
+const campaignId = ref(0)
+const planId = ref(0)
 
 onMounted(() => {
   if (props.multiple && props.modelValue) {
     multipleValue.value = props.modelValue
+  }
+  if (props.campaignId > 0) {
+    campaignId.value = props.campaignId
+  }
+  if (props.planId > 0) {
+    planId.value = props.planId
   }
 })
 
@@ -245,6 +262,19 @@ const emits = defineEmits(['update:modelValue'])
 const deleteImg = (index) => {
   multipleValue.value.splice(index, 1)
   emits('update:modelValue', multipleValue.value)
+}
+
+const createAndList = (val) => {
+  console.log('tst1:'+val)
+  // 直接从上传素材
+  const material = service({
+    url: '/material/createMaterial',
+    method: 'post',
+    data: {
+      "url": val
+    }
+  })
+  getMaterials()
 }
 
 // 分页
@@ -328,6 +358,7 @@ const openChooseImg = async() => {
 }
 
 const getMaterials = async() => {
+  console.log(imageCommon.value)
   const res = await getMaterialList({ page: page.value, pageSize: pageSize.value, ...search.value })
   if (res.code === 0) {
     picList.value = res.data.list

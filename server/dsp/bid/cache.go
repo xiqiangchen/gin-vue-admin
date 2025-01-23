@@ -3,11 +3,14 @@ package bid
 import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/link"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/ad"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/bid"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/budget"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/dsp/strategy"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/ip2geo"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"go.uber.org/zap"
 	"sync"
@@ -19,15 +22,37 @@ var Campaigns map[uint]*ad.Campaign
 
 var AdFrequency = sync.Map{}           // 计划曝光频控
 var BudgetControl budget.BudgetControl // 计划消耗
+var ClickLimit *strategy.ClickLimit
+var LinkSystemClient *link.Client
 
-func init() {
-	// redis模式还是本地模式
-	if global.GVA_CONFIG.System.UseRedis {
-	} else {
-		if BudgetControl == nil {
-			BudgetControl = budget.NewLocalBudgetControl(2 * time.Hour)
+func Init() {
+	if BudgetControl == nil {
+		// redis模式还是本地模式
+		if global.GVA_CONFIG.Dsp.UseRedis {
+			BudgetControl = budget.NewRedisBudgetControl(1 * time.Minute)
+		} else {
+			BudgetControl = budget.NewLocalBudgetControl(1 * time.Minute)
 		}
 	}
+	if ClickLimit == nil {
+		// redis模式还是本地模式
+		if global.GVA_CONFIG.Dsp.UseRedis {
+			ClickLimit = strategy.NewClickLimit(7 * 24 * time.Hour)
+		} else {
+			// TODO
+		}
+	}
+	if LinkSystemClient == nil {
+		LinkSystemClient = link.NewClient(link.DefaultConfig())
+	}
+	if len(global.GVA_CONFIG.Dsp.Ipv4Path) > 0 && len(global.GVA_CONFIG.Dsp.Ipv6Path) > 0 {
+		ip2geo.LoadIp2Geo(global.GVA_CONFIG.Dsp.Ipv4Path, global.GVA_CONFIG.Dsp.Ipv6Path)
+	}
+
+}
+
+func ResetCampaignData() {
+	BudgetControl.CleanToday()
 }
 
 // 定期扫描符合投放条件的活动
@@ -93,8 +118,8 @@ func Load() error {
 		// 预算、曝光限制
 		if c.GetBudgetDaily() > 0 || c.GetBudgetTotal() > 0 || c.GetImpTotal() > 0 || c.GetImpDaily() > 0 {
 			key := c.GetBudgetKey()
-			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Print(key)))
-			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal())
+			global.GVA_LOG.Info("预算和消耗情况", zap.Any(key, BudgetControl.Get(key)))
+			BudgetControl.SetLimits(key, float64(c.GetBudgetDaily()), float64(c.GetBudgetTotal()), c.GetImpDaily(), c.GetImpTotal(), c.GetClkDaily(), c.GetClkTotal())
 		}
 	}
 	Campaigns = cs

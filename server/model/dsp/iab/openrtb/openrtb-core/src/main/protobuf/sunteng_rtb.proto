@@ -1,7 +1,0 @@
-import "openrtb.proto";
-package com.google.openrtb;
-
-extend BidRequest{
-    optional bool A = 101;
-    optional bool B = 102;
-}

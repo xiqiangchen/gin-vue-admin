@@ -34,13 +34,9 @@ func (creativeApi *CreativeApi) CreateCreative(c *gin.Context) {
 		return
 	}
 	creative.CreatedBy = utils.GetUserID(c)
-	verify := utils.Rules{
-		"PlanId":     {utils.NotEmpty()},
-		"CampaignId": {utils.NotEmpty()},
-		"MaterialId": {utils.NotEmpty()},
-	}
-	if err := utils.Verify(creative, verify); err != nil {
-		response.FailWithMessage(err.Error(), c)
+	*creative.Status = true
+	if creative.PlanId == 0 || creative.CampaignId == 0 || creative.MaterialId == 0 {
+		response.FailWithMessage("必填参数缺失", c)
 		return
 	}
 	if err := creativeService.CreateCreative(&creative); err != nil {
@@ -68,8 +64,8 @@ func (creativeApi *CreativeApi) CreateCreatives(c *gin.Context) {
 		return
 	}
 	verify := utils.Rules{
-		"PlanId":     {utils.NotEmpty()},
-		"CampaignId": {utils.NotEmpty()},
+		"Creative.PlanId":     {utils.NotEmpty()},
+		"Creative.CampaignId": {utils.NotEmpty()},
 	}
 	if err := utils.Verify(creativeBatch, verify); err != nil {
 		response.FailWithMessage(err.Error(), c)

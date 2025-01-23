@@ -136,10 +136,13 @@
          <el-table-column align="left" label="结束时间" width="180">
             <template #default="scope">{{ formatDateTo(scope.row.end_at, 'yyyy-MM-dd') }}</template>
          </el-table-column>
-        <el-table-column align="left" label="总预算(元)" prop="budget_total" width="120" />
-        <el-table-column align="left" label="每日预(元)" prop="budget_daily" width="120" />
-        <el-table-column align="left" label="总曝光数" prop="imp_total" width="120" />
-        <el-table-column align="left" label="每日曝光数" prop="imp_daily" width="120" />
+        <el-table-column align="left" label="总预算" prop="budget_total" width="120" />
+        <el-table-column align="left" label="每日预算" prop="budget_daily" width="120" />
+        <el-table-column align="left" label="总曝光数限制" prop="imp_total" width="120" />
+        <el-table-column align="left" label="每日曝光数限制" prop="imp_daily" width="120" />
+        <el-table-column align="left" label="当天消耗" prop="today_cost" width="120" />
+        <el-table-column align="left" label="当天曝光数" prop="today_impression" width="120" />
+        <el-table-column align="left" label="当天点击数" prop="today_click" width="120" />
         <el-table-column align="left" label="曝光频制" prop="imp_frequency" width="120" />
         <el-table-column align="left" label="曝光频控周期" prop="imp_frequency_minute" width="120" />
         <el-table-column align="left" label="点击频控" prop="clk_frequency" width="120" />
@@ -208,7 +211,7 @@
                 </el-form-item>
               </el-col>
 
-              <el-col :span="6" class="grid-cell">
+              <!-- <el-col :span="6" class="grid-cell">
                 <el-form-item label="虚拟活动:"  prop="is_virtually" >
                   <el-switch v-model="formData.is_virtually" active-text="是" inactive-text="否" clearable ></el-switch>
                 </el-form-item>
@@ -217,7 +220,7 @@
                 <el-form-item label="混量:"  prop="allow_virtually" >
                   <el-switch v-model="formData.allow_virtually"  active-text="是" inactive-text="否" clearable ></el-switch>
                 </el-form-item>
-              </el-col>
+              </el-col> -->
             </el-row>
             <el-row>
               <el-col :span="10" class="grid-cell">
@@ -319,13 +322,67 @@
               </el-col>
             </el-row>
             <el-form-item label="定向包id:"  prop="target_id" >
-              <el-input v-model.number="formData.target_id" :clearable="true" placeholder="请输入定向包id" />
+              <el-select 
+                v-model="formData.target_id" 
+                placeholder="请选择定向包"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchTargets"
+                :loading="targetLoading"
+                @change="handleTargetChange"
+                @visible-change="handleTargetVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in targets" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item label="黑白名单id:"  prop="bwlist_id" >
-              <el-input v-model.number="formData.bwlist_id" :clearable="true" placeholder="请输入黑白名单id" />
+              <el-select 
+                v-model="formData.bwlist_id" 
+                placeholder="请选择黑白名单"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchBwlists"
+                :loading="bwlistLoading"
+                @change="handleBwlistChange"
+                @visible-change="handleBwlistVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in bwlists" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item label="出价策略id:"  prop="policy_id" >
-              <el-input v-model.number="formData.policy_id" :clearable="true" placeholder="请输入出价策略id" />
+              <el-select 
+                v-model="formData.policy_id" 
+                placeholder="请选择出价策略"
+                clearable
+                filterable
+                remote
+                :remote-method="remoteSearchPolicies"
+                :loading="policyLoading"
+                @change="handlePolicyChange"
+                @visible-change="handlePolicyVisibleChange"
+              >
+                <el-option key="0" label="无" :value="0" />
+                <el-option 
+                  v-for="item in policies" 
+                  :key="item.ID"
+                  :label="item.name" 
+                  :value="item.ID"
+                />
+              </el-select>
             </el-form-item>
 
             <el-row>
@@ -373,8 +430,11 @@
             <el-form-item label="落地页h5:"  prop="h5" >
               <el-input v-model="formData.h5" :clearable="true"  placeholder="请输入落地页" />
             </el-form-item>
-            <el-form-item label="deeplink:"  prop="deeplink" >
+            <el-form-item label="单个deeplink:"  prop="deeplink" >
               <el-input v-model="formData.deeplink" :clearable="true"  placeholder="请输入deeplink字段" />
+            </el-form-item>
+            <el-form-item label="多deeplink:"  prop="deeplinks" >
+              <el-input v-model="formData.deeplinks" type="textarea" :rows="10"  :clearable="true"  placeholder="请输入多个deeplink并以回车分割" />
             </el-form-item>
             <el-form-item label="universal_link:"  prop="universal_link" >
               <el-input v-model="formData.universal_link" :clearable="true"  placeholder="请输入universal_link字段" />
@@ -384,6 +444,9 @@
             </el-form-item>
             <el-form-item label="动态代码:"  prop="adm" >
               <el-input v-model="formData.adm" type="textarea" :rows="10" :clearable="true"  placeholder="请输入动态代码" />
+            </el-form-item>
+            <el-form-item label="动态链接:"  prop="status" >
+              <el-switch v-model="formData.link_system" active-color="#13ce66" inactive-color="#ff4949" active-text="是" inactive-text="否" clearable ></el-switch>
             </el-form-item>
           </el-form>
       </el-scrollbar>
@@ -411,12 +474,12 @@
                 <el-descriptions-item label="状态">
                     {{ formatBoolean(formData.status) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="是否虚拟活动">
+                <!-- <el-descriptions-item label="是否虚拟活动">
                     {{ formatBoolean(formData.is_virtually) }}
                 </el-descriptions-item>
                 <el-descriptions-item label="允许虚拟混量">
-                    {{ formatBoolean(formData.allow_virtually) }}
-                </el-descriptions-item>
+                    {{ formatBoolean(formData.allow_virtually) }} 
+                </el-descriptions-item>-->
                 <el-descriptions-item label="开始时间">
                       {{ formatDate(formData.start_at) }}
                 </el-descriptions-item>
@@ -492,8 +555,14 @@
                 <el-descriptions-item label="deeplink">
                         {{ formData.deeplink }}
                 </el-descriptions-item>
+                <el-descriptions-item label="deeplinks">
+                        {{ formData.deeplinks }}
+                </el-descriptions-item>
                 <el-descriptions-item label="universal_link">
                         {{ formData.universal_link }}
+                </el-descriptions-item>
+                <el-descriptions-item label="动态链接">
+                    {{ formatBoolean(formData.link_system) }}
                 </el-descriptions-item>
         </el-descriptions>
       </el-scrollbar>
@@ -556,6 +625,10 @@ import {
 } from '@/api/campaign'
 
 import {
+  getTargetList
+} from '@/api/target'
+
+import {
   createCreatives
 } from '@/api/creative'
 
@@ -563,6 +636,14 @@ import {
   findPlan,
   getPlanList,
 } from '@/api/plan'
+
+import {
+  getBlackWhiteListList
+} from '@/api/bwlist'
+
+import {
+  getPolicyList
+} from '@/api/policy'
 
 import SelectMaterial from '@/components/selectMaterial/selectMaterial.vue'
 // 全量引入格式化工具 请按需保留
@@ -651,8 +732,10 @@ const formData = ref({
         click_track_url: '',
         h5: '',
         deeplink: '',
+        deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
+        link_system: false,
         })
 
 const creatives = ref({
@@ -1050,8 +1133,10 @@ const closeDetailShow = () => {
           click_track_url: '',
           h5: '',
           deeplink: '',
+          deeplinks: '',
           universal_link: '',
           creatives: [initCreative],
+          link_system: false,
           }
 }
 
@@ -1119,8 +1204,10 @@ const closeDialog = () => {
         click_track_url: '',
         h5: '',
         deeplink: '',
+        deeplinks: '',
         universal_link: '',
         creatives: [initCreative],
+        link_system: false,
         }
 }
 
@@ -1194,6 +1281,152 @@ const enterDialogCreative = async () => {
                 //getTableData()
               }
       })
+}
+
+// 添加targets数组到data中
+const targets = ref([])
+const targetLoading = ref(false)
+
+// 处理下拉框展开/收起
+const handleTargetVisibleChange = async (visible) => {
+  if (visible) {
+    targetLoading.value = true
+    try {
+      const res = await getTargetList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        targets.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取定向包列表失败:', error)
+    } finally {
+      targetLoading.value = false
+    }
+  }
+}
+
+// 远程搜索方法
+const remoteSearchTargets = async(query) => {
+  if (query !== '') {
+    targetLoading.value = true
+    try {
+      const res = await getTargetList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        targets.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索定向包失败:', error)
+    } finally {
+      targetLoading.value = false
+    }
+  }
+}
+
+const handleTargetChange = (val) => {
+  formData.value.target_id = val
+}
+
+// 添加相关数据和方法
+const bwlists = ref([])
+const policies = ref([])
+const bwlistLoading = ref(false)
+const policyLoading = ref(false)
+
+// 黑白名单相关方法
+const handleBwlistVisibleChange = async (visible) => {
+  if (visible) {
+    bwlistLoading.value = true
+    try {
+      const res = await getBlackWhiteListList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        bwlists.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取黑白名单列表失败:', error)
+    } finally {
+      bwlistLoading.value = false
+    }
+  }
+}
+
+const remoteSearchBwlists = async(query) => {
+  if (query !== '') {
+    bwlistLoading.value = true
+    try {
+      const res = await getBlackWhiteListList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        bwlists.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索黑白名单失败:', error)
+    } finally {
+      bwlistLoading.value = false
+    }
+  }
+}
+
+const handleBwlistChange = (val) => {
+  formData.value.bwlist_id = val
+}
+
+// 出价策略相关方法
+const handlePolicyVisibleChange = async (visible) => {
+  if (visible) {
+    policyLoading.value = true
+    try {
+      const res = await getPolicyList({ 
+        page: 1, 
+        pageSize: 20,
+        sort: '-created_at'
+      })
+      if (res.code === 0) {
+        policies.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('获取出价策略列表失败:', error)
+    } finally {
+      policyLoading.value = false
+    }
+  }
+}
+
+const remoteSearchPolicies = async(query) => {
+  if (query !== '') {
+    policyLoading.value = true
+    try {
+      const res = await getPolicyList({ 
+        page: 1, 
+        pageSize: 20,
+        name: query
+      })
+      if (res.code === 0) {
+        policies.value = res.data.list.filter(item => item.ID !== 0)
+      }
+    } catch (error) {
+      console.error('搜索出价策略失败:', error)
+    } finally {
+      policyLoading.value = false
+    }
+  }
+}
+
+const handlePolicyChange = (val) => {
+  formData.value.policy_id = val
 }
 
 </script>

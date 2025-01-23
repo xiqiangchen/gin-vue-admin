@@ -2,49 +2,57 @@ package dsp
 
 import (
 	"encoding/json"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils"
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/dsp/bid/pricer"
+	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 )
 
 type Track struct {
-	AdxId       int    `json:"adx_id,omitempty" form:"ch,omitempty"`      // 渠道id
-	Spot        string `json:"spot,omitempty" form:"sp,omitempty"`        // 广告位id
-	SpotId      uint64 `json:"spot_id,omitempty" form:"-"`                // 广告位id
-	TemplateId  int    `json:"template_id,omitempty" form:"tp,omitempty"` // 模板id
-	UserId      int    `json:"user_id,omitempty" form:"u,omitempty"`      // 用户id
-	PlanId      int    `json:"plan_id,omitempty" form:"p,omitempty"`      // 计划id
-	CampaignId  int    `json:"campaign_id,omitempty" form:"c,omitempty"`  // 活动id
-	CreativeId  int    `json:"creative_id,omitempty" form:"cr,omitempty"` // 创意id
-	MaterialId  int    `json:"material_id,omitempty" form:"m,omitempty"`  // 素材id
-	AdType      int    `json:"ad_type,omitempty" form:"adt,omitempty"`    // 0: banner； 1: native； 2: video
-	RequestId   string `json:"-" form:"rid,omitempty"`                    // 请求id
-	ClickId     string `json:"-" form:"ckid,omitempty"`                   // 平台唯一id
-	Device      int    `json:"device,omitempty" form:"dv,omitempty"`      // 设备
-	Os          string `json:"-" form:"os,omitempty"`                     // 系统
-	OsId        int    `json:"os,omitempty" form:"-"`                     // 系统
-	App         string `json:"-" form:"ap,omitempty"`                     // 应用
-	AppId       uint64 `json:"app,omitempty" form:"-"`                    // 应用id
-	Publisher   string `json:"-" form:"puer,omitempty"`                   // 发布者
-	PublisherId uint64 `json:"puer,omitempty" form:"-"`                   // 发布者id
-	Site        string `json:"-" form:"site,omitempty"`                   // 网站
-	SiteId      uint64 `json:"site,omitempty" form:"-"`                   // 网站id
-	Did         string `json:"-" form:"did,omitempty"`                    // 设备id
-	Did5        string `json:"-" form:"did5,omitempty"`                   // 设备id 的 md5 摘要，32位
-	Imei5       string `json:"-" form:"im5,omitempty"`                    // imei 的 md5 摘要，32位
-	Idfa5       string `json:"-" form:"ifa5,omitempty"`                   // IOS 6+的设备id字段的md5，32位
-	Caid        string `json:"-" form:"cid,omitempty"`                    // IOS 14后的设备id字段
-	Caid5       string `json:"-" form:"cid5,omitempty"`                   // IOS 14后的设备id字段的md5，32位
-	CaidVersion string `json:"-" form:"cidv,omitempty"`                   // caid版本号
-	Oaid        string `json:"-" form:"oid,omitempty"`                    // Android Q及更高版本的设备号，32位
-	Oaid5       string `json:"-" form:"oid5,omitempty"`                   // Android Q及更高版本的设备号的md5摘要，32位
-	IP          string `json:"-" form:"ip,omitempty"`                     // IP地址
-	Country     string `json:"-" form:"cny,omitempty"`                    // 国家
-	UserAgent   string `json:"-" form:"ua,omitempty"`                     // user-agent
-	ClickTs     int64  `json:"-" form:"ts,omitempty"`                     // 点击ts
-	Sign        string `json:"-" form:"sign,omitempty"`                   // 验参
-	MultiTrack  string `json:"-" form:"mul,omitempty"`                    // 多活动、创意、素材
-	RedirectUrl string `json:"-" form:"reurl,omitempty"`                  // 重定向地址
+	EventTs     int64  `json:"event_ts,omitempty" form:"-"`                 // 时间时间戳
+	AdxId       int    `json:"adx_id,omitempty" form:"ch,omitempty"`        // 渠道id
+	Spot        string `json:"spot,omitempty" form:"sp,omitempty"`          // 广告位id
+	SpotId      uint64 `json:"spot_id,omitempty" form:"-"`                  // 广告位id
+	TemplateId  int    `json:"template_id,omitempty" form:"tp,omitempty"`   // 模板id
+	UserId      int    `json:"user_id,omitempty" form:"u,omitempty"`        // 用户id
+	PlanId      int    `json:"plan_id,omitempty" form:"p,omitempty"`        // 计划id
+	CampaignId  int    `json:"campaign_id,omitempty" form:"c,omitempty"`    // 活动id
+	CreativeId  int    `json:"creative_id,omitempty" form:"cr,omitempty"`   // 创意id
+	MaterialId  int    `json:"material_id,omitempty" form:"m,omitempty"`    // 素材id
+	DeeplinkId  int    `json:"deeplink_id,omitempty" form:"dp,omitempty"`   // dpid
+	DeeplinkId2 int    `json:"deeplink_id2,omitempty" form:"dp2,omitempty"` // 活动内deeplink行数
+	AdType      int    `json:"ad_type,omitempty" form:"adt,omitempty"`      // 0: banner； 1: native； 2: video
+	RequestId   string `json:"-" form:"rid,omitempty"`                      // 请求id
+	ClickId     string `json:"-" form:"ckid,omitempty"`                     // 平台唯一id
+	Device      int    `json:"device,omitempty" form:"dv,omitempty"`        // 设备
+	Os          string `json:"-" form:"os,omitempty"`                       // 系统
+	OsId        int    `json:"os,omitempty" form:"-"`                       // 系统
+	App         string `json:"bundle,omitempty" form:"ap,omitempty"`        // 应用
+	AppId       uint64 `json:"app,omitempty" form:"-"`                      // 应用id
+	Publisher   string `json:"-" form:"puer,omitempty"`                     // 发布者
+	PublisherId uint64 `json:"puer,omitempty" form:"-"`                     // 发布者id
+	Site        string `json:"-" form:"site,omitempty"`                     // 网站
+	SiteId      uint64 `json:"site,omitempty" form:"-"`                     // 网站id
+	Did         string `json:"-" form:"did,omitempty"`                      // 设备id
+	Did5        string `json:"-" form:"did5,omitempty"`                     // 设备id 的 md5 摘要，32位
+	Imei5       string `json:"-" form:"im5,omitempty"`                      // imei 的 md5 摘要，32位
+	Idfa5       string `json:"-" form:"ifa5,omitempty"`                     // IOS 6+的设备id字段的md5，32位
+	Caid        string `json:"-" form:"cid,omitempty"`                      // IOS 14后的设备id字段
+	Caid5       string `json:"-" form:"cid5,omitempty"`                     // IOS 14后的设备id字段的md5，32位
+	CaidVersion string `json:"-" form:"cidv,omitempty"`                     // caid版本号
+	Oaid        string `json:"-" form:"oid,omitempty"`                      // Android Q及更高版本的设备号，32位
+	Oaid5       string `json:"-" form:"oid5,omitempty"`                     // Android Q及更高版本的设备号的md5摘要，32位
+	IP          string `json:"-" form:"ip,omitempty"`                       // IP地址
+	Country     string `json:"-" form:"cny,omitempty"`                      // 国家
+	UserAgent   string `json:"-" form:"ua,omitempty"`                       // user-agent
+	BidTs       int64  `json:"-" form:"ts,omitempty"`                       // 竞价ts
+	Sign        string `json:"-" form:"sign,omitempty"`                     // 验参
+	MultiTrack  string `json:"-" form:"mul,omitempty"`                      // 多活动、创意、素材
+	RedirectUrl string `json:"-" form:"reurl,omitempty"`                    // 重定向地址
 	Metrics
 }
 
@@ -56,7 +64,7 @@ type Click struct {
 	Track
 }
 
-func (track *Track) Check() error {
+func (track *Track) Validate() error {
 	return nil
 }
 
@@ -81,6 +89,7 @@ func (track *Track) Parse() {
 	default:
 
 	}
+	track.EventTs = time.Now().Unix()
 }
 
 func (track *Track) GetCampaignBudgetKey() string {
@@ -91,6 +100,11 @@ func (track *Track) GetPlanBudgetKey() string {
 	return "budget_" + strconv.Itoa(int(track.UserId*10000+track.PlanId*10)+1)
 }
 
+func (track *Track) GetCampaignDeeplinkKey() string {
+	return fmt.Sprintf("dp_%d_%d_%d", track.UserId, track.CampaignId, track.DeeplinkId2)
+	//return "dp_" + strconv.Itoa(int(track.UserId*10000000+track.PlanId*10000+track.CampaignId*10)+1)
+}
+
 func (track *Track) Clone() *Track {
 	return &Track{
 		Metrics: Metrics{
@@ -98,7 +112,15 @@ func (track *Track) Clone() *Track {
 			Click:      track.Click,
 			Landing:    track.Landing,
 			Price:      track.Price,
+			BidFloor:   track.BidFloor,
+			WakeUp:     track.WakeUp,
+			Active:     track.Active,
+			Register:   track.Register,
+			Purchase:   track.Purchase,
+			Offer:      track.Offer,
+			Win:        track.Win,
 		},
+		EventTs:     track.EventTs,
 		AdxId:       track.AdxId,
 		UserId:      track.UserId,
 		PlanId:      track.PlanId,
@@ -112,6 +134,14 @@ func (track *Track) Clone() *Track {
 		AppId:       track.AppId,
 		PublisherId: track.PublisherId,
 		SiteId:      track.SiteId,
+		RequestId:   track.RequestId,
+		BidTs:       track.BidTs,
+		DeeplinkId:  track.DeeplinkId,
+		DeeplinkId2: track.DeeplinkId2,
+		MultiTrack:  track.MultiTrack,
+		RedirectUrl: track.RedirectUrl,
+		Spot:        track.Spot,
+		Os:          track.Os,
 	}
 }
 
@@ -146,10 +176,18 @@ func (track *Track) Marshal() []byte {
 	return byt
 }
 
-func (imp *Impression) Check() error {
+func (imp *Impression) Validate() error {
+	var err error
+	if imp.Price, err = pricer.DefaultPricer.Decode(imp.PriceSrc); err != nil {
+		return errors.New("价格解析失败: " + imp.PriceSrc)
+	}
+	// 曝光超过24小时算作弊
+	if imp.BidTs <= 0 || imp.BidTs > 0 && time.Now().Unix()-imp.BidTs > 24*60*60 {
+		return errors.New("曝光时间超过24小时")
+	}
 	return nil
 }
 
-func (clk *Click) Check() error {
+func (clk *Click) Validate() error {
 	return nil
 }

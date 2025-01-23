@@ -57,6 +57,7 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
+        <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="预览" width="100">
           <template #default="scope">
             <CustomPic

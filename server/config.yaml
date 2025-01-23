@@ -23,7 +23,7 @@ redis:
   #是否使用redis集群模式
   useCluster: false
   #使用集群模式addr和db默认无效
-  addr: 127.0.0.1:6379
+  addr: 192.168.10.41:6379
   password: ""
   db: 0
   clusterAddrs:
@@ -300,6 +300,8 @@ dsp:
   use-mongo: false
   use-redis: false
   domain: http://47.236.174.69
+  ipv4-path: /Users/chenxiqiang/Downloads/工作/技术对接/ipdatacloud_city/ipdatacloud_city_v4_en.dat
+  ipv6-path: /Users/chenxiqiang/Downloads/工作/技术对接/ipdatacloud_city/ipdatacloud_city_v6_en.dat
   bid:
     port: 18888
     uri: /bid

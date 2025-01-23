@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -27,6 +28,8 @@ type Campaign struct {
 	BudgetDaily        *int                   `json:"budget_daily" form:"budget_daily" gorm:"column:budget_daily;comment:每日预算,元;size:20;"`                         //每日预算,元
 	ImpTotal           *int                   `json:"imp_total" form:"imp_total" gorm:"column:imp_total;comment:总曝光数;size:20;"`                                    //总曝光数
 	ImpDaily           *int                   `json:"imp_daily" form:"imp_daily" gorm:"column:imp_daily;comment:每日曝光数;size:20;"`                                   //每日曝光数
+	ClkTotal           *int                   `json:"clk_total" form:"clk_total" gorm:"column:clk_total;comment:总点击数;size:20;"`                                    //总曝光数
+	ClkDaily           *int                   `json:"clk_daily" form:"clk_daily" gorm:"column:clk_daily;comment:每日点击数;size:20;"`                                   //每日曝光数
 	ImpFrequency       *int                   `json:"imp_frequency" form:"imp_frequency" gorm:"column:imp_frequency;comment:曝光频制;size:10;"`                        //曝光频制
 	ImpFrequencyMinute *int                   `json:"imp_frequency_minute" form:"imp_frequency_minute" gorm:"column:imp_frequency_minute;comment:曝光频控周期;size:10;"` //曝光频控周期
 	ClkFrequency       *int                   `json:"clk_frequency" form:"clk_frequency" gorm:"column:clk_frequency;comment:点击频控;size:10;"`                        //点击频控
@@ -60,6 +63,14 @@ type Campaign struct {
 	Creatives          []*Creative            `json:"creatives" gorm:"foreignKey:campaign_id"`
 	Images             map[int][]*Creative    `json:"images" gorm:"-"`
 	Videos             map[int][]*Creative    `json:"Videos" gorm:"-"`
+	TodayCost          float64                `json:"today_cost" form:"-" gorm:"-"`       // 当天消耗
+	TodayImpression    int                    `json:"today_impression" form:"-" gorm:"-"` // 当天曝光
+	TodayClick         int                    `json:"today_click" form:"-" gorm:"-"`      // 当天点击
+	// 扩展功能
+	Deeplinks  string   `json:"deeplinks" form:"deeplinks" gorm:"column:deeplinks;comment:;type:text;"` //deeplink字段
+	LinkSystem *bool    `json:"link_system" form:"link_system" gorm:"column:link_system,comment:动态链接"`  // 动态链接
+	currentDP  int      `json:"-" form:"-" gorm:"-"`
+	dps        []string `json:"-" form:"-" gorm:"-"`
 }
 
 // TableName 活动 Campaign自定义表名 campaigns
@@ -190,6 +201,19 @@ func (c *Campaign) GetImpDaily() int {
 	}
 	return math.MaxInt
 }
+
+func (c *Campaign) GetClkTotal() int {
+	if c.ClkTotal != nil {
+		return *c.ClkTotal
+	}
+	return math.MaxInt
+}
+func (c *Campaign) GetClkDaily() int {
+	if c.ClkDaily != nil {
+		return *c.ClkDaily
+	}
+	return math.MaxInt
+}
 func (c *Campaign) GetCtrMax() float64 {
 	if c.CtrMax != nil {
 		return *c.CtrMax
@@ -225,6 +249,12 @@ func (c Campaign) GetBidMethod() int {
 		return *c.BidMethod
 	}
 	return 0
+}
+func (c *Campaign) IsLinkSystem() bool {
+	if c.LinkSystem != nil {
+		return *c.LinkSystem
+	}
+	return false
 }
 func (c *Campaign) GetBidMode() int {
 	if c.BidMode != nil {
@@ -269,12 +299,49 @@ func (c *Campaign) Init() {
 	if c.Target != nil {
 		c.Target.Init()
 	}
+	c.buildDeeplinks()
+}
+
+func (c *Campaign) InAdx(adx int) bool {
+	if c.Target != nil {
+		return c.Target.InAdx(adx)
+	}
+	return true
 }
 func (c *Campaign) InRegion(region string) bool {
 	if c.Target != nil {
 		return c.Target.InRegion(region)
 	}
 	return true
+}
+
+func (c *Campaign) InOs(os string) bool {
+	if c.Target != nil {
+		return c.Target.InOs(os)
+	}
+	return true
+}
+
+func (c *Campaign) buildDeeplinks() {
+	if len(c.Deeplinks) > 0 {
+		c.dps = strings.Split(c.Deeplinks, "\n")
+	}
+}
+
+func (c *Campaign) DPIncr() {
+	if len(c.dps) > 0 {
+		c.currentDP++
+		c.currentDP = c.currentDP % len(c.dps)
+	}
+}
+
+func (c *Campaign) VoteDeeplink() string {
+	if len(c.dps) > 0 {
+		return c.dps[c.currentDP]
+	} else if len(c.Deeplink) > 0 {
+		return c.Deeplink
+	}
+	return ""
 }
 
 func (c *Campaign) BuildCreatives() {
@@ -382,4 +449,8 @@ func (c *Campaign) FillTrackParams(params map[string]string) {
 	params["u"] = strconv.Itoa(int(c.CreatedBy))
 	params["p"] = strconv.Itoa(int(c.PlanId))
 	params["c"] = strconv.Itoa(int(c.ID))
+	if dp := c.VoteDeeplink(); len(dp) > 0 {
+		params["dp2"] = strconv.Itoa(c.currentDP)
+		params["dp"] = strconv.Itoa(int(utils.HashCode(c.VoteDeeplink())))
+	}
 }

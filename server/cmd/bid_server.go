@@ -34,6 +34,10 @@ func main() {
 	global.GVA_DB = initialize.Gorm() // gorm连接数据库
 	//initialize.Timer()
 	initialize.DBList()
+	if global.GVA_CONFIG.Dsp.UseRedis {
+		// 初始化redis服务
+		initialize.Redis()
+	}
 	if global.GVA_DB != nil {
 		err := global.GVA_DB.AutoMigrate(example.ExaFile{},
 			example.ExaCustomer{},
@@ -49,6 +53,7 @@ func main() {
 		db, _ := global.GVA_DB.DB()
 		defer db.Close()
 
+		bid.Init()
 		bid.Load()
 		initialize.BidTimer()
 	}

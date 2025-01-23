@@ -65,6 +65,7 @@
             />
           </template>
         </el-table-column>
+        <el-table-column align="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="视频链接" prop="video_url" width="250" />
         <el-table-column align="left" label="备注" prop="comment" width="200" />
         <el-table-column align="left" label="视频格式" prop="format" width="120" />
