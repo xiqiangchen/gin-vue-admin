@@ -139,22 +139,36 @@ export const pubPlug = (params) => {
   })
 }
 
-
-export const llmAuto = (params) => {
-  let modeName = {
-    "xiaoqi": "小奇",
-    "xiaomiao": "小淼",
-  }
+export const llmAuto = (data) => {
   return service({
     url: '/autoCode/llmAuto',
     method: 'post',
-    params,
+    data: { ...data, mode: 'ai' },
     timeout: 1000 * 60 * 10,
-    loadingOption:{
+    loadingOption: {
       lock: true,
-      fullscreen:true,
-      text: `${modeName[params.mode]}正在思考，请稍候...`,
+      fullscreen: true,
+      text: `小淼正在思考，请稍候...`
     }
+  })
+}
+
+export const butler = (data) => {
+  return service({
+    url: '/autoCode/llmAuto',
+    method: 'post',
+    data: { ...data, mode: 'butler' },
+    timeout: 1000 * 60 * 10
+  })
+}
+
+
+export const eye = (data) => {
+  return service({
+    url: '/autoCode/llmAuto',
+    method: 'post',
+    data: { ...data, mode: 'eye' },
+    timeout: 1000 * 60 * 10
   })
 }
 
@@ -162,6 +176,22 @@ export const llmAuto = (params) => {
 export const addFunc = (data) => {
   return service({
     url: '/autoCode/addFunc',
+    method: 'post',
+    data
+  })
+}
+
+export const initMenu = (data) => {
+  return service({
+    url: '/autoCode/initMenu',
+    method: 'post',
+    data
+  })
+}
+
+export const initAPI = (data) => {
+  return service({
+    url: '/autoCode/initAPI',
     method: 'post',
     data
   })

@@ -31,6 +31,17 @@ redis:
     - "172.21.0.4:7001"
     - "172.21.0.2:7002"
 
+# redis-list configuration
+redis-list:
+    - name: cache           # 数据库的名称,注意: name 需要在 redis-list 中唯一
+      useCluster: false     # 是否使用redis集群模式
+      addr: 127.0.0.1:6379  # 使用集群模式addr和db默认无效
+      password: ""
+      db: 0
+      clusterAddrs:
+          - "172.21.0.3:7000"
+          - "172.21.0.4:7001"
+          - "172.21.0.2:7002"
 
 # mongo configuration
 mongo:
@@ -76,6 +87,8 @@ system:
   router-prefix: ""
   # 素材url前缀
   url-prefix: "http://localhost:8080/api/"
+  # 严格角色模式 打开后权限将会存在上下级关系
+  use-strict-auth: false
 
 # captcha configuration
 captcha:
@@ -185,6 +198,16 @@ qiniu:
   access-key: ""
   secret-key: ""
   use-cdn-domains: false
+
+# minio oss configuration
+minio:
+  endpoint: yourEndpoint
+  access-key-id: yourAccessKeyId
+  access-key-secret: yourAccessKeySecret
+  bucket-name: yourBucketName
+  use-ssl: false
+  base-path: ""
+  bucket-url: "http://host:9000/yourBucketName"
 
 # aliyun oss configuration
 aliyun-oss:

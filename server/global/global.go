@@ -1,10 +1,12 @@
 package global
 
 import (
+	"sync"
+
 	"github.com/IBM/sarama"
+
 	"github.com/gin-gonic/gin"
 	"github.com/qiniu/qmgo"
-	"sync"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/timer"
 	"github.com/songzhibin97/gkit/cache/local_cache"
@@ -21,12 +23,13 @@ import (
 )
 
 var (
-	GVA_DB             *gorm.DB
-	GVA_DBList         map[string]*gorm.DB
-	GVA_REDIS          redis.UniversalClient
-	GVA_MONGO          *qmgo.QmgoClient
-	GVA_CONFIG         config.Server
-	GVA_VP             *viper.Viper
+	GVA_DB        *gorm.DB
+	GVA_DBList    map[string]*gorm.DB
+	GVA_REDIS     redis.UniversalClient
+	GVA_REDISList map[string]redis.UniversalClient
+	GVA_MONGO     *qmgo.QmgoClient
+	GVA_CONFIG    config.Server
+	GVA_VP        *viper.Viper
 	GVA_KAFKA_PRODUCER sarama.AsyncProducer
 
 	// GVA_LOG    *oplogging.Logger
@@ -55,4 +58,12 @@ func MustGetGlobalDBByDBName(dbname string) *gorm.DB {
 		panic("db no init")
 	}
 	return db
+}
+
+func GetRedis(name string) redis.UniversalClient {
+	redis, ok := GVA_REDISList[name]
+	if !ok || redis == nil {
+		panic(fmt.Sprintf("redis `%s` no init", name))
+	}
+	return redis
 }

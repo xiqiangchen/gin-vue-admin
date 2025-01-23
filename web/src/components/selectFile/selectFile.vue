@@ -1,86 +1,81 @@
 <template>
   <div>
     <el-upload
+      v-model:file-list="fileList"
       multiple
       :action="`${getBaseUrl()}/fileUploadAndDownload/upload?noSave=1`"
       :on-error="uploadError"
       :on-success="uploadSuccess"
+      :on-remove="uploadRemove"
       :show-file-list="true"
-      :file-list="fileList"
       :limit="limit"
       :accept="accept"
       class="upload-btn"
     >
-      <el-button type="primary">上传文件</el-button>
+      <el-button type="primary"> 上传文件 </el-button>
     </el-upload>
   </div>
 </template>
 
 <script setup>
+  import { ref } from 'vue'
+  import { ElMessage } from 'element-plus'
+  import { getBaseUrl } from '@/utils/format'
 
-import { ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/pinia/modules/user'
-import { getBaseUrl } from '@/utils/format'
+  defineOptions({
+    name: 'UploadCommon'
+  })
 
-defineOptions({
-  name: 'UploadCommon',
-})
+  defineProps({
+    limit: {
+      type: Number,
+      default: 3
+    },
+    accept: {
+      type: String,
+      default: ''
+    }
+  })
 
-const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => []
-  },
-  limit: {
-    type: Number,
-    default: 3
-  },
-  accept: {
-    type: String,
-    default: ''
-  },
-})
+  const fullscreenLoading = ref(false)
 
-const path = ref(import.meta.env.VITE_BASE_API)
+  const model = defineModel({ type: Array })
 
-const userStore = useUserStore()
-const fullscreenLoading = ref(false)
+  const fileList = ref(model.value)
 
-const fileList = ref(props.modelValue)
+  const emits = defineEmits(['on-success', 'on-error'])
 
-const emits = defineEmits(['update:modelValue'])
-
-watch(fileList.value, (val) => {
-  console.log(val)
-  emits('update:modelValue', val)
-})
-
-watch(
-  () => props.modelValue,
-  value => {
-    fileList.value = value
-  },
-  { immediate: true }
-)
-const uploadSuccess = (res) => {
-  const { data } = res
-  if (data.file) {
-    fileList.value.push({
+  const uploadSuccess = (res) => {
+    const { data, code } = res
+    if (code !== 0) {
+      ElMessage({
+        type: 'error',
+        message: '上传失败' + res.msg
+      })
+      fileList.value.pop()
+      return
+    }
+    model.value.push({
       name: data.file.name,
       url: data.file.url
     })
-    fullscreenLoading.value = false
+    emits('on-success', res)
   }
-}
 
-const uploadError = () => {
-  ElMessage({
-    type: 'error',
-    message: '上传失败'
-  })
-  fullscreenLoading.value = false
-}
+  const uploadRemove = (file) => {
+    const index = model.value.indexOf(file)
+    if (index > -1) {
+      model.value.splice(index, 1)
+      fileList.value = model.value
+    }
+  }
 
+  const uploadError = (err) => {
+    ElMessage({
+      type: 'error',
+      message: '上传失败'
+    })
+    fullscreenLoading.value = false
+    emits('on-error', err)
+  }
 </script>
-

@@ -18,7 +18,7 @@ func init() {
 	system.RegisterInit(initOrderEnsureTables, &ensureTables{})
 }
 
-func (ensureTables) InitializerName() string {
+func (e *ensureTables) InitializerName() string {
 	return "ensure_tables_created"
 }
 func (e *ensureTables) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -51,6 +51,7 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		sysModel.SysExportTemplate{},
 		sysModel.Condition{},
 		sysModel.JoinTemplate{},
+		sysModel.SysParams{},
 
 		adapter.CasbinRule{},
 

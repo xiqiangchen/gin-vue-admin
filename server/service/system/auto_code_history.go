@@ -52,9 +52,9 @@ func (s *autoCodeHistory) First(ctx context.Context, info common.GetById) (strin
 // Repeat 检测重复
 // Author [SliverHorn](https://github.com/SliverHorn)
 // Author [songzhibin97](https://github.com/songzhibin97)
-func (s *autoCodeHistory) Repeat(businessDB, structName, Package string) bool {
+func (s *autoCodeHistory) Repeat(businessDB, structName, abbreviation, Package string) bool {
 	var count int64
-	global.GVA_DB.Model(&model.SysAutoCodeHistory{}).Where("business_db = ? and struct_name = ? and package = ? and flag = 0", businessDB, structName, Package).Count(&count)
+	global.GVA_DB.Model(&model.SysAutoCodeHistory{}).Where("business_db = ? and (struct_name = ? OR abbreviation = ?) and package = ? and flag = ?", businessDB, structName, abbreviation, Package, 0).Count(&count).Debug()
 	return count > 0
 }
 
@@ -66,6 +66,12 @@ func (s *autoCodeHistory) RollBack(ctx context.Context, info request.SysAutoHist
 	err := global.GVA_DB.Where("id = ?", info.ID).First(&history).Error
 	if err != nil {
 		return err
+	}
+	if history.ExportTemplateID != 0 {
+		err = global.GVA_DB.Delete(&model.SysExportTemplate{}, "id = ?", history.ExportTemplateID).Error
+		if err != nil {
+			return err
+		}
 	}
 	if info.DeleteApi {
 		ids := info.ApiIds(history)

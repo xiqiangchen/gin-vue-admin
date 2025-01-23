@@ -16,7 +16,9 @@ func RunWindowsServer() {
 	if global.GVA_CONFIG.System.UseMultipoint || global.GVA_CONFIG.System.UseRedis {
 		// 初始化redis服务
 		initialize.Redis()
+		initialize.RedisList()
 	}
+
 	if global.GVA_CONFIG.System.UseMongo {
 		err := initialize.Mongo.Initialization()
 		if err != nil {
@@ -30,7 +32,6 @@ func RunWindowsServer() {
 	}
 
 	Router := initialize.Routers()
-	Router.Static("/form-generator", "./resource/page")
 
 	address := fmt.Sprintf(":%d", global.GVA_CONFIG.System.Addr)
 	s := initServer(address, Router)
@@ -39,8 +40,8 @@ func RunWindowsServer() {
 
 	fmt.Printf(`
 	欢迎使用 gin-vue-admin
-	当前版本:v2.7.1
-    加群方式:微信号：shouzi_1994 QQ群：470239250
+	当前版本:v2.7.8
+	加群方式:微信号：shouzi_1994 QQ群：470239250
 	项目地址：https://github.com/flipped-aurora/gin-vue-admin
 	插件市场:https://plugin.gin-vue-admin.com
 	GVA讨论社区:https://support.qq.com/products/371961

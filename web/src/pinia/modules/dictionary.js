@@ -10,7 +10,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     dictionaryMap.value = { ...dictionaryMap.value, ...dictionaryRes }
   }
 
-  const getDictionary = async(type) => {
+  const getDictionary = async (type) => {
     if (dictionaryMap.value[type] && dictionaryMap.value[type].length) {
       return dictionaryMap.value[type]
     } else {

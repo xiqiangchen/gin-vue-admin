@@ -4,12 +4,12 @@ type Server struct {
 	JWT    JWT    `mapstructure:"jwt" json:"jwt" yaml:"jwt"`
 	Zap    Zap    `mapstructure:"zap" json:"zap" yaml:"zap"`
 	Redis  Redis  `mapstructure:"redis" json:"redis" yaml:"redis"`
+	RedisList []Redis `mapstructure:"redis-list" json:"redis-list" yaml:"redis-list"`
 	Mongo  Mongo  `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
 	Email  Email  `mapstructure:"email" json:"email" yaml:"email"`
 	System System `mapstructure:"system" json:"system" yaml:"system"`
 	Dsp    Dsp    `mapstructure:"dsp" json:"dsp" yaml:"dsp"`
 	Kafka  Kafka  `mapstructure:"kafka" json:"kafka" yaml:"kafka"`
-
 	Captcha Captcha `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
 	// auto
 	AutoCode Autocode `mapstructure:"autocode" json:"autocode" yaml:"autocode"`
@@ -28,6 +28,7 @@ type Server struct {
 	TencentCOS   TencentCOS   `mapstructure:"tencent-cos" json:"tencent-cos" yaml:"tencent-cos"`
 	AwsS3        AwsS3        `mapstructure:"aws-s3" json:"aws-s3" yaml:"aws-s3"`
 	CloudflareR2 CloudflareR2 `mapstructure:"cloudflare-r2" json:"cloudflare-r2" yaml:"cloudflare-r2"`
+	Minio        Minio        `mapstructure:"minio" json:"minio" yaml:"minio"`
 
 	Excel Excel `mapstructure:"excel" json:"excel" yaml:"excel"`
 
