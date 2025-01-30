@@ -52,40 +52,62 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="日期" width="180">
-            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
-        </el-table-column>
-        <el-table-column align="left" label="名称" prop="name" width="120" />
+        <el-table-column align="left" label="ID" fixed="left" prop="ID" width="80" />
+        <el-table-column align="left" label="名称" fixed="left" prop="name" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
-        <el-table-column align="left" label="渠道媒体" prop="adx" width="120" />
+        <el-table-column align="left" label="渠道媒体" prop="adx" width="120" >
+          <template #default="scope">
+            <span v-if="scope.row.adx === ''">不限</span>
+            <template v-else>
+              {{ scope.row.adx.split(',').map(ele => filterDict(Number(ele), adxOptions)).join(',') }}
+            </template>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="广告形式" prop="ad_format" width="120">
             <template #default="scope">
-            {{ filterDict(scope.row.ad_format,adFormatOptions) }}
+            <span v-if="scope.row.ad_format === ''">不限</span>
+            <template v-else>
+              {{ scope.row.ad_format.split(',').map(ele => filterDict(Number(ele), adFormatOptions)).join(',') }}
+            </template>
             </template>
         </el-table-column>
         <el-table-column align="left" label="设备类型" prop="device_type" width="120">
             <template #default="scope">
-            {{ filterDict(scope.row.device_type,deviceTypeOptions) }}
+            <span v-if="scope.row.device_type === ''">不限</span>
+            <template v-else>
+              {{ scope.row.device_type.split(',').map(ele => filterDict(Number(ele), deviceTypeOptions)).join(',') }}
+            </template>
             </template>
         </el-table-column>
         <el-table-column align="left" label="操作系统" prop="os" width="120">
             <template #default="scope">
-            {{ filterDict(scope.row.os,osOptions) }}
+            <span v-if="scope.row.os === ''">不限</span>
+            <template v-else>
+              {{ scope.row.os.split(',').map(ele => filterDict(Number(ele), osOptions)).join(',') }}
+            </template>
             </template>
         </el-table-column>
         <el-table-column align="left" label="定向类型" prop="target_type" width="120">
             <template #default="scope">
-            {{ filterDict(scope.row.target_type,targetTypeOptions) }}
+            <span v-if="scope.row.target_type === ''">不限</span>
+            <template v-else>
+              {{ scope.row.target_type.split(',').map(ele => filterDict(Number(ele), targetTypeOptions)).join(',') }}
+            </template>
             </template>
         </el-table-column>
         <el-table-column align="left" label="行政区域" prop="region" width="120" />
         <el-table-column align="left" label="性别" prop="gender" width="120">
             <template #default="scope">
-            {{ filterDict(scope.row.gender,genderOptions) }}
+            <span v-if="scope.row.gender === ''">不限</span>
+            <template v-else>
+              {{ scope.row.gender.split(',').map(ele => filterDict(Number(ele), genderOptions)).join(',') }}
+            </template>
             </template>
         </el-table-column>
-        <el-table-column align="left" label="操作" min-width="120">
+        <el-table-column align="left" label="日期" width="180">
+            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+        </el-table-column>
+        <el-table-column align="right" fixed="right" label="操作" min-width="120">
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
                 <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>

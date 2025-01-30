@@ -59,10 +59,7 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="日期" width="180">
-            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
-        </el-table-column>
+        <el-table-column align="left" fixed="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="平台渠道" prop="platform" width="120">
           <template #default="scope">
            <span v-if="scope.row.platform === 0">不限</span>
@@ -102,7 +99,10 @@
         <el-table-column align="left" label="地区" prop="region" width="120" />
         <el-table-column align="left" label="平均出价" prop="price" width="120" />
         <el-table-column align="left" label="浮动范围(%)" prop="scope" width="120" />
-        <el-table-column align="left" label="操作" min-width="120">
+        <el-table-column align="left" label="日期" width="180">
+            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+        </el-table-column>
+        <el-table-column align="right" fixed="right" label="操作" min-width="120">
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
                 <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>

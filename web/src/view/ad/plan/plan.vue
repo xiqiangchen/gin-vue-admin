@@ -82,7 +82,7 @@
         <el-table-column align="left" label="点击率" prop="ctrMax" width="120">
           <template #default="scope">[{{ (scope.row.ctrMax) }}%, {{ (scope.row.ctrMin) }}%]</template>
         </el-table-column> />
-        <el-table-column align="left" label="操作" min-width="120">
+        <el-table-column align="right" fixed="right"  label="操作" min-width="120">
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
                 <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>

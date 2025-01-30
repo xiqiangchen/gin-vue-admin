@@ -99,24 +99,13 @@
         row-key="ID"
         @selection-change="handleSelectionChange"
         >
-        <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="ID" prop="ID" width="80" />
-        <el-table-column align="left" label="计划" prop="plan.name" width="120"/>
-        <el-table-column align="left" label="名称" prop="name" width="120" >
+        <el-table-column type="selection" width="55" fixed="left" />
+        <el-table-column align="left" label="ID" prop="ID" width="80" fixed="left" />
+        <el-table-column align="left" label="计划" prop="plan.name" width="120" fixed="left"/>
+        <el-table-column align="left" label="名称" prop="name" width="120" fixed="left">
           <template #default="scope">
             <a :href="'#' + creativePath + '?cid=' + scope.row.ID" >{{ scope.row.name }}</a>
           </template>
-        </el-table-column>
-        <el-table-column align="left" label="操作" min-width="250">
-            <template #default="scope">
-            <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
-                <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
-                查看详情
-            </el-button>
-            <el-button type="primary" link icon="edit" class="table-button" @click="updateCampaignFunc(scope.row)">变更</el-button>
-            <el-button type="primary" link icon="plus" class="table-button" @click="createCreativeFunc(scope.row)">添加创意</el-button>
-            <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
-            </template>
         </el-table-column>
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="状态" prop="status" width="120">
@@ -163,7 +152,17 @@
         </el-table-column>
         <el-table-column align="left" label="品牌名称" prop="brand" width="120" />
         <el-table-column align="left" label="创意方式" prop="creative_mode" width="120" />
-        
+        <el-table-column align="right" label="操作" min-width="250" fixed="right">
+            <template #default="scope">
+            <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
+                <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
+                查看详情
+            </el-button>
+            <el-button type="primary" link icon="edit" class="table-button" @click="updateCampaignFunc(scope.row)">变更</el-button>
+            <el-button type="primary" link icon="plus" class="table-button" @click="createCreativeFunc(scope.row)">添加创意</el-button>
+            <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
+            </template>
+        </el-table-column>
         </el-table>
         <div class="gva-pagination">
             <el-pagination

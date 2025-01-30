@@ -63,7 +63,7 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="预览" width="100" class="media-box">
+        <el-table-column align="left" fixed="left" label="预览" width="100" class="media-box">
           <template #default="scope">
             <CustomPic
               v-if="!isVideoExt(scope.row.material.url)"
@@ -101,7 +101,7 @@
               </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="ID" prop="ID" width="80" />
+        <el-table-column align="left" fixed="left" label="ID" prop="ID" width="80" />
         <el-table-column align="left" label="计划" prop="plan_id" width="120" />
         <el-table-column align="left" label="活动id" prop="campaign_id" width="120" />
         <el-table-column align="left" label="活动名称" prop="campaign.name" width="120" >
@@ -118,7 +118,7 @@
         <el-table-column align="left" label="标题" prop="title" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="行动语" prop="button" width="120" />
-        <el-table-column align="left" label="操作" min-width="120">
+        <el-table-column align="right" label="操作" min-width="120" fixed="right" >
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
                 <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>

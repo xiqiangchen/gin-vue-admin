@@ -48,10 +48,8 @@
         @selection-change="handleSelectionChange"
         >
         <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="日期" width="180">
-            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
-        </el-table-column>
-        <el-table-column align="left" label="名称" prop="name" width="120" />
+        <el-table-column align="left" fixed="left" label="ID" prop="ID" width="80" />
+        <el-table-column align="left" fixed="left" label="名称" prop="name" width="120" />
         <el-table-column align="left" label="描述" prop="desc" width="120" />
         <el-table-column align="left" label="平台、渠道白名单" prop="platformWhitelist" width="120" />
         <el-table-column align="left" label="平台、渠道黑名单" prop="platformBlacklist" width="120" />
@@ -61,7 +59,10 @@
         <el-table-column align="left" label="应用黑名单" prop="bundleBlacklist" width="120" />
         <el-table-column align="left" label="网站域名白名单" prop="siteWhitelist" width="120" />
         <el-table-column align="left" label="网站域名黑名单" prop="siteBlacklist" width="120" />
-        <el-table-column align="left" label="操作" min-width="120">
+        <el-table-column align="left" label="日期" width="180">
+            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+        </el-table-column>
+        <el-table-column align="right" fixed="right" label="操作" min-width="120">
             <template #default="scope">
             <el-button type="primary" link class="table-button" @click="getDetails(scope.row)">
                 <el-icon style="margin-right: 5px"><InfoFilled /></el-icon>
